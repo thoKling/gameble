@@ -32,6 +32,8 @@ Rails.configuration.to_prepare do
   event_store.subscribe(Game::Handlers::PlayerActivity, to: Game::Handlers::PlayerActivity::EVENTS.keys)
 
   event_store.subscribe(PlayerStream, to: PlayerStream::EVENTS)
+  # Trade offers and friend invitations also reach the mobile apps as push notifications.
+  event_store.subscribe(PushNotices, to: PushNotices::EVENTS)
 
   Rails.configuration.event_store = event_store
 end
