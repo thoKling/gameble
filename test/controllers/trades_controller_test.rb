@@ -64,6 +64,8 @@ class TradesControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "title", /Échanges/
     assert_select ".trades--list"
+    assert_select "nav.socials-tabs a.segmented__option[href='/fr/trades'][aria-current=true]", /Échanges/
+    assert_select "nav.socials-tabs a.segmented__option[href='/fr/friends']:not([aria-current])", /Amis/
     assert_equal [ "En attente de vous", "En attente de leur réponse" ], css_select(".trades__group").map { it.text.strip }
     rows = css_select(".trade-row")
     assert_equal 2, rows.size

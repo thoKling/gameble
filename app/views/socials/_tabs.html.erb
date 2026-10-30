@@ -1,0 +1,19 @@
+<%# locals: (current:) %>
+<% waiting = shell_trades_waiting %>
+<% invited = socials_invitations_received %>
+<nav class="segmented socials-tabs" aria-label="<%= t("socials.tabs.label") %>">
+  <%= link_to trades_path, class: "segmented__option socials-tabs__option", aria: { current: ("true" if current == :trades) }, data: { turbo_prefetch: false } do %>
+    <%= t("socials.tabs.trades") %>
+    <% if waiting.positive? %>
+      <span class="socials-tabs__badge" aria-hidden="true"><%= number_with_delimiter(waiting) %></span>
+      <span class="visually-hidden"><%= t("shell.tabs.trades_waiting", count: waiting, number: number_with_delimiter(waiting)) %></span>
+    <% end %>
+  <% end %>
+  <%= link_to friends_path, class: "segmented__option socials-tabs__option", aria: { current: ("true" if current == :friends) }, data: { turbo_prefetch: false } do %>
+    <%= t("socials.tabs.friends") %>
+    <% if invited.positive? %>
+      <span class="socials-tabs__badge" aria-hidden="true"><%= number_with_delimiter(invited) %></span>
+      <span class="visually-hidden"><%= t("socials.tabs.invitations", count: invited, number: number_with_delimiter(invited)) %></span>
+    <% end %>
+  <% end %>
+</nav>

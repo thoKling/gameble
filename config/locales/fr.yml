@@ -99,7 +99,7 @@ fr:
       hub: "Pont"
       booster: "Capsule"
       collection: "Collection"
-      trades: "Échanges"
+      trades: "Social"
       more: "Plus"
       landing: "Accueil"
       all_cards: "Toutes les cartes"
@@ -141,12 +141,11 @@ fr:
           zero: "%{owned} carte unique sur %{total}"
           one: "%{owned} carte unique sur %{total}"
           other: "%{owned} cartes uniques sur %{total}"
-        trades: "Échanges"
+        trades: "Social"
         trades_waiting:
           zero: "%{number} échange en attente de vous"
           one: "%{number} échange en attente de vous"
           other: "%{number} échanges en attente de vous"
-        friends: "Amis"
         # French keeps the singular for 0, which the plural rule here does not.
         friends_online:
           zero: "%{number} en ligne"
@@ -1390,7 +1389,6 @@ fr:
       named: "Voir la collection de %{name}"
     show:
       title: "Amis"
-      more: "Plus"
       code_label: "Votre code ami"
       empty: "Aucun ami pour l'instant."
       empty_invite: "Invitez-en un avec votre lien ou votre code."
@@ -2284,3 +2282,13 @@ fr:
       stale_batch: "La saison sur laquelle cette passe a commencé a été publiée depuis, officier. Ses cartes en réserve sont jetées : lance un nouvel import."
       not_completed: "Seule une passe d'import terminée ou promue peut être recalculée, officier."
       already_published: "Les cartes de cette passe sont déjà publiées dans une saison, officier. Lance un nouvel import pour remplir le prochain brouillon."
+  socials:
+    title: "Social"
+    tabs:
+      label: "Social"
+      trades: "Échanges"
+      friends: "Amis"
+      invitations:
+        zero: "%{number} invitation en attente"
+        one: "%{number} invitation en attente"
+        other: "%{number} invitations en attente"

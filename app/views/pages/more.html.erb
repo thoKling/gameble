@@ -13,12 +13,6 @@
       <% end %>
     </li>
     <li>
-      <%= link_to friends_path, class: "menu-item menu-item--plus", data: { turbo_prefetch: false } do %>
-        <span class="menu-item__label"><%= t("pages.home.menu.friends") %></span>
-        <%= pixel_icon("arrow-small-right", class: "menu-item__arrow") %>
-      <% end %>
-    </li>
-    <li>
       <%= link_to feed_path, class: "menu-item menu-item--plus", data: { turbo_prefetch: false } do %>
         <span class="menu-item__label"><%= t("pages.home.menu.feed") %></span>
         <%= pixel_icon("arrow-small-right", class: "menu-item__arrow") %>

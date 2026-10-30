@@ -104,7 +104,7 @@ class ShellTest < ApplicationSystemTestCase
       assert_selector ".tab-bar a.tab-bar__tab[aria-current=page]", text: /PONT/i
       assert_selector ".tab-bar a.tab-bar__tab[href='/fr/booster']", text: /CAPSULE/i
       assert_selector ".tab-bar a.tab-bar__tab[href='/fr/more']", text: /PLUS/i
-      assert_selector ".tab-bar a.tab-bar__tab[href='/fr/trades']", text: /ÉCHANGES/i
+      assert_selector ".tab-bar a.tab-bar__tab[href='/fr/trades']", text: /SOCIAL/i
       assert_no_selector ".rarity-counter__button", visible: true
       assert_selector ".top-bar .player-chip__button", visible: true
       assert_equal "fixed", computed(".tab-bar", "position")
@@ -446,7 +446,7 @@ class ShellTest < ApplicationSystemTestCase
   test "on a desktop, no back button after the hub, from a direct link or after a reload" do
     sign_in_with_three_cards
     find(".hub-menu .menu-item[aria-keyshortcuts='5']").click
-    assert_current_path friends_path(locale: :en)
+    assert_current_path feed_path(locale: :en)
     assert_no_selector PREVIOUS
     find(".top-bar__home").click
     assert_current_path home_path(locale: :en)

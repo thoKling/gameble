@@ -467,3 +467,22 @@
   flex-wrap: wrap;
   gap: var(--space-4);
 }
+
+/* The SOCIAL switch above trades and friends: a segmented pair of links,
+   each with the count waiting for the player. */
+.socials-tabs {
+  align-self: flex-start;
+}
+
+.socials-tabs__option {
+  gap: var(--space-2);
+}
+
+.socials-tabs__badge {
+  min-width: 18px;
+  padding: 0 var(--space-1);
+  background: var(--color-alert);
+  color: var(--color-on-accent);
+  font: var(--font-number);
+  text-align: center;
+}

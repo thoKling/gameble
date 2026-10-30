@@ -1097,7 +1097,6 @@ en:
       invite: Invite a friend
       invites_you: "%{name} invites you"
       manual: Copy the link by hand.
-      more: More
       nameless: Nameless player
       no_invitations: No invitation pending.
       pending: Pending
@@ -1619,7 +1618,6 @@ en:
           one: "%{owned} unique card out of %{total}"
           other: "%{owned} unique cards out of %{total}"
         feed: Activity feed
-        friends: Friends
         friends_online:
           one: "%{number} online"
           other: "%{number} online"
@@ -1634,7 +1632,7 @@ en:
           one: "%{number} special capsule"
           other: "%{number} special capsules"
         support: Support
-        trades: Trades
+        trades: "Socials"
         trades_waiting:
           one: "%{number} trade waiting for you"
           other: "%{number} trades waiting for you"
@@ -2318,7 +2316,7 @@ en:
       label: Main navigation
       landing: Home
       more: More
-      trades: Trades
+      trades: "Socials"
       trades_waiting:
         one: "%{number} trade waiting for you"
         other: "%{number} trades waiting for you"
@@ -2549,3 +2547,12 @@ en:
       text: What you changed will be lost, and %{name}'s proposal will come back as
         it was.
       title: Discard the changes?
+  socials:
+    title: "Socials"
+    tabs:
+      label: "Socials"
+      trades: "Trades"
+      friends: "Friends"
+      invitations:
+        one: "%{number} invitation waiting for you"
+        other: "%{number} invitations waiting for you"

@@ -125,7 +125,7 @@ class FriendsControllerTest < ActionDispatch::IntegrationTest
       assert_select ".friends__dot[aria-hidden=true]", 2
 
       get home_path(locale: :fr)
-      assert_select ".hub-menu a.menu-item[href='/fr/friends'] .menu-item__meta", "1 en ligne"
+      assert_select ".hub-menu a.menu-item[href='/fr/trades'] .menu-item__meta", "1 en ligne"
 
       travel 6.minutes
       bob.update_columns(last_seen_at: Time.current)
@@ -133,11 +133,11 @@ class FriendsControllerTest < ActionDispatch::IntegrationTest
       assert_select ".friends__friend:nth-child(1) .friends__presence--offline", "6 min ago"
       assert_select ".friends__friend:nth-child(2) .friends__presence--online", "Online"
       get home_path(locale: :en)
-      assert_select ".hub-menu a.menu-item[href='/en/friends'] .menu-item__meta", "1 online"
+      assert_select ".hub-menu a.menu-item[href='/en/trades'] .menu-item__meta", "1 online"
     end
   end
 
-  test "a private friend reads Profil privé and is left out of menu 05's count" do
+  test "a private friend reads Profil privé and is left out of menu 04's count" do
     ada = accounts_players(:moderator)
     ada.update_columns(persona_name: "Ada", last_seen_at: Time.current, visibility: "private")
     low, high = [ @player.id, ada.id ].minmax
@@ -147,22 +147,22 @@ class FriendsControllerTest < ActionDispatch::IntegrationTest
     get friends_path(locale: :fr)
     assert_select ".friends__friend .friends__presence--private", "Profil privé"
     get home_path(locale: :fr)
-    assert_select ".hub-menu a.menu-item[href='/fr/friends'] .menu-item__meta", "0 en ligne"
+    assert_select ".hub-menu a.menu-item[href='/fr/trades'] .menu-item__meta", "0 en ligne"
 
     ada.update_columns(visibility: "friends_only")
     get friends_path(locale: :en)
     assert_select ".friends__friend .friends__presence--online", "Online"
     get home_path(locale: :fr)
-    assert_select ".hub-menu a.menu-item[href='/fr/friends'] .menu-item__meta", "1 en ligne"
+    assert_select ".hub-menu a.menu-item[href='/fr/trades'] .menu-item__meta", "1 en ligne"
   end
 
-  test "menu 05 shows zero online for a player without friends, nothing for a visitor" do
+  test "menu 04 shows zero online for a player without friends, nothing for a visitor" do
     get home_path(locale: :fr)
     assert_select ".hub-menu .menu-item__meta", { text: /en ligne/, count: 0 }
 
     sign_in(@player)
     get home_path(locale: :fr)
-    assert_select ".hub-menu a.menu-item[href='/fr/friends'] .menu-item__meta", "0 en ligne"
+    assert_select ".hub-menu a.menu-item[href='/fr/trades'] .menu-item__meta", "0 en ligne"
   end
 
   test "a friend's profile button opens their profile dialog, whose frame loads the profile lazily" do
@@ -382,12 +382,31 @@ class FriendsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to home_path(locale: :fr)
   end
 
-  test "menu 05 and the PLUS row lead a player to Amis" do
+  test "Amis is a tab of Social: the tab bar lights Social, the switch marks Amis, and neither the hub nor PLUS lists it apart" do
     sign_in(@player)
 
+    get friends_path(locale: :fr)
+    assert_select "a.tab-bar__tab[href='/fr/trades'][aria-current=page]", /Social/
+    assert_select "nav.socials-tabs[aria-label=Social]" do
+      assert_select "a.segmented__option[href='/fr/trades']:not([aria-current])", /Échanges/
+      assert_select "a.segmented__option[href='/fr/friends'][aria-current=true]", /Amis/
+    end
+    assert_select ".top-bar__phone-back", false
+
     get home_path(locale: :fr)
-    assert_select ".hub-menu a.menu-item[href='/fr/friends'][aria-keyshortcuts='5']"
+    assert_select ".hub-menu a.menu-item[href='/fr/friends']", false
     get more_path(locale: :fr)
-    assert_select ".plus__list a.menu-item[href='/fr/friends']", /Amis/
+    assert_select ".plus__list a.menu-item[href='/fr/friends']", false
+  end
+
+  test "the Amis switch counts the invitations waiting for the player" do
+    sender = accounts_players(:moderator)
+    Game::SendInvitation.new.call(player: sender, recipient_token: @player.token).value!
+    sign_in(@player)
+
+    get trades_path(locale: :en)
+
+    assert_select "nav.socials-tabs a[href='/en/friends'] .socials-tabs__badge", "1"
+    assert_select "nav.socials-tabs a[href='/en/friends'] .visually-hidden", "1 invitation waiting for you"
   end
 end
