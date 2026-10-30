@@ -85,7 +85,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_30_150100) do
     t.index ["player_id"], name: "index_accounts_push_devices_on_player_id"
     t.index ["token"], name: "index_accounts_push_devices_on_token", unique: true
     t.check_constraint "char_length(token::text) <= 4096", name: "accounts_push_devices_token_length_check"
-    t.check_constraint "platform::text = ANY (ARRAY['apple'::character varying::text, 'google'::character varying::text])", name: "accounts_push_devices_platform_check"
+    t.check_constraint "platform::text ~ '^(apple|google)$'::text", name: "accounts_push_devices_platform_check"
   end
 
   create_table "accounts_reports", force: :cascade do |t|
