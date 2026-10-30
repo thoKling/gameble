@@ -1,0 +1,8 @@
+/* Inside the mobile apps: their native tab bar takes the place of the web one. */
+:root[data-native-app] {
+  --tabbar-height: 0;
+}
+
+:root[data-native-app] .top-bar__bridge {
+  display: none;
+}

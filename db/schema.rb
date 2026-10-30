@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_29_150100) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_30_150100) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -73,6 +73,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_29_150100) do
     t.check_constraint "persona_name IS NULL OR char_length(persona_name::text) <= 512", name: "accounts_players_persona_name_length_check"
     t.check_constraint "role::text = 'player'::text OR role::text = 'moderator'::text OR role::text = 'administrator'::text", name: "accounts_players_role_check"
     t.check_constraint "visibility::text = 'public'::text OR visibility::text = 'friends_only'::text OR visibility::text = 'private'::text", name: "accounts_players_visibility_check"
+  end
+
+  create_table "accounts_push_devices", force: :cascade do |t|
+    t.bigint "player_id", null: false
+    t.string "platform", null: false
+    t.string "token", null: false
+    t.string "locale", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["player_id"], name: "index_accounts_push_devices_on_player_id"
+    t.index ["token"], name: "index_accounts_push_devices_on_token", unique: true
+    t.check_constraint "char_length(token::text) <= 4096", name: "accounts_push_devices_token_length_check"
+    t.check_constraint "platform::text ~ '^(apple|google)$'::text", name: "accounts_push_devices_platform_check"
   end
 
   create_table "accounts_reports", force: :cascade do |t|
@@ -596,6 +609,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_29_150100) do
   add_foreign_key "accounts_identities", "accounts_players", column: "player_id"
   add_foreign_key "accounts_moderation_actions", "accounts_players", column: "player_id"
   add_foreign_key "accounts_moderation_actions", "accounts_players", column: "staff_id"
+  add_foreign_key "accounts_push_devices", "accounts_players", column: "player_id"
   add_foreign_key "accounts_reports", "accounts_players", column: "reported_id"
   add_foreign_key "accounts_reports", "accounts_players", column: "reporter_id"
   add_foreign_key "catalog_card_seasons", "catalog_cards", column: "card_id"
