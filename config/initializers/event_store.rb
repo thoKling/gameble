@@ -28,15 +28,20 @@ Rails.configuration.to_prepare do
   # The notable pulls of an opening go to the activity feed.
   event_store.subscribe(Game::Handlers::PackOpenedFeed, to: [ Game::PackOpened ])
   event_store.subscribe(Game::Handlers::CardRepostedFeed, to: [ Game::CardReposted ])
+  event_store.subscribe(Game::Handlers::WeeklyVerdictFeed, to: [ Game::WeeklyVerdictReached ])
   event_store.subscribe(Game::Handlers::TradeAccepted, to: [ Game::TradeAccepted ])
   event_store.subscribe(Game::Handlers::GoalsReached, to: Game::Handlers::GoalsReached::EVENTS)
   event_store.subscribe(Game::Handlers::SetTierFeed, to: Game::Handlers::SetTierFeed::EVENTS)
   event_store.subscribe(Game::Handlers::Achievements, to: Game::Handlers::Achievements::EVENTS.keys)
   event_store.subscribe(Game::Handlers::CardBacks, to: Game::Handlers::CardBacks::EVENTS.keys)
   event_store.subscribe(LiveStream, to: LiveStream::EVENTS)
+  event_store.subscribe(ReactionStream, to: ReactionStream::EVENTS)
   event_store.subscribe(Game::Handlers::PlayerActivity, to: Game::Handlers::PlayerActivity::EVENTS.keys)
+  # A player's first reaction to an entry is recorded once, and only then do the entry's owners hear of it.
+  event_store.subscribe(->(event) { PlayerStream.reacted(Game::Handlers::ReactionNotices.call(event)) }, to: [ Game::FeedEntryReacted ])
 
   event_store.subscribe(PlayerStream, to: PlayerStream::EVENTS)
+  event_store.subscribe(PushNotices, to: PushNotices::EVENTS)
 
   Rails.configuration.event_store = event_store
 end

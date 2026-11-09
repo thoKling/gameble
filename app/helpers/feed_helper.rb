@@ -3,6 +3,7 @@ module FeedHelper
 
   def feed_sentence(item, card, partner_card = nil, set = nil, links: true, titles: false)
     return feed_set_sentence(item, set, links:, titles:) if item.entry.kind == "set"
+    return feed_verdict_sentence(item, links:, titles:) if item.entry.kind == "verdict"
 
     words = { name: feed_name(item.player, item.player_title, links:, titles:), card: feed_game(card, links:) }
     case item.entry.kind
@@ -12,6 +13,8 @@ module FeedHelper
     else t("feeds.show.pulled_html", **words)
     end
   end
+
+  def feed_types_sheet_id = "feed-types"
 
   def feed_chip_link(label, path, current:, classes:)
     link_to path, class: [ classes, "filter-chip" ], aria: { current: ("true" if current) } do
@@ -48,6 +51,12 @@ module FeedHelper
     end
   end
 
+  def feed_verdict_sentence(item, links:, titles:)
+    label = t("feeds.show.verdict_register")
+    register = links ? link_to(label, fortune_register_path(period: "last_week"), class: "feed__game", data: { turbo_prefetch: false }) : tag.strong(label)
+    t("feeds.show.verdict_html", name: feed_name(item.player, item.player_title, links:, titles:), register:)
+  end
+
   def feed_tier_name(tier)
     t("feeds.show.tiers.#{tier}")
   end
@@ -58,7 +67,18 @@ module FeedHelper
     elsif links then link_to(name, brother_path(token: player.token), class: "feed__name", data: { turbo_prefetch: false })
     else tag.strong(name)
     end
-    titles ? safe_join([ shown, active_title_tag(title, class_name: "feed__title") ].compact, " ") : shown
+    titles ? safe_join([ shown, feed_rank(title) ].compact, " ") : shown
+  end
+
+  def feed_rank(title)
+    return unless title
+
+    rank = tag.span(class: "feed__rank-name") do
+      safe_join([ (rank_mark(title.rank, class: "feed__rank-mark") if rank_tier?(title.rank)), t("profile_titles.ranks.#{title.rank}") ].compact)
+    end
+    tag.span(class: [ "profile-title", "feed__rank", "feed__rank--#{title.rank}" ]) do
+      safe_join([ rank, tag.span("·", class: "feed__rank-dot"), tag.span(SetLabel.for(title), class: "feed__rank-set") ], " ")
+    end
   end
 
   def feed_game(card, links:)

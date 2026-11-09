@@ -2,12 +2,14 @@ class LibraryController < ApplicationController
   include PublicRead
   include CollectionGridLoading
   include SetBoardLoading
+  include GoalSuggestionLoading
   include SetAlbumLoading
   include GoalControlLoading
 
   helper_method :goal_marks
 
   MORE_RESULTS_FRAME = "set-more-results-"
+  ALL_CARDS_FAN = 3
 
   def show
     authorize :page, :play?
@@ -20,18 +22,19 @@ class LibraryController < ApplicationController
 
     @custom_set_tiles, library_tiles = own_set_tiles(own_sets, owner: current_player, season: @season).partition { it.own_set.custom? }
     @steam_library_tile = library_tiles.first
-    @goals = goal_marks.needs
+    load_goals
     load_unique_cards
+    load_latest_cards
   end
 
   def in_progress
     authorize :page, :play?
     return redirect_to library_path unless turbo_frame_request?
 
-    section = params[:section] if BOARD_SECTIONS.include?(params[:section])
-    load_set_tiles(Catalog::PublishedSeason.call, owner: current_player, section:, offset: tile_offset)
+    @section = params[:section] if BOARD_SECTIONS.include?(params[:section])
     @goals = Game::GoalNeeds.targets(current_player)
-    render(:more_tiles) if section
+    load_set_tiles(Catalog::PublishedSeason.call, owner: current_player, section: @section, offset: tile_offset, goals: @goals)
+    render(:more_tiles) if @section
   end
 
   def cards
@@ -64,8 +67,18 @@ class LibraryController < ApplicationController
       render :more_results
     end
 
+    def load_goals
+      @goals = goal_marks.needs
+      @goal_suggestions = @goals.empty? && !turbo_frame_request? ? goal_suggestions(current_player, season: @season) : []
+    end
+
     def load_unique_cards
       @unique = Game::HeldGames.count(current_player)
       @season_cards = Catalog::CardCount.call(@season)
+    end
+
+    def load_latest_cards
+      ids = Game::LatestGains.call(current_player, season: @season, limit: ALL_CARDS_FAN)
+      @latest_cards = Catalog::CardViews.call(ids, locale: I18n.locale).values_at(*ids).compact
     end
 end

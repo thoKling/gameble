@@ -3,8 +3,9 @@ module Game
     self.table_name = "game_feed_entries"
 
     NOTABLE_TIER = 4
+    DISCOVERY_TIER = 3
 
-    KINDS = %w[pull discovery trade repost set].freeze
+    KINDS = %w[pull discovery trade repost set verdict].freeze
 
     RECORD_SETS_SQL = <<~SQL.squish.freeze
       WITH reached AS (
@@ -40,7 +41,7 @@ module Game
 
     def self.record_pack(pack, rarities, now, discovered: [])
       cards = pack.card_season_ids.each_with_index.filter_map { |id, position| [ id, position, rarities[id] ] if rarities[id] }
-      firsts = discovered.filter_map { |id| cards.find { |card_id, _, _| card_id == id }&.at(1) }
+      firsts = discovered.filter_map { |id| cards.find { |card_id, _, tier| card_id == id && tier >= DISCOVERY_TIER }&.at(1) }
       chosen = cards.filter_map do |id, position, tier|
         if firsts.include?(position) then [ id, position, tier, "discovery" ]
         elsif tier >= NOTABLE_TIER then [ id, position, tier, "pull" ]
@@ -77,6 +78,13 @@ module Game
     def self.record_sets(player_id:, set_id:, tier:, now:)
       binds = { player_id:, set_id:, tier:, now:, tiers: SetTier::TIERS }
       connection.exec_update(sanitize_sql_array([ RECORD_SETS_SQL, binds ]), "Game::FeedEntry Record Sets")
+    end
+
+    def self.verdict_of?(week_start) = exists?(kind: "verdict", occurred_at: week_start.to_time(:utc))
+
+    def self.record_verdict(player_id:, week_start:, now:)
+      row = { kind: "verdict", player_id:, notable: true, occurred_at: week_start.to_time(:utc), created_at: now, updated_at: now }
+      insert_all([ row ], unique_by: :index_game_feed_entries_one_verdict_per_week, record_timestamps: false)
     end
 
     def self.best_card(card_season_ids, rarities)

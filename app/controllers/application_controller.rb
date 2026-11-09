@@ -1,5 +1,6 @@
 class ApplicationController < ActionController::Base
   include Pundit::Authorization
+  include AppUserAgent
 
   allow_browser versions: :modern, unless: :public_read?, block: :refuse_unsupported_browser
 
@@ -18,7 +19,9 @@ class ApplicationController < ActionController::Base
 
   PRESENCE_MARK = :seen_at
 
-  helper_method :current_player, :forced_motion, :motion_reduced?
+  CLOSED_ANNOUNCEMENT_COOKIE = :closed_announcement
+
+  helper_method :current_player, :forced_motion, :motion_reduced?, :running_release
 
   def self.throttle_player(to:, only:, path:, alert:, within: 1.minute)
     rate_limit to:, within:, only:,
@@ -63,6 +66,12 @@ class ApplicationController < ActionController::Base
       params[:locale]
     end
 
+    def running_release
+      return @running_release if defined?(@running_release)
+
+      @running_release = Accounts::ReleaseVersion.parse(ShellHelper.app_version)
+    end
+
     def current_player
       return @current_player if defined?(@current_player)
 
@@ -92,6 +101,10 @@ class ApplicationController < ActionController::Base
       else
         cookies[MOTION_COOKIE] = { value: FORCED_MOTIONS.key(setting), expires: 1.year.from_now, httponly: true, same_site: :lax }
       end
+    end
+
+    def write_closed_announcement_cookie(token)
+      cookies[CLOSED_ANNOUNCEMENT_COOKIE] = { value: token, expires: 1.year.from_now, httponly: true, same_site: :lax }
     end
 
     def set_sentry_user

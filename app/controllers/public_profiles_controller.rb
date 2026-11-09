@@ -3,21 +3,25 @@ class PublicProfilesController < ApplicationController
   include CollectionGridLoading
   include SetBoardLoading
   include SetAlbumLoading
-  include ChosenCards
-
-  MOST_COMPLETE_SETS_SHOWN = 6
+  include ProfileLoading
+  include FortunePeriod
 
   before_action :authorize_page
   before_action :load_owner
 
   def show
-    @season = Catalog::PublishedSeason.call
-    @card_total = Catalog::CardCount.call(@season)
-    @summary = capped_at_card_total(Game::CollectionSummary.call(@owner, season: @season))
-    @achievements = Game::EarnedAchievements.call(@owner)
-    @showcase = chosen_cards(@owner)
+    @fortune = Game::FortuneStanding.call(@owner, period: fortune_period(params[:fortune]))
+    return render(partial: "public_profiles/fortune", locals: { owner: @owner, fortune: @fortune }) if fortune_tab_request?
+
+    load_profile(@owner)
     @owner_title = Game::ActiveProfileTitle.call(@owner)
-    load_season_sections if @season
+    load_relation
+  end
+
+  def summary
+    @owner_title = Game::ActiveProfileTitle.call(@owner)
+    @fortune = Game::FortuneStanding.call(@owner, period: :week)
+    @rarities = Game::HeldGames.by_rarity(@owner)
     load_relation
   end
 
@@ -36,8 +40,8 @@ class PublicProfilesController < ApplicationController
   end
 
   private
-    def capped_at_card_total(summary)
-      summary.with(distinct_cards: [ summary.distinct_cards, @card_total ].min)
+    def fortune_tab_request?
+      turbo_frame_request_id == "profile-fortune"
     end
 
     def grid_owner
@@ -63,24 +67,5 @@ class PublicProfilesController < ApplicationController
       return unless Game::Visibility.visible?(current_player, @owner, staff_sees_all: false)
 
       @relation = Game::ProfileRelation.call(current_player, @owner)
-    end
-
-    def load_season_sections
-      @rarities = Game::HeldGames.by_rarity(@owner)
-      @activity = Game::ProfileActivity.call(@owner)
-      standings = started_standings
-      @started_set_count = standings.size
-      @started_sets = most_complete_set_tiles(standings)
-      @goals = Game::GoalNeeds.on_game_sets(@owner)
-    end
-
-    def started_standings
-      Game::SetsInProgress.call(@owner, season: @season).values
-        .sort_by { |standing| [ standing.complete? ? 0 : 1, -standing.share, standing.set_id ] }
-    end
-
-    def most_complete_set_tiles(standings)
-      shown = standings.first(MOST_COMPLETE_SETS_SHOWN)
-      set_tiles(set_rows(shown, Catalog::SetsById.call(shown.map(&:set_id))), owner: @owner, season: @season)
     end
 end

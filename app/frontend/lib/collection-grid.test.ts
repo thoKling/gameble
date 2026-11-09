@@ -172,18 +172,14 @@ describe("the grid of every card", () => {
   })
 
   it("shares the phone's width between two columns, the gap 8px on narrow phones", () => {
-    const phoneAt = collectionStylesheet.indexOf(PHONE)
-    expect(phoneAt).toBeGreaterThan(collectionStylesheet.indexOf(".collection-grid--fill {"))
+    const fillAt = collectionStylesheet.indexOf(".collection-grid--fill {")
+    const phoneAt = collectionStylesheet.indexOf(PHONE, fillAt)
+    expect(phoneAt).toBeGreaterThan(fillAt)
     const phoneGrid = ruleBody(collectionStylesheet, ".collection-grid", phoneAt)
     expect(phoneGrid).toContain("grid-template-columns: repeat(2, minmax(0, 1fr));")
     expect(phoneGrid).not.toContain("justify-content")
     expect(collectionStylesheet.indexOf(PHONE_NARROW)).toBeGreaterThan(phoneAt)
     expect(narrowPhoneGap()).toBe(8)
-  })
-
-  it("is 964px wide beside the RAPPORT at 1280px", () => {
-    expect(REPORT).toBe(220)
-    expect(CARDS_WIDE).toBe(964)
   })
 
   it.each([

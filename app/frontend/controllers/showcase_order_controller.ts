@@ -2,7 +2,7 @@ import { Controller } from "@hotwired/stimulus"
 import { dispatchGameble } from "../lib/events"
 import { t } from "../lib/i18n"
 import { motionReduced } from "../lib/motion"
-import { TOUCH_HOLD_MS, edgeButtons, nearestIndex, pastThreshold, sendPlacement } from "../lib/showcase_order"
+import { TOUCH_HOLD_MS, nearestIndex, pastThreshold, sendPlacement } from "../lib/showcase_order"
 
 type Gesture = {
   slot: HTMLElement
@@ -50,7 +50,7 @@ export default class extends Controller<HTMLElement> {
   press(event: PointerEvent): void {
     if (this.gesture || this.saving || !event.isPrimary || event.button !== 0) return
     const slot = event.currentTarget as HTMLElement
-    if ((event.target as Element).closest("form")) return
+    if ((event.target as Element).closest("button")) return
 
     this.gesture = {
       slot,
@@ -109,6 +109,7 @@ export default class extends Controller<HTMLElement> {
     gesture.grabY = gesture.startY - (box.top + box.height / 2)
     gesture.slot.dataset.dragging = ""
     this.listTarget.dataset.sorting = ""
+    if (gesture.touch) dispatchGameble("gameble:touch-held", { held: true })
   }
 
   private carry(x: number, y: number): void {
@@ -192,13 +193,13 @@ export default class extends Controller<HTMLElement> {
     if (gesture.slot.getAttribute("style") === "") gesture.slot.removeAttribute("style")
     delete gesture.slot.dataset.dragging
     delete this.listTarget.dataset.sorting
+    if (gesture.dragging && gesture.touch) dispatchGameble("gameble:touch-held", { held: false })
     this.gesture = undefined
   }
 
   private async save(slot: HTMLElement, position: number, before: HTMLElement[]): Promise<void> {
     this.saving = true
     this.listTarget.setAttribute("aria-busy", "true")
-    this.showEdges()
     const result = await sendPlacement({ url: slot.dataset.url ?? "", position, csrfToken: this.csrfToken() })
     this.saving = false
     this.listTarget.removeAttribute("aria-busy")
@@ -222,17 +223,6 @@ export default class extends Controller<HTMLElement> {
 
   private restore(order: HTMLElement[]): void {
     order.forEach((slot) => this.listTarget.append(slot))
-    this.showEdges()
-  }
-
-  private showEdges(): void {
-    const slots = this.slotTargets
-    slots.forEach((slot, index) => {
-      const shown = edgeButtons(index, slots.length)
-      slot.querySelectorAll<HTMLFormElement>("form[data-direction]").forEach((form) => {
-        form.hidden = !shown[form.dataset.direction as keyof typeof shown]
-      })
-    })
   }
 
   private announce(message: string): void {
