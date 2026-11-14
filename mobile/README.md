@@ -10,7 +10,14 @@ sheet and haptics.
 - **App detection.** The apps' user agent contains `Hotwire Native`, so
   `hotwire_native_app?` is true. The layout then marks `<html data-native-app>`,
   and leaves out the web tab bar. The web header and its back buttons stay;
-  the Android app hides its native app bar so the header is not doubled.
+  both apps hide their native app bar so the header is not doubled.
+- The links at the right of the web header leave the current tab: a destination
+  that belongs to a tab selects that tab, any other opens in a full-screen layer
+  above the tabs, with a way back that closes it. Every screen coming back into
+  view reads the header's values again.
+- A link inside a screen to a destination that belongs to another tab selects
+  that tab at its root (then opens the destination there) instead of stacking
+  it in the current tab, so a tab never shows another tab's screen.
 - **Path configuration.** `public/configurations/ios_v1.json` and
   `android_v1.json` say how each URL is shown. Each app also bundles a minimal
   copy for its first launch.
@@ -67,11 +74,17 @@ sends nothing.
 4. In debug builds, five quick taps in the top-left corner show a panel with
    the Hotwire and WebView logs, which can be copied.
 
+## App icons
+
+`node script/pixel_art/app_icons.mjs` draws both apps' icons from the gold G of
+the pixel art export, on the apps' dark ground. It also gives iOS the tab icons
+and the wordmark from Android's vector drawables.
+
 ## Not done yet
 
-- App icons and launch screens. The Android app uses a system icon for now.
+- Launch screens.
 - Linking another sign-in method from the settings still runs Clerk inside
   the web view, where Google refuses it.
 - A rotated FCM token is only sent again when the player turns notifications
   on again.
-- Neither shell has been built in CI yet.
+- The iOS shell has not run on a device yet.

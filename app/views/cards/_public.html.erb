@@ -27,12 +27,17 @@
       <% if pioneer %>
         <p class="public-card__pioneer">
           <span class="public-card__pioneer-label"><%= t("card_details.facts.pioneer") %></span>
-          <% if pioneer.token %>
-            <%= link_to pioneer.name, brother_path(token: pioneer.token) %>
-          <% else %>
-            <span><%= t("card_details.pioneer.anonymous") %></span>
-          <% end %>
+          <%= render PlayerNameComponent.new(player: pioneer.player, viewer: current_player) %>
           <span class="public-card__pioneer-date"><%= card_detail_pioneer_date(pioneer.discovered_on) %></span>
+        </p>
+      <% end %>
+      <% if price %>
+        <p class="public-card__price">
+          <span class="public-card__price-label"><%= t("card_details.facts.average_price", number: view.season_number) %></span>
+          <%= render AveragePriceComponent.new(price:) %>
+          <% if (basis = average_price_basis(price)) %>
+            <span class="average-price__basis"><%= basis %></span>
+          <% end %>
         </p>
       <% end %>
       <% if detail.short_description %>
@@ -50,15 +55,7 @@
     </div>
   </div>
 
-  <section class="public-card__live" aria-labelledby="public-card-live">
-    <h2 id="public-card-live" class="public-card__live-title">
-      <%= render "shell/live_marker" %>
-      <span aria-hidden="true">·</span>
-      <%= t("cards.show.live.title") %>
-    </h2>
-    <%= render "cards/live_strip", items: live %>
-    <%= turbo_stream_from(*LiveStream.feed_streamables) %>
-  </section>
+  <%= render "shell/live_strip", items: live, title: t("cards.show.live.title"), id: "public-card-live" %>
 
   <footer class="public-card__footer">
     <%= link_to t("cards.show.legal"), legal_path, class: "public-card__legal" %>

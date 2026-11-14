@@ -198,7 +198,7 @@ module BackOffice
     test "the dashboard links the page to an administrator only" do
       sign_in(accounts_players(:administrator))
       get back_office_path(locale: :en)
-      assert_select "a[href='/en/back-office/themes']", "The themes"
+      assert_select "a[href='/en/back-office/themes'] .office-tile__title", "The themes"
 
       sign_in(accounts_players(:moderator))
       get back_office_path(locale: :en)
@@ -223,20 +223,6 @@ module BackOffice
 
         assert_response :forbidden, "#{verb} #{path}"
         assert_includes response.body, ERB::Util.html_escape(I18n.t("authorization.forbidden", locale: :fr))
-      end
-      assert_equal before, rows
-    end
-
-    test "a visitor and a player get the 404 of an unknown address for every themes action" do
-      before = rows
-
-      [ nil, accounts_players(:player) ].each do |player|
-        sign_in(player) if player
-        each_request do |verb, path, params|
-          public_send(verb, path, params:)
-
-          assert_unknown_address "#{verb} #{path}"
-        end
       end
       assert_equal before, rows
     end

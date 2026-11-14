@@ -10,10 +10,14 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="application-name" content="<%= t("layouts.application.application_name") %>">
 <meta name="mobile-web-app-capable" content="yes">
+<% if current_player %>
+  <meta name="service-worker" content="<%= pwa_service_worker_path(format: :js, locale: nil) %>">
+<% end %>
 <%= csrf_meta_tags %>
 <%= csp_meta_tag %>
 
 <%= content_for(:head) %>
+<%= default_meta_description %>
 
 
 <link rel="icon" href="<%= vite_asset_path("images/pixel/favicon.svg") %>" type="image/svg+xml">
@@ -25,5 +29,5 @@
 <% end %>
 
 <%= vite_client_tag %>
-<%= vite_stylesheet_tag "application.css" %>
-<%= vite_typescript_tag "application" %>
+<%= vite_stylesheet_tag "application.css", "data-turbo-track": "reload" %>
+<%= vite_typescript_tag "application", "data-turbo-track": "reload" %>

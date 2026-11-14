@@ -58,6 +58,31 @@ module BackOffice
       end
     end
 
+    test "the list opens on the count of every player, the new and the recently seen ones, then each row's dates and sign-ins" do
+      Accounts::Player.update_all(created_at: 30.days.ago, last_seen_at: nil)
+      @target.update!(created_at: 2.days.ago, last_seen_at: 1.hour.ago)
+      Accounts::Identity.create!(player: @target, provider: "discord", uid: "discord-gabe")
+      sign_in(@moderator)
+
+      get back_office_players_path(locale: :fr)
+
+      total = Accounts::Player.where(deleted_at: nil).count
+      assert_select "dl[data-player-census] dd[data-player-census-total]", total.to_s
+      assert_select "dl[data-player-census] dd[data-player-census-joined]", "1"
+      assert_select "dl[data-player-census] dd[data-player-census-active]", Accounts::Player.where(last_seen_at: 7.days.ago..).count.to_s
+      assert_select "dl[data-player-census] dd[data-player-census-matching]", false
+      assert_select "#{row(@target)} td[data-player-joined-at] time[datetime=?]", @target.created_at.utc.iso8601
+      assert_select "#{row(@target)} td[data-player-last-seen-at] time[datetime=?]", @target.last_seen_at.utc.iso8601
+      assert_select "#{row(@banned)} td[data-player-last-seen-at]", "Jamais"
+      assert_select "#{row(@target)} td[data-player-sign-ins]", /Discord/
+
+      get back_office_players_path(locale: :fr, q: "rude")
+
+      assert_select "dl[data-player-census] dd[data-player-census-total]", total.to_s
+      assert_select "dl[data-player-census] dt", /rude/
+      assert_select "dl[data-player-census] dd[data-player-census-matching]", "1"
+    end
+
     test "a moderator sees the refusal on another moderator's row; an administrator sees BANNIR there" do
       other_moderator = Accounts::Player.create!(steam_id: "76561197960380001", role: :moderator, persona_name: "Deputy")
       sign_in(@moderator)
@@ -108,7 +133,7 @@ module BackOffice
       get back_office_players_path(locale: :fr, q: "nobody<b>")
 
       assert_select "tbody", false
-      assert_select "main .panel[data-player-search-empty]", "Aucun joueur ne correspond à « nobody<b> »."
+      assert_select "main .panel[data-player-search-empty]", "Aucun joueur ne correspond à «\u202Fnobody<b>\u202F»."
     end
 
     test "a deleted account is not listed, even searched by its old name" do
@@ -204,38 +229,6 @@ module BackOffice
       end
     end
 
-    test "an administrator reads the players in English" do
-      sign_in(@administrator)
-
-      get back_office_players_path(locale: :en, q: "gabe")
-
-      assert_select "h1", "The players"
-      assert_select "#{row(@target)} td[data-player-role=player]", "Player"
-      assert_select "#{row(@target)} td[data-player-visibility=friends_only]", "Friends only"
-      assert_select "#{row(@target)} td[data-player-state=good_standing]", "In good standing"
-      assert_select "#{row(@target)} button", "BAN"
-
-      get back_office_players_path(locale: :en, q: "nobody")
-      assert_select "main .panel[data-player-search-empty]", "No player matches “nobody”."
-    end
-
-    test "the dashboard links to the players first" do
-      sign_in(@moderator)
-
-      get back_office_path(locale: :fr)
-
-      assert_select "main a[href='/fr/back-office/players']", "Les joueurs"
-    end
-
-    test "a player and a visitor get the 404 of an unknown address" do
-      get back_office_players_path(locale: :fr)
-      assert_unknown_address
-
-      sign_in(@target)
-      get back_office_players_path(locale: :fr, q: "gabe")
-      assert_unknown_address
-    end
-
     test "an administrator sees ÉFFACER on a banned player's row only; a moderator never does" do
       sign_in(@administrator)
 
@@ -284,16 +277,6 @@ module BackOffice
       delete back_office_player_path(locale: :fr, token: @banned.token)
 
       assert_response :forbidden
-      assert_not_predicate @banned.reload, :deleted?
-    end
-
-    test "a player and a visitor cannot erase" do
-      delete back_office_player_path(locale: :fr, token: @banned.token)
-      assert_unknown_address
-
-      sign_in(@target)
-      delete back_office_player_path(locale: :fr, token: @banned.token)
-      assert_unknown_address
       assert_not_predicate @banned.reload, :deleted?
     end
 

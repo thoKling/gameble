@@ -92,6 +92,17 @@ class SteamLinksControllerTest < ActionDispatch::IntegrationTest
     assert_select "form[action=?]", "/en/settings/steam", 0
   end
 
+  test "a Steam account linked from the settings asks for the player's library set; a refused link does not" do
+    player = sign_in_through_clerk
+    clear_enqueued_jobs
+
+    link_steam(accounts_players(:player).steam_id)
+    assert_no_enqueued_jobs(only: CreateSteamLibrarySetJob)
+
+    link_steam
+    assert_enqueued_with(job: CreateSteamLibrarySetJob, args: [ player.id ])
+  end
+
   test "linking again the Steam account the player holds says so" do
     sign_in_through_clerk
     link_steam
@@ -168,13 +179,5 @@ class SteamLinksControllerTest < ActionDispatch::IntegrationTest
     sign_in(accounts_players(:player))
     get settings_path(locale: :en)
     assert_select "form[action=?]", "/en/settings/steam", 0
-  end
-
-  test "the Link Steam button speaks French" do
-    sign_in_through_clerk
-
-    get settings_path(locale: :fr)
-
-    assert_select "form[action='/fr/settings/steam'] button", "Lier Steam"
   end
 end

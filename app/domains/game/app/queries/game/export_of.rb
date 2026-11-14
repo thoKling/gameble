@@ -2,7 +2,7 @@ module Game
   module ExportOf
     HeldCard = Data.define(:card_season_id, :quantity, :last_gained_at)
     ShowcaseCard = Data.define(:card_season_id, :position)
-    PackRow = Data.define(:token, :kind, :season_number, :card_back, :card_back_season, :available_at, :opened_at, :card_season_ids)
+    PackRow = Data.define(:token, :kind, :season_number, :card_back, :card_back_season, :available_at, :opened_at, :reveal_mode, :card_season_ids)
     Contribution = Data.define(:week_start, :openings)
     ReachedTier = Data.define(:season_number, :kind, :key, :tier, :reached_by, :reached_at)
     Discovery = Data.define(:card_season_id, :discovered_at)
@@ -10,18 +10,22 @@ module Game
     Entry = Data.define(:kind, :card_season_id, :occurred_at, :set, :tier, :set_count) do
       def initialize(kind:, card_season_id:, occurred_at:, set: nil, tier: nil, set_count: nil) = super
     end
+    ReactionRow = Data.define(:kind, :entry_token, :entry_kind, :reacted_at)
     Unlock = Data.define(:achievement, :unlocked_at)
     BackUnlock = Data.define(:back, :unlocked_at)
     CardBackChoice = Data.define(:active, :active_season, :unlocks)
     Line = Data.define(:card_season_id, :quantity)
     TradeRow = Data.define(:status, :proposed_at, :closed_at, :offered)
     Invitations = Data.define(:received, :sent)
+    CustomSetRow = Data.define(:token, :name, :kind, :created_at, :card_ids)
+    LibraryRow = Data.define(:token, :created_at, :synced_at, :library_private_since, :card_ids)
+    GoalRow = Data.define(:position, :set_kind, :set_key, :custom_set_token, :created_at)
 
     Result = Data.define(:friend_code, :held_cards, :showcase, :packs, :daily_bonus_days, :goal_reward_weeks, :contributions,
-      :set_tiers, :discoveries, :feed_entries, :unlocks, :card_backs, :friend_count, :invitations, :trades) do
+      :set_tiers, :discoveries, :feed_entries, :reactions, :unlocks, :card_backs, :friend_count, :invitations, :trades, :custom_sets, :steam_library, :goals, :market) do
       def card_season_ids
         (held_cards.map(&:card_season_id) + showcase.map(&:card_season_id) + packs.flat_map(&:card_season_ids) + discoveries.map(&:card_season_id) +
-          feed_entries.filter_map(&:card_season_id) + trades.flat_map { |trade| trade.offered.map(&:card_season_id) }).uniq
+          feed_entries.filter_map(&:card_season_id) + trades.flat_map { |trade| trade.offered.map(&:card_season_id) } + market.card_season_ids).uniq
       end
     end
 
@@ -40,12 +44,17 @@ module Game
         discoveries: FirstDiscovery.where(player_id: player.id).order(:discovered_at, :card_season_id)
           .pluck(:card_season_id, :discovered_at).map { |id, at| Discovery.new(card_season_id: id, discovered_at: at) },
         feed_entries: feed_entries(player),
+        reactions: reactions(player),
         unlocks: AchievementUnlock.where(player_id: player.id).order(:unlocked_at, :achievement)
           .pluck(:achievement, :unlocked_at).map { |achievement, unlocked_at| Unlock.new(achievement:, unlocked_at:) },
         card_backs: card_backs(player),
         friend_count: FriendsOf.call(player).size,
         invitations: Invitations.new(received: invitations.received.size, sent: invitations.sent.size),
-        trades: trades(player, now)
+        trades: trades(player, now),
+        custom_sets: custom_sets(player),
+        steam_library: steam_library(player),
+        goals: goals(player),
+        market: Market::ExportOf.call(player)
       )
     end
 
@@ -62,11 +71,11 @@ module Game
 
     def self.packs(player)
       rows = Pack.where(player_id: player.id).order(:available_at, :id)
-        .pluck(:token, :kind, :season_id, :card_back, :card_back_season, :available_at, :opened_at, :card_season_ids)
+        .pluck(:token, :kind, :season_id, :card_back, :card_back_season, :available_at, :opened_at, :reveal_mode, :card_season_ids)
       numbers = Catalog::Season.where(id: rows.map { it[2] }.uniq).pluck(:id, :number).to_h
-      rows.map do |token, kind, season_id, card_back, card_back_season, available_at, opened_at, card_season_ids|
+      rows.map do |token, kind, season_id, card_back, card_back_season, available_at, opened_at, reveal_mode, card_season_ids|
         unopened = opened_at.nil?
-        PackRow.new(token:, kind:, season_number: numbers[season_id], available_at:, opened_at:,
+        PackRow.new(token:, kind:, season_number: numbers[season_id], available_at:, opened_at:, reveal_mode: unopened ? nil : reveal_mode,
           card_back: unopened ? nil : card_back || CardBacks::STANDARD, card_back_season: unopened ? nil : card_back_season,
           card_season_ids: unopened ? [] : card_season_ids)
       end
@@ -101,6 +110,12 @@ module Game
       end
     end
 
+    def self.reactions(player)
+      FeedReaction.where(player_id: player.id).joins(:feed_entry).order(:created_at, :id)
+        .pluck(:kind, "game_feed_entries.token", "game_feed_entries.kind", :created_at)
+        .map { |kind, entry_token, entry_kind, reacted_at| ReactionRow.new(kind:, entry_token:, entry_kind:, reacted_at:) }
+    end
+
     def self.set_refs(set_ids)
       return {} if set_ids.empty?
 
@@ -120,6 +135,28 @@ module Game
       end
     end
 
-    private_class_method :held_cards, :showcase, :packs, :set_tiers, :card_backs, :feed_entries, :set_refs, :trades
+    def self.custom_sets(player)
+      rows = CustomSet.custom.where(player_id: player.id).order(:id).pluck(:id, :token, :name, :kind, :created_at)
+      games = CustomSetCardIds.call(rows.map(&:first))
+      rows.map do |id, token, name, kind, created_at|
+        CustomSetRow.new(token:, name:, kind:, created_at:, card_ids: games.fetch(id, []))
+      end
+    end
+
+    def self.steam_library(player)
+      id, token, created_at, synced_at, library_private_since = CustomSet.steam_library.where(player_id: player.id)
+        .pick(:id, :token, :created_at, :synced_at, :library_private_since)
+      return unless id
+
+      LibraryRow.new(token:, created_at:, synced_at:, library_private_since:, card_ids: CustomSetCardIds.call([ id ]).fetch(id, []))
+    end
+
+    def self.goals(player)
+      Goal.where(player_id: player.id).left_joins(:custom_set).order(:position)
+        .pluck(:position, :set_kind, :set_key, Arel.sql("game_custom_sets.token"), :created_at)
+        .map { |position, set_kind, set_key, custom_set_token, created_at| GoalRow.new(position:, set_kind:, set_key:, custom_set_token:, created_at:) }
+    end
+
+    private_class_method :held_cards, :showcase, :packs, :set_tiers, :card_backs, :feed_entries, :reactions, :set_refs, :trades, :custom_sets, :steam_library, :goals
   end
 end

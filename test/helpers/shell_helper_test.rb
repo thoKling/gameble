@@ -61,7 +61,7 @@ class ShellHelperTest < ActionView::TestCase
       %w[library show] => "Sets", %w[library cards] => "Collection", %w[library set] => "Set", %w[cards show] => "Card", %w[boosters show] => "Capsule",
       %w[packs show] => "Capsule", %w[trades show] => "Trades", %w[trades edit] => "Trades", %w[friends show] => "Friends",
       %w[friend_profiles show] => "Profile", %w[public_profiles show] => "Profile", %w[public_profiles set] => "Set",
-      %w[settings show] => "Profile", %w[feeds show] => "Feed", %w[pages legal] => "Legal notice", %w[pages how_it_works] => "How it works", %w[pages more] => "More",
+      %w[settings show] => "Profile", %w[feeds show] => "Feed", %w[pages legal] => "Legal notice", %w[pages how_it_works] => "How it works", %w[own_profiles show] => "Me",
       %w[back_office/dashboard show] => "Back-office", %w[back_office/import_runs index] => "Back-office",
       %w[pages home] => nil, %w[invite_links show] => nil
     }
@@ -102,6 +102,17 @@ class ShellHelperTest < ActionView::TestCase
       shell_bank
       shell_tier_counts
     end
+  end
+
+  test "the invitations waiting are read once per request, and not at all for a visitor" do
+    assert_queries_count(0) { assert_nil shell_invitations_waiting }
+
+    remove_instance_variable(:@shell_invitations_waiting)
+    self.current_player = accounts_players(:player)
+    Game::Invitation.create!(sender_id: accounts_players(:moderator).id, recipient_id: current_player.id)
+
+    assert_queries_count(1) { assert_equal 1, shell_invitations_waiting }
+    assert_queries_count(0) { assert_equal 1, shell_invitations_waiting }
   end
 
   test "the page's own bank is the shell's, without a query" do

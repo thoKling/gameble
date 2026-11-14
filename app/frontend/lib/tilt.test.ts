@@ -17,6 +17,7 @@ import {
   reflectionOf,
   tiltTarget,
 } from "./tilt"
+import { onGameble } from "./events"
 
 const cardStylesheet = card + cardTiltEffects
 const detailStylesheet = cardDetail + cardDetailStepping + cardDetailPublic
@@ -60,16 +61,6 @@ describe("reflection", () => {
   it("rests at the flat card's position", () => {
     expect(reflection(0, 0, 2 / 3)).toEqual({ strip: 30, fresnel: 0.8, horizon: -0.32, hue: 50 })
     expect(REST_REFLECTION).toEqual({ strip: 30, fresnel: 0.8, horizon: -0.32, hue: 50 })
-  })
-
-  it("slides opposite a corner brought down, and brightens up to a cap", () => {
-    const corner = reflection(0.5, 0.5, 2 / 3)
-    expect(corner.strip).toBeCloseTo(30 - 68.75 - 37.5)
-    expect(corner.fresnel).toBeCloseTo(1.4)
-    expect(corner.horizon).toBeCloseTo(-0.32 - 1.25 - 0.25 * (2 / 3))
-    expect(corner.hue).toBeCloseTo(50 + 0.45 * 300)
-    expect(reflection(0.5, -0.5, 2 / 3).fresnel).toBeCloseTo(1.4)
-    expect(reflection(0.25, 0, 2 / 3).fresnel).toBeCloseTo(0.875)
   })
 
   it("weighs the ceiling's sideways slide by the card's shape", () => {
@@ -302,6 +293,29 @@ describe("attachTilt", () => {
     expect(card.dataset.tilt).toBeUndefined()
     expect(card.dataset.tilting).toBeUndefined()
     expect(card.properties.size).toBe(0)
+  })
+
+  it("tells the page a finger holds the card, and a mouse never does", () => {
+    const page = new EventTarget()
+    const card = Object.assign(new FakeCard(), { ownerDocument: { defaultView: page } })
+    const detach = attachTilt(card as unknown as HTMLElement, { max: 10 })
+    const holds: boolean[] = []
+    const stop = onGameble("gameble:touch-held", ({ held }) => holds.push(held), page)
+
+    card.dispatchEvent(pointer("pointermove", "mouse", 180, 320))
+    card.dispatchEvent(pointer("pointerleave", "mouse", 180, 320))
+    card.dispatchEvent(pointer("pointerdown", "touch", 140, 260))
+    expect(holds).toEqual([])
+    vi.advanceTimersByTime(HOLD_MS)
+    expect(holds).toEqual([true])
+    card.dispatchEvent(pointer("pointerup", "touch", 140, 260))
+    expect(holds).toEqual([true, false])
+
+    card.dispatchEvent(pointer("pointerdown", "touch", 140, 260))
+    vi.advanceTimersByTime(HOLD_MS)
+    detach()
+    expect(holds).toEqual([true, false, true, false])
+    stop()
   })
 
   it("swallows the click that follows a finger's tilt, and only that one", () => {

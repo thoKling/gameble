@@ -1,23 +1,27 @@
 class TradesController < ApplicationController
+  include GoalsReachedTracking
+  include TradeProposals
+  include GoalMarksLoading
+
+  helper_method :goal_marks
+
   throttle_player to: 20, only: %i[create counter accept decline cancel], path: -> { trades_path }, alert: "trades.throttled"
   rate_limit to: 120, within: 1.minute, only: :faces, name: "faces",
     by: -> { current_player&.id || request.remote_ip },
     with: -> { head :too_many_requests }
 
-  INSUFFICIENT = %i[requested_cards_unavailable insufficient_copies request_exceeds_holdings].freeze
-
   def index
     authorize :trade, :index?
-    @trades = Game::TradesOf.call(current_player)
+    load_list
     @trade = @trades.first
-    load_board(@trades, @trade)
+    load_board(@trade)
   end
 
   def show
     authorize :trade, :show?
     @trade = find_trade!
-    @trades = Game::TradesOf.call(current_player)
-    load_board(@trades, @trade)
+    load_list
+    load_board(@trade)
   end
 
   def new
@@ -30,14 +34,11 @@ class TradesController < ApplicationController
       return redirect_to(trades_path)
     end
 
-    @trades = Game::TradesOf.call(current_player)
-    if (open = open_trade_with(@trades, @friend))
-      show_refusal t("trades.one_at_a_time.text", name: helpers.friend_name(@friend)), title: t("trades.one_at_a_time.title")
-      return redirect_to(trade_path(token: open.token))
-    end
-
-    @cards = card_views(@trades, nil)
+    load_list
+    @cards = card_views(nil)
     load_holdings(@friend)
+    load_prices
+    @prefill = board_prefill(@friend)
   end
 
   def faces
@@ -76,9 +77,10 @@ class TradesController < ApplicationController
       return redirect_to(trade_path(token: @trade.token))
     end
 
-    @trades = Game::TradesOf.call(current_player)
-    @cards = card_views(@trades, @trade)
+    load_list
+    @cards = card_views(@trade)
     load_holdings(@trade.friend)
+    load_prices
   end
 
   def counter
@@ -101,7 +103,11 @@ class TradesController < ApplicationController
     authorize :trade, :accept?
     trade = find_trade!
 
-    redirect_after(trade, Game::AcceptTrade.new.call(player: current_player, trade_id: trade.id, revision: params[:revision])) do
+    result, reached = tracking_goals_reached(current_player) do
+      Game::AcceptTrade.new.call(player: current_player, trade_id: trade.id, revision: params[:revision])
+    end
+    redirect_after(trade, result) do
+      toast_goals_reached(reached)
       cards = Catalog::CardViews.call(trade.friend_side.map(&:card_season_id), locale: I18n.locale)
       gained = trade.friend_side.filter_map { |line| helpers.trade_line_title(line, cards) }
       toast t("trades.accepted.title"), t("trades.accepted.text", count: gained.size, cards: gained.to_sentence)
@@ -135,8 +141,8 @@ class TradesController < ApplicationController
     end
 
     def choose_friend
-      @trades = Game::TradesOf.call(current_player)
-      @cards = card_views(@trades, nil)
+      load_list
+      @cards = card_views(nil)
       @friends = Game::FriendsPresence.call(current_player)
       render :choose
     end
@@ -145,28 +151,43 @@ class TradesController < ApplicationController
       Game::TradesOf.find(current_player, params[:token]) || raise(ActiveRecord::RecordNotFound)
     end
 
-    def befriended(token)
-      friend = Accounts::PlayerByToken.call(token)
-      friend if befriended?(friend)
+    def load_list
+      @trades = Game::TradesOf.call(current_player)
+      @suggestions = Game::TradeSuggestions.call(current_player)
     end
 
-    def befriended?(friend)
-      friend.present? && !friend.removed? && Game::FriendshipBetween.call(current_player, friend)
+    def card_views(trade)
+      rows = [ @trades.yours, @trades.theirs, @trades.recent, [ trade ] ].flatten.compact
+      Catalog::CardViews.call(rows.flat_map(&:card_season_ids) + @suggestions.card_season_ids, locale: I18n.locale)
     end
 
-    def open_trade_with(trades, friend)
-      (trades.yours + trades.theirs).find { |row| row.friend.id == friend.id }
+    def board_prefill(friend)
+      return unless %i[take give ask].any? { params.key?(it) }
+
+      keys = { take: prefill_keys(params[:take]), give: prefill_keys(params[:give]), ask: prefill_keys([ params[:ask] ]) }
+      ids = Catalog::PublishedCardSeasonIds.call(keys.values.flatten.filter_map { helpers.trade_card_key_parts(it) })
+      sides = keys.transform_values { |side| side.filter_map { (parts = helpers.trade_card_key_parts(it)) && ids[parts] } }
+      TradeSuggestionsHelper::Prefill.new(friend:,
+        take: (spared_duplicates(sides[:take], holder: friend, other: current_player) |
+          Game::TradeSuggestions.still_spared(sides[:ask], holder: friend, other: current_player)),
+        give: spared_duplicates(sides[:give], holder: current_player, other: friend))
     end
 
-    def card_views(trades, trade)
-      rows = [ trades.yours, trades.theirs, trades.recent, [ trade ] ].flatten.compact
-      Catalog::CardViews.call(rows.flat_map(&:card_season_ids), locale: I18n.locale)
+    def spared_duplicates(card_season_ids, holder:, other:)
+      Game::TradeSuggestions.still_spared(card_season_ids, holder:, other:, minimum_copies: Game::TradeSuggestions::DUPLICATE_COPIES)
     end
 
-    def load_board(trades, trade)
-      @cards = card_views(trades, trade)
+    def prefill_keys(keys)
+      keys.is_a?(Array) ? keys.grep(String).uniq.first(Game::TradeItem::MAX_CARDS_PER_SIDE) : []
+    end
+
+    def load_board(trade)
+      @cards = card_views(trade)
       case trade&.state
       when :yours then load_holdings(trade.friend)
+      when :theirs
+        @own_cards = Game::HeldCopies.call(current_player)
+        @friend_cards = Game::HeldCopies.call(trade.friend)
       when :concluded
         received = trade.friend_side.map(&:card_season_id)
         @new_cards = Game::CollectionSlots.call(current_player, received).select { |_, slot| slot.new }.keys
@@ -176,6 +197,7 @@ class TradesController < ApplicationController
           @trade_again = @trades_closed.nil?
         end
       end
+      load_prices
     end
 
     def load_holdings(friend)
@@ -184,27 +206,8 @@ class TradesController < ApplicationController
       @picks = Catalog::CardViews.call(@own_cards.keys + @friend_cards.keys, locale: I18n.locale)
     end
 
-    def sent_sides(friend)
-      own = Game::HeldCopies.call(current_player).keys
-      theirs = Game::HeldCopies.call(friend).keys
-      cards = Catalog::CardViews.call(own + theirs, locale: I18n.locale)
-      offer = quantities(params[:give], own, cards)
-      request = quantities(params[:take], theirs, cards)
-
-      if offer.nil? then Dry::Monads::Failure(:invalid_offer)
-      elsif request.nil? then Dry::Monads::Failure(:invalid_request)
-      else Dry::Monads::Success({ offer:, request: })
-      end
-    end
-
-    def quantities(fields, held, cards)
-      fields = fields.respond_to?(:to_unsafe_h) ? fields.to_unsafe_h : {}
-      ids = held.filter_map { |id| (view = cards[id]) && [ helpers.trade_card_key(view), id ] }.to_h
-      fields.each_with_object({}) do |(key, value), side|
-        id = ids[key.to_s] or return
-        value = value.to_s.strip
-        side[id] = value unless value.empty? || value == "0"
-      end
+    def load_prices
+      @prices = Game::Market::EditionPrices.call(@cards.keys | (@picks&.keys || []))
     end
 
     def counter_refused_path(trade, code)
@@ -218,26 +221,5 @@ class TradesController < ApplicationController
         refused(result.failure, trade.friend)
       end
       redirect_to trade_path(token: trade.token), status: :see_other
-    end
-
-    def toast_sent(friend, offer)
-      name = helpers.friend_name(friend)
-      toast t("trades.sent.title"), offer.empty? ? t("trades.sent.open_text", name:) : t("trades.sent.text", name:)
-    end
-
-    def toast(title, text)
-      flash[:toast_title] = title
-      flash[:notice] = text
-    end
-
-    def refused(code, friend = nil)
-      message = Game::Operation.failure_message(code, name: (helpers.friend_name(friend) if friend))
-      show_refusal message, title: (t("trades.insufficient") if INSUFFICIENT.include?(code))
-    end
-
-    def show_refusal(message, title: nil)
-      flash[:trade_error] = message
-      flash[:toast_title] = title if title
-      flash[:alert] = message
     end
 end

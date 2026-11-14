@@ -7,7 +7,7 @@ class Game::EarnedAchievementsTest < ActiveSupport::TestCase
   end
 
   def unlock(key, at, player: @player)
-    Game::AchievementUnlock.create!(player_id: player.id, achievement: key, unlocked_at: at)
+    Game::AchievementUnlock.create!(player_id: player.id, achievement: key, unlocked_at: at, claimed_at: at)
   end
 
   test "the count over the catalogue and the four latest earned, newest first, a tie by key, in one query" do
@@ -22,7 +22,7 @@ class Game::EarnedAchievementsTest < ActiveSupport::TestCase
     earned = nil
     assert_queries_count(1) { earned = Game::EarnedAchievements.call(@player) }
 
-    assert_equal [ 6, 10 ], [ earned.count, earned.total ]
+    assert_equal [ 6, Game::Achievements::CATALOGUE.size ], [ earned.count, earned.total ]
     assert_equal %i[first_trade boosters_10 first_legendary first_repost], earned.latest.map(&:key)
     assert earned.latest.all?(&:earned)
     assert_equal [ 1, 10, 1, 1 ], earned.latest.map(&:threshold)
@@ -47,7 +47,9 @@ class Game::EarnedAchievementsTest < ActiveSupport::TestCase
 
   test "nothing earned, without a query, for nil" do
     assert_queries_count(0) do
-      assert_equal Game::EarnedAchievements::Earned.new(count: 0, total: 10, latest: []), Game::EarnedAchievements.call(nil)
+      assert_equal Game::EarnedAchievements::Earned.new(count: 0, total: total_achievements, latest: []), Game::EarnedAchievements.call(nil)
     end
   end
+
+  def total_achievements = Game::Achievements::CATALOGUE.size
 end

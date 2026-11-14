@@ -13,6 +13,13 @@ class ToastComponentTest < ViewComponent::TestCase
     assert_selector "button.toast__close[type=button][aria-label=Fermer][data-action='toast#close'] svg.pixel-icon[aria-hidden=true]"
   end
 
+  test "a title alone prints no message line" do
+    I18n.with_locale(:fr) { render_inline(ToastComponent.new(title: "Proposition transmise")) }
+
+    assert_selector ".toast.toast--notice .toast__title", text: "Proposition transmise"
+    assert_no_selector ".toast__message"
+  end
+
   test "an alert with a title" do
     I18n.with_locale(:en) { render_inline(ToastComponent.new(message: "Nothing moved.", title: "Not enough copies", tone: :alert)) }
 
@@ -23,7 +30,7 @@ class ToastComponentTest < ViewComponent::TestCase
   end
 
   test "a toast that waits out an opening's reveal is marked for the region" do
-    I18n.with_locale(:fr) { render_inline(ToastComponent.new(title: "Succès débloqué", message: "Première capsule", after_reveal: true)) }
+    I18n.with_locale(:fr) { render_inline(ToastComponent.new(title: "Succès débloqué", message: "Première acquisition approuvée", after_reveal: true)) }
 
     assert_selector ".toast.toast--notice[data-toast-after-reveal]"
   end

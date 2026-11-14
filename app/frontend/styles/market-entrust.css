@@ -1,0 +1,266 @@
+.market-entrust {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  width: 100%;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-gutter-phone);
+}
+
+.market-entrust__header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.market-entrust__kicker {
+  margin: 0;
+  color: var(--color-accent);
+  font: var(--font-kicker);
+  letter-spacing: var(--tracking-kicker);
+  text-transform: uppercase;
+}
+
+.market-entrust__title {
+  margin: 0;
+  color: var(--color-gold);
+  font: var(--font-screen-title);
+  letter-spacing: var(--tracking-screen-title);
+}
+
+.market-entrust__intro,
+.market-entrust__notice p {
+  margin: 0;
+  color: var(--color-text);
+  font: var(--font-body);
+}
+
+.market-entrust__notice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4);
+}
+
+.market-entrust__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.market-entrust__layout {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.market-entrust__refusal {
+  margin: 0;
+  padding: var(--space-3);
+  border-left: 4px solid var(--color-alert);
+  background: var(--color-panel-sunken);
+  color: var(--color-text-bright);
+  font: var(--font-body-small);
+}
+
+.market-entrust__main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  min-width: 0;
+}
+
+[data-layout="wide"] .entrust-bar {
+  display: none;
+}
+
+.entrust-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.entrust-grid__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.entrust-grid__hint,
+.entrust-grid__empty {
+  margin: 0;
+  color: var(--color-muted);
+  font: var(--font-body-small);
+}
+
+.entrust-grid__failed {
+  margin: 0;
+  padding: var(--space-3);
+  border-left: 4px solid var(--color-alert);
+  background: var(--color-panel-sunken);
+  color: var(--color-text-bright);
+  font: var(--font-body-small);
+}
+
+.entrust-grid__failed[hidden] {
+  display: none;
+}
+
+.entrust-grid__list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 180px), 1fr));
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Each cell stacks its own layers, so its stepper never draws over the recap bar. */
+.entrust-cell {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  background: var(--color-panel);
+  box-shadow: var(--control-border);
+  color: var(--color-text);
+  font: var(--font-body);
+}
+
+.entrust-cell--picked::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  z-index: 3;
+  box-shadow: 0 0 0 3px var(--color-lime);
+  pointer-events: none;
+}
+
+.entrust-cell__toggle {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.entrust-cell__toggle:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: var(--focus-ring-offset);
+}
+
+.entrust-cell__check {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  z-index: 4;
+  width: 24px;
+  height: 24px;
+  background: var(--color-lime);
+  box-shadow: 0 0 0 2px var(--color-outline);
+  color: var(--color-on-lime);
+  font: var(--font-button);
+  line-height: 24px;
+  text-align: center;
+}
+
+.entrust-cell__check[hidden] {
+  display: none;
+}
+
+.entrust-cell__art {
+  display: flex;
+  justify-content: center;
+}
+
+.entrust-cell__name {
+  color: var(--color-text-bright);
+  font-weight: 700;
+}
+
+.entrust-cell__edition,
+.entrust-cell__free {
+  color: var(--color-muted);
+  font: var(--font-body-small);
+}
+
+.entrust-cell--rare .entrust-cell__edition {
+  color: var(--color-rarity-rare);
+}
+
+.entrust-cell--epic .entrust-cell__edition {
+  color: var(--color-rarity-epique);
+}
+
+.entrust-cell--legendary .entrust-cell__edition {
+  color: var(--color-gold);
+}
+
+.entrust-cell__value {
+  color: var(--color-gold);
+}
+
+/* The free count, or the stepper in its place, sits at the cell's foot, level across a row. */
+.entrust-cell__free,
+.entrust-cell__stepper {
+  margin-top: auto;
+}
+
+.entrust-cell__stepper {
+  position: relative;
+  z-index: 5;
+}
+
+.entrust-cell:not(.entrust-cell--picked) .entrust-cell__stepper {
+  display: none;
+}
+
+.entrust-cell .stepper[hidden] {
+  display: none;
+}
+
+.entrust-cell .stepper__max-phone {
+  display: none;
+}
+
+/* The stepper spans the cell: − on the left, + on the right, "×2 of 3" between. */
+.entrust-cell .stepper {
+  display: flex;
+  width: 100%;
+  height: var(--space-button-height-sm);
+}
+
+.entrust-cell .stepper__button {
+  flex: none;
+  width: var(--space-button-height-sm);
+  height: 100%;
+}
+
+.entrust-cell .stepper__button--more {
+  order: 3;
+}
+
+.entrust-cell .stepper__value {
+  min-width: 0;
+  order: 1;
+  margin-left: auto;
+  padding-right: var(--space-2);
+}
+
+.entrust-cell .stepper__max {
+  order: 2;
+  margin-right: auto;
+  padding: 0;
+}
+
+.entrust-cell--picked:has(.entrust-cell__stepper) .entrust-cell__free {
+  display: none;
+}

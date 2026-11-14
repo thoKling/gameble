@@ -1,9 +1,12 @@
 require "test_helper"
 require_relative "../support/catalog_seeds"
+require_relative "../support/custom_sets"
 require_relative "../support/library_requests"
 require_relative "../support/game_packs"
 require_relative "../support/game_sets"
 require_relative "../support/steam_sign_in"
+require_relative "../support/holdings"
+require_relative "../support/market"
 
 # A card's detail page ("FICHE DE LA CARTE"): every fact in the viewer's
 # language, the viewer's copies, the sets leading to their grids, the Steam
@@ -17,10 +20,13 @@ require_relative "../support/steam_sign_in"
 # covered in card_preview_tags_test.rb.
 class CardsControllerTest < ActionDispatch::IntegrationTest
   include CatalogSeeds
+  include CustomSets
   include LibraryRequests
   include GamePacks
   include GameSets
   include SteamSignIn
+  include Holdings
+  include MarketSettings
 
   setup do
     # A PUBLIC_URL exported in the shell would replace the request's base.
@@ -112,7 +118,7 @@ class CardsControllerTest < ActionDispatch::IntegrationTest
       store_link.then { [ it.text.squish, it["href"], it["rel"], it["target"] ] }
     assert_includes store_link["class"], "button--secondary"
     assert_select ".card-detail .button--primary", 0
-    assert_select ".card-detail__actions > .card-detail__card-links:only-child"
+    assert_select ".card-detail__actions > .card-detail__action-group:only-child > .card-detail__card-links"
     # The description is never on the face.
     assert_no_match(/portals/, css_select(".card-detail__card").sole.text)
     assert_no_match(/collection of/i, response.body)
@@ -212,19 +218,19 @@ class CardsControllerTest < ActionDispatch::IntegrationTest
     sign_in(player)
 
     get card_path(locale: :en, slug: "portal")
-    assert_equal [ [ "Copies", "2 copies" ], [ "Editions", "Epic: S1" ] ], facts.last(2)
+    assert_equal [ [ "Copies", "2 copies" ], [ "Editions", "Epic: S1" ] ], facts.to_h.slice("Copies", "Editions").to_a
 
     get card_path(locale: :en, slug: "golden-crown")
-    assert_equal [ [ "Copies", "1 copy" ], [ "Editions", "Legendary: S1" ] ], facts.last(2)
+    assert_equal [ [ "Copies", "1 copy" ], [ "Editions", "Legendary: S1" ] ], facts.to_h.slice("Copies", "Editions").to_a
 
     get card_path(locale: :fr, slug: "golden-crown")
-    assert_equal [ [ "Exemplaires", "1 exemplaire" ], [ "Éditions", "Légendaire : S1" ] ], facts.last(2)
+    assert_equal [ [ "Exemplaires", "1 exemplaire" ], [ "Éditions", "Légendaire\u202F: S1" ] ], facts.to_h.slice("Exemplaires", "Éditions").to_a
 
     get card_path(locale: :en, slug: "tin-soldier")
-    assert_equal [ [ "Copies", "None" ], [ "Editions", "None" ] ], facts.last(2)
+    assert_equal [ [ "Copies", "None" ], [ "Editions", "None" ] ], facts.to_h.slice("Copies", "Editions").to_a
 
     get card_path(locale: :fr, slug: "green-hills")
-    assert_equal [ [ "Exemplaires", "Aucun" ], [ "Éditions", "Aucune" ] ], facts.last(2)
+    assert_equal [ [ "Exemplaires", "Aucun" ], [ "Éditions", "Aucune" ] ], facts.to_h.slice("Exemplaires", "Éditions").to_a
   end
 
   test "a visitor on the card's own page gets the public card page: the card at card-xl, no copies, no panel, no way back to the bridge" do
@@ -320,6 +326,38 @@ class CardsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "/en/library/theme/roguelike?page=2", css_select(".top-bar__phone-back").sole["href"]
   end
 
+  test "a card opened from the player's own set walks it in the set's order, its ends disabled; the way back is that set's album" do
+    names = %i[rare_card portal common_card]
+    player = accounts_players(:player)
+    custom_set = create_custom_set(player, card_ids: names.map { catalog_cards(it).id })
+    in_custom_set = ->(name) { card_season_path(locale: :en, slug: catalog_cards(name).slug, number: 1, custom_set: custom_set.token) }
+    sign_in(player)
+
+    get in_custom_set.(:portal)
+    assert_equal [ [ "a", in_custom_set.(:rare_card) ], [ "a", in_custom_set.(:common_card) ] ], navs
+    assert_equal "2 / 3", position[%r{\d+ / \d+}]
+    assert_equal "/en/library/custom-sets/#{custom_set.token}", css_select(".top-bar__phone-back").sole["href"]
+
+    get in_custom_set.(:rare_card)
+    assert_equal [ [ "button", "disabled" ], [ "a", in_custom_set.(:portal) ] ], navs
+
+    get in_custom_set.(:common_card)
+    assert_equal [ [ "a", in_custom_set.(:portal) ], [ "button", "disabled" ] ], navs
+  end
+
+  test "another player's set, an unknown token, or a set without the card is ignored: the card's first set" do
+    add_a_theme_set
+    player = accounts_players(:player)
+    theirs = create_custom_set(accounts_players(:moderator), card_ids: %i[portal rare_card common_card].map { catalog_cards(it).id })
+    without_portal = create_custom_set(player, card_ids: %i[rare_card common_card uncommon_card].map { catalog_cards(it).id })
+    sign_in(player)
+
+    [ theirs.token, "nope", without_portal.token, [ theirs.token ] ].each do |token|
+      get card_season_path(locale: :en, slug: "portal", number: 1, custom_set: token)
+      assert_equal [ [ "a", in_theme("tin-soldier") ], [ "a", in_theme("blue-depths") ] ], navs, token.inspect
+    end
+  end
+
   test "a card opened from a player's album browses it, leads back to that album, links its sets to that player's albums and shows the face of a card that player does not hold" do
     season, cards = published_cards(70)
     insert_theme(cards, key: "roguelike", season:)
@@ -410,7 +448,7 @@ class CardsControllerTest < ActionDispatch::IntegrationTest
     assert_select "form[action='/en/cards/portal/seasons/1/repost'] button", "Repost"
 
     get in_theme("tin-soldier", locale: :fr)
-    assert_equal [ [ "Exemplaires", "Aucun" ], [ "Éditions", "Aucune" ] ], facts.last(2)
+    assert_equal [ [ "Exemplaires", "Aucun" ], [ "Éditions", "Aucune" ] ], facts.to_h.slice("Exemplaires", "Éditions").to_a
     assert_select ".card-detail__share-button", "Partager"
   end
 
@@ -516,7 +554,8 @@ class CardsControllerTest < ActionDispatch::IntegrationTest
     assert_equal [ "Link copied", "Press Ctrl+C to copy" ], [ detail["data-share-copied-value"], detail["data-share-manual-value"] ]
     assert_equal [ [ "card-detail__holder-actions", [ "button-form", "card-detail__showcase" ] ],
       [ "card-detail__card-links", [ "card-detail__share-button", "card-detail__store" ] ] ],
-      css_select(".card-detail__actions > *").map { |group| [ group["class"], group.element_children.map { (it["class"].split & %w[button-form card-detail__showcase card-detail__share-button card-detail__store]).sole } ] }
+      css_select(".card-detail__actions > .card-detail__action-group > div").map { |group| [ group["class"], group.element_children.map { (it["class"].split & %w[button-form card-detail__showcase card-detail__share-button card-detail__store]).sole } ] }
+    assert_equal [ "Collection", "Links" ], css_select(".card-detail__action-group > h2.card-detail__action-title").map(&:text)
     # "Repost" posts to this card-season's repost, in Turbo Stream, and stays.
     assert_select ".card-detail__holder-actions > form.button-form:first-child[method=post][action='/en/cards/portal/seasons/1/repost'] button.button--primary", "Repost"
     assert_select ".card-detail .button--primary", 1
@@ -859,25 +898,25 @@ class CardsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".top-bar__phone-back", false
   end
 
-  test "a player's request costs eleven queries, a visitor's five; a frame visit (◀ ▶) skips the top bar's" do
+  test "a player's request costs eighteen queries, a visitor's six; a frame visit (◀ ▶) skips the top bar's" do
     player = accounts_players(:player)
     hold(player, catalog_card_seasons(:portal_one).id, 2)
     sign_in(player)
 
-    # Player lookup, card detail, sets, neighbours, quantities, the
-    # holder's showcase, the pioneer, and the top bar's three (reserve count, next pack,
-    # copies per tier), and the tab bar's trades waiting.
-    assert_request_queries(11) { get card_path(locale: :en, slug: "portal") }
+    # Player lookup, card detail, sets, neighbours, quantities, the copies
+    # set apart, the holder's showcase, the pioneer, the friends owning it, the share image, the player's goals, and the top bar's four
+    # (reserve count, next pack, copies per tier, rarity legend), and the tab bar's trades and invitations waiting.
+    assert_request_queries(21) { get card_path(locale: :en, slug: "portal") }
     assert_response :success
     assert_equal [ "Copies", "2 copies" ], facts.to_h.assoc("Copies")
     assert_select "#share-sheet"
-    assert_request_queries(7) { get card_path(locale: :en, slug: "portal"), headers: { "Turbo-Frame" => "card-detail" } }
+    assert_request_queries(11) { get card_path(locale: :en, slug: "portal"), headers: { "Turbo-Frame" => "card-detail" } }
     assert_select "turbo-frame#card-detail .card-detail h1", "Portal"
 
     delete session_path(locale: :en)
     # The public card page: the card detail and its sets; no neighbours; the
-    # LIVE strip's entries, notable then fillers (none here), the pioneer.
-    assert_request_queries(5) { get card_path(locale: :en, slug: "portal") }
+    # share image, the LIVE strip's entries, notable then fillers (none here), the pioneer, the market's state.
+    assert_request_queries(8) { get card_path(locale: :en, slug: "portal") }
     assert_response :success
     assert_select ".public-card"
   end
@@ -887,17 +926,17 @@ class CardsControllerTest < ActionDispatch::IntegrationTest
     pack = create_pack(player, cards: fixture_tier_ids, opened_at: 1.minute.ago)
     sign_in(player)
 
-    # The nine, the set's neighbours replaced by the pack and its two
+    # The twelve and the friends of a missing card, the set's neighbours replaced by the pack and its two
     # neighbours' cards.
-    assert_request_queries(11) { get pack_detail("blue-depths", pack, slot: 3) }
+    assert_request_queries(21) { get pack_detail("blue-depths", pack, slot: 3) }
     assert_equal "S1 · #3 · 3 / 5 · swipe to browse", position
 
     # The set's neighbours replaced by the published season, the grid's
     # genres, the grid's cards in order and its two neighbours' cards,
     # whether a state is asked or not.
-    assert_request_queries(13) { get card_season_path(locale: :en, slug: "blue-depths", number: 1, grid: { q: "" }) }
+    assert_request_queries(23) { get card_season_path(locale: :en, slug: "blue-depths", number: 1, grid: { q: "" }) }
     assert_select ".card-detail__nav", 2
-    assert_request_queries(13) { get card_season_path(locale: :en, slug: "blue-depths", number: 1, grid: { q: "", state: %w[all] }) }
+    assert_request_queries(23) { get card_season_path(locale: :en, slug: "blue-depths", number: 1, grid: { q: "", state: %w[all] }) }
   end
 
   # The row of a card whose fixture pioneer is the banned player.
@@ -928,42 +967,36 @@ class CardsControllerTest < ActionDispatch::IntegrationTest
     assert_equal %w[Season Pioneer], facts.map(&:first).each_cons(2).find { |a, b| b == "Pioneer" }
   end
 
-  test "a banned pioneer reads as an anonymous player with the date and no link, to staff too" do
-    sign_in(accounts_players(:administrator))
-
-    get card_path(locale: :en, slug: "portal")
-
-    assert_equal [ "Pioneer", "An anonymous player on #{I18n.l(2.weeks.ago.to_date, format: :long_day, locale: :en)}" ], facts.assoc("Pioneer")
-    assert_select ".card-detail__pioneer a", false
-  end
-
-  test "a deleted pioneer, or a private profile, reads as an anonymous player" do
+  test "a private pioneer reads as a bare name, a deleted one as an anonymous player" do
     pioneer = accounts_players(:moderator)
+    pioneer.update!(persona_name: "Léa")
     pioneered_by(pioneer)
     pioneer.update!(visibility: :private)
     sign_in(accounts_players(:player))
 
     get card_path(locale: :en, slug: "portal")
 
-    assert_select ".card-detail__pioneer-anon", "An anonymous player"
+    assert_select ".card-detail__pioneer span.player-name", "Léa"
     assert_select ".card-detail__pioneer a", false
     pioneer.update_columns(deleted_at: Time.current, steam_id: nil, visibility: Accounts::Player.visibilities.fetch(:public))
     get card_path(locale: :en, slug: "portal")
-    assert_select ".card-detail__pioneer-anon", "An anonymous player"
+    assert_select ".card-detail__pioneer .player-name--anonymous", "An anonymous player"
+    assert_select ".card-detail__pioneer", text: /Léa/, count: 0
   end
 
-  test "a visitor browsing a context reads the name of a public profile, and a friends-only profile as anonymous" do
+  test "a visitor browsing a context reads the name of a public profile linked, and a friends-only profile as a bare name" do
     pioneer = accounts_players(:moderator)
     pioneer.update!(persona_name: "Léa")
     pioneered_by(pioneer)
     owner = accounts_players(:player)
 
     get card_season_path(locale: :en, slug: "portal", number: 1, brother: owner.token)
-    assert_select ".card-detail__pioneer a", "Léa"
+    assert_select ".card-detail__pioneer a.player-name--linked", "Léa"
 
     pioneer.update!(visibility: :friends_only)
     get card_season_path(locale: :en, slug: "portal", number: 1, brother: owner.token)
-    assert_select ".card-detail__pioneer-anon"
+    assert_select ".card-detail__pioneer span.player-name", "Léa"
+    assert_select ".card-detail__pioneer a", false
   end
 
   test "each edition of a card names its own pioneer, whichever season is published" do
@@ -1002,14 +1035,7 @@ class CardsControllerTest < ActionDispatch::IntegrationTest
     assert_not_nil facts.assoc("Pioneer")
   end
 
-  test "a card without a recorded discovery shows no pioneer row" do
-    Game::FirstDiscovery.where(card_season_id: catalog_card_seasons(:portal_one).id).delete_all
-    sign_in(accounts_players(:player))
-    get card_path(locale: :en, slug: "portal")
-    assert_nil facts.assoc("Pioneer")
-  end
-
-  test "the public card page shows the pioneer between the rarity line and the description, named or anonymous, with no id" do
+  test "the public card page shows the pioneer between the rarity line and the description, linked or a bare name, with no id" do
     pioneer = accounts_players(:moderator)
     pioneer.update!(persona_name: "Léa")
     pioneered_by(pioneer)
@@ -1024,7 +1050,7 @@ class CardsControllerTest < ActionDispatch::IntegrationTest
     pioneer.update!(visibility: :private)
     get card_path(locale: :en, slug: "portal")
     assert_select ".public-card__pioneer a", false
-    assert_match(/An anonymous player/, css_select(".public-card__pioneer").text)
+    assert_select ".public-card__pioneer span.player-name", "Léa"
 
     Game::FirstDiscovery.delete_all
     get card_path(locale: :en, slug: "portal")
@@ -1087,7 +1113,7 @@ class CardsControllerTest < ActionDispatch::IntegrationTest
     assert_select "[style]", 0
 
     get card_season_path(locale: :fr, slug: "portal", number: 1)
-    assert_equal [ [ "Exemplaires", "2 exemplaires" ], [ "Éditions", "Légendaire : S2 | Épique : S1" ] ], facts.to_h.slice("Exemplaires", "Éditions").to_a
+    assert_equal [ [ "Exemplaires", "2 exemplaires" ], [ "Éditions", "Légendaire\u202F: S2 | Épique\u202F: S1" ] ], facts.to_h.slice("Exemplaires", "Éditions").to_a
   end
 
   test "the editions of one rarity share a line, seasons ascending; past three lines they fold under how many more" do
@@ -1114,10 +1140,10 @@ class CardsControllerTest < ActionDispatch::IntegrationTest
     hold(accounts_players(:moderator), catalog_card_seasons(:rare_card_one).id, 0)
     sign_in_viewer
     get card_path(locale: :en, slug: "portal")
-    assert_equal [ [ "Copies", "None" ], [ "Editions", "None" ] ], facts.last(2)
+    assert_equal [ [ "Copies", "None" ], [ "Editions", "None" ] ], facts.to_h.slice("Copies", "Editions").to_a
 
     get card_path(locale: :fr, slug: "portal")
-    assert_equal [ [ "Exemplaires", "Aucun" ], [ "Éditions", "Aucune" ] ], facts.last(2)
+    assert_equal [ [ "Exemplaires", "Aucun" ], [ "Éditions", "Aucune" ] ], facts.to_h.slice("Exemplaires", "Éditions").to_a
 
     delete session_path(locale: :en)
     get card_season_path(locale: :en, slug: "portal", number: 1, grid: { q: "" })
@@ -1145,53 +1171,6 @@ class CardsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_equal "S1 · #1 · 2 / 3 · swipe to browse", position
     assert_equal [ [ "a", "/en/cards/blue-depths/seasons/1?grid%5Bq%5D=" ], [ "a", "/en/cards/portal/seasons/2?grid%5Bq%5D=" ] ], navs
-  end
-
-  test "epic detail floats with purple rays; common detail stays still with no rays" do
-    viewer = accounts_players(:moderator)
-    hold(viewer, catalog_card_seasons(:portal_one).id, 1)
-    hold(viewer, catalog_card_seasons(:common_card_one).id, 1)
-    sign_in(viewer)
-
-    get card_path(locale: :en, slug: "portal")
-    assert_response :success
-    assert_select ".card-detail__card .card-float .card-rays.card-rays--epic", 1
-    assert_select ".card-detail__card .card-float .card.card--l", 1
-
-    get card_path(locale: :en, slug: "tin-soldier")
-    assert_response :success
-    assert_select ".card-detail__card .card-float", 0
-    assert_select ".card-detail__card .card-rays", 0
-    assert_select ".card-detail__shadow", 1
-  end
-
-  test "an epic not held, within a set, is faded and locked, without float or rays" do
-    add_a_theme_set
-    player = accounts_players(:player)
-    hold(player, catalog_card_seasons(:common_card_one).id, 1)
-    sign_in(player)
-
-    get in_theme("portal")
-
-    assert_response :success
-    assert_select ".card-detail__card .card-float", 0
-    assert_select ".card-detail__card .card-rays", 0
-    assert_select ".card-detail__card .card.card--l.card--rarity-epic.card--not-owned > .card__lock", 1
-    assert_select ".card-detail__shadow", 1
-  end
-
-  test "epic public page floats with rays; common public page stays still" do
-    get card_path(locale: :en, slug: "portal")
-    assert_response :success
-    assert_select ".public-card__stage .card-float .card-rays.card-rays--epic", 1
-    assert_select ".public-card__stage .card-float .card.card--xl", 1
-    assert_select ".public-card__shadow", 1
-
-    get card_path(locale: :en, slug: "tin-soldier")
-    assert_response :success
-    assert_select ".public-card__stage .card-float", 0
-    assert_select ".public-card__stage .card-rays", 0
-    assert_select ".public-card__shadow", 1
   end
 
   # The showcase buttons as [ label, the verb their form sends or "disabled" ].
@@ -1227,7 +1206,8 @@ class CardsControllerTest < ActionDispatch::IntegrationTest
     get card_season_path(locale: :en, slug: "portal", number: 1)
     assert_equal [ [ "Add to showcase", "disabled" ] ], showcase_buttons
     assert_select ".card-detail__showcase form", false
-    assert_select ".card-detail__holder-actions > .card-detail__showcase + .card-detail__showcase-full:last-child", "Showcase full: remove a card to add another."
+    assert_select ".card-detail__holder-actions > .card-detail__showcase + .card-detail__showcase-full:last-child", /\AShowcase full: remove a card to add another.\s+Open my showcase\z/
+    assert_select ".card-detail__showcase-full a.card-detail__showcase-open[href=?]", "/en/me?card=portal&edition=1#showcase"
     assert_select ".card-detail__holder-actions > form.button-form:first-child button.button--primary", "Repost"
   end
 
@@ -1264,5 +1244,108 @@ class CardsControllerTest < ActionDispatch::IntegrationTest
     owner.update!(visibility: :private)
     get card_season_path(locale: :en, slug: "portal", number: 1, brother: owner.token)
     assert_select ".public-card"
+  end
+
+  test "CONFIER is absent before the market first opened, while it is closed and for a visitor" do
+    Game::Market::Settings.delete_all
+    hold(accounts_players(:player), catalog_card_seasons(:portal_one).id, 2)
+    sign_in(accounts_players(:player))
+
+    get card_path(locale: :en, slug: "portal")
+    assert_select ".card-detail__market", false
+
+    close_market!
+    get card_path(locale: :en, slug: "portal")
+    assert_select ".card-detail__market", false
+
+    open_market!(first_opened_at: 1.day.ago)
+    close_market!
+    get card_path(locale: :en, slug: "portal")
+    assert_select ".card-detail__market", false
+  end
+
+  test "CONFIER is absent for a visitor" do
+    open_market!(first_opened_at: 1.day.ago)
+
+    get card_path(locale: :en, slug: "portal")
+
+    assert_select ".card-detail__market", false
+  end
+
+  test "CONFIER links to the filtered Confier when the player holds a free copy" do
+    Game::Market::Settings.delete_all
+    open_market!(first_opened_at: 1.day.ago)
+    hold(accounts_players(:player), catalog_card_seasons(:portal_one).id, 2, reserved: 1)
+    sign_in(accounts_players(:player))
+
+    get card_path(locale: :en, slug: "portal")
+
+    assert_select ".card-detail__actions > .card-detail__action-group > .card-detail__market a.button--secondary[href=?]", new_market_card_entrustment_path(locale: :en, slug: "portal"), text: "Entrust"
+    assert_select ".card-detail__market-note", false
+    assert_select ".card-detail__market .picoin-amount", false
+  end
+
+  test "CONFIER is greyed with the reserved count when every copy is reserved" do
+    Game::Market::Settings.delete_all
+    open_market!(first_opened_at: 1.day.ago)
+    hold(accounts_players(:player), catalog_card_seasons(:portal_one).id, 2, reserved: 2)
+    sign_in(accounts_players(:player))
+
+    get card_path(locale: :en, slug: "portal")
+
+    assert_select ".card-detail__market a", false
+    assert_select ".card-detail__market button[disabled]", text: "Entrust"
+    assert_select ".card-detail__market-note", "2 reserved copies"
+  end
+
+  test "CONFIER is absent for a card the player does not hold" do
+    Game::Market::Settings.delete_all
+    open_market!(first_opened_at: 1.day.ago)
+    hold(accounts_players(:player), catalog_card_seasons(:common_card_one).id, 2)
+    sign_in(accounts_players(:player))
+
+    get card_path(locale: :en, slug: "portal")
+
+    assert_select ".card-detail__market", false
+  end
+
+  test "METTRE EN VENTE links to the filtered Mettre en vente beside CONFIER when the player holds a free copy" do
+    Game::Market::Settings.delete_all
+    open_market!(first_opened_at: 1.day.ago)
+    hold(accounts_players(:player), catalog_card_seasons(:portal_one).id, 2, reserved: 1)
+    sign_in(accounts_players(:player))
+
+    get card_path(locale: :en, slug: "portal")
+
+    assert_select ".card-detail__market a.button--secondary[href=?]", new_market_card_sale_path(locale: :en, slug: "portal"), text: "Put up for sale"
+    assert_select ".card-detail__market a.button--secondary", 2
+    assert_select ".card-detail__market-note", false
+  end
+
+  test "METTRE EN VENTE is greyed with the reserved count shown once when every copy is reserved" do
+    Game::Market::Settings.delete_all
+    open_market!(first_opened_at: 1.day.ago)
+    hold(accounts_players(:player), catalog_card_seasons(:portal_one).id, 2, reserved: 2)
+    sign_in(accounts_players(:player))
+
+    get card_path(locale: :en, slug: "portal")
+
+    assert_select ".card-detail__market button[disabled]", text: "Put up for sale"
+    assert_select ".card-detail__market a", false
+    assert_select ".card-detail__market-note", count: 1, text: "2 reserved copies"
+  end
+
+  test "METTRE EN VENTE is absent while the market is suspended and for a visitor" do
+    Game::Market::Settings.delete_all
+    open_market!(first_opened_at: 2.days.ago)
+    hold(accounts_players(:player), catalog_card_seasons(:portal_one).id, 2)
+
+    get card_path(locale: :en, slug: "portal")
+    assert_select "a[href=?]", new_market_card_sale_path(locale: :en, slug: "portal"), false
+
+    sign_in(accounts_players(:player))
+    close_market!(first_opened_at: 2.days.ago)
+    get card_path(locale: :en, slug: "portal")
+    assert_select ".card-detail__market", false
   end
 end

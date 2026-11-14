@@ -1,0 +1,167 @@
+.market-listing__leader {
+  margin: 0;
+  color: var(--color-gold);
+  font: var(--font-body);
+}
+
+.market-listing__bid {
+  padding: var(--space-5);
+  background: var(--color-panel);
+  box-shadow: var(--control-border);
+}
+
+.market-listing__bid:not(:has(*)) {
+  display: none;
+}
+
+.market-listing__bid .market-event,
+.market-listing__bid .market-outcome,
+.market-listing__bid .market-answer {
+  background: var(--color-panel-sunken);
+}
+
+.market-history {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+  padding: var(--space-5);
+  background: var(--color-panel);
+  box-shadow: inset 0 0 0 var(--space-unit) var(--color-line);
+}
+
+.market-history__heading {
+  margin: 0;
+  color: var(--color-muted);
+  font: var(--font-label);
+  letter-spacing: var(--tracking-kicker);
+}
+
+.market-history__lines {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.market-history__line {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: var(--space-1) var(--space-4);
+  padding: var(--space-3) 0;
+  box-shadow: inset 0 var(--space-unit) 0 var(--color-line-soft);
+  color: var(--color-text);
+  font: var(--font-body);
+}
+
+.market-history__line:has(.market-history__leading) {
+  padding-left: var(--space-4);
+  box-shadow:
+    inset 3px 0 0 var(--color-gold),
+    inset 0 var(--space-unit) 0 var(--color-line-soft);
+}
+
+.market-history__line--extension,
+.market-history__line--covered,
+.market-history__line--raise,
+.market-history__line--created {
+  color: var(--color-muted);
+}
+
+.market-history__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-1) var(--space-3);
+  min-width: 0;
+}
+
+.market-history__text {
+  grid-column: 1 / -1;
+}
+
+.market-history__price {
+  justify-self: end;
+  color: var(--color-text-max);
+  font-weight: 700;
+}
+
+.market-history__leading {
+  color: var(--color-gold);
+  font: var(--font-label);
+  letter-spacing: var(--tracking-kicker);
+  text-transform: uppercase;
+}
+
+.market-history__time {
+  grid-column: 1 / -1;
+  color: var(--color-muted);
+  font: var(--font-body-small);
+  font-weight: 400;
+}
+
+.market-outcome {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+  margin: 0;
+  padding: var(--space-4);
+  background: var(--color-panel);
+  box-shadow: var(--control-border);
+  color: var(--color-text);
+  font: var(--font-body);
+}
+
+.market-outcome__title,
+.market-outcome__body {
+  margin: 0;
+}
+
+.market-outcome__title {
+  color: var(--color-text-max);
+  font: var(--font-label);
+  letter-spacing: var(--tracking-kicker);
+}
+
+.market-outcome--success .market-outcome__title {
+  color: var(--color-lime);
+}
+
+.market-outcome--alert .market-outcome__title {
+  color: var(--color-alert);
+}
+
+@media (min-width: 720px) {
+  .market-listing__layout {
+    grid-template-columns: auto minmax(0, 1fr) 330px;
+    grid-template-rows: auto 1fr;
+    grid-template-areas:
+      "card figures history"
+      "card bid history";
+    align-items: start;
+  }
+
+  .market-listing__card {
+    grid-area: card;
+  }
+
+  .market-listing__figures {
+    grid-area: figures;
+  }
+
+  .market-listing__bid {
+    grid-area: bid;
+  }
+
+  .market-history {
+    grid-area: history;
+  }
+}
+
+.market-history__text .picoin-amount {
+  color: var(--color-text-max);
+  font-weight: 700;
+}

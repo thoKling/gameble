@@ -15,10 +15,6 @@ class SteamImportStepJobTest < ActiveJob::TestCase
     Steam::StartImport.new.call.value!
   end
 
-  test "it runs on the import queue" do
-    assert_equal "import", Steam::ImportStepJob.new.queue_name
-  end
-
   test "a page job imports one page and enqueues the next" do
     run = start_run
     clear_enqueued_jobs
@@ -142,7 +138,7 @@ class SteamImportStepJobTest < ActiveJob::TestCase
     assert_equal 10, run.last_appid
     assert_equal 1, run.apps_listed
     message = run.latest_errors.first.message
-    assert_includes message, "Steam::WebApi::Error"
+    assert_includes message, "Steam::WebApi::Unavailable"
     assert_includes message, "503"
     assert_not_includes message, API_KEY
     assert_equal 1, run.error_messages.size

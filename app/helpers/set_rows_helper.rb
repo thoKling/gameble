@@ -2,6 +2,7 @@ module SetRowsHelper
   NOTCHES = { "bronze" => 1, "silver" => 2, "gold" => 3 }.freeze
 
   PathNode = Data.define(:tier, :required, :state, :lit)
+  TileLabel = Data.define(:name, :kind, :sentence)
 
   def set_kind_name(kind)
     t("library.set_kinds.#{kind}")
@@ -15,11 +16,23 @@ module SetRowsHelper
     [ SetLabel.for(set), set_kind_name(set.kind).downcase ].join(", ")
   end
 
-  def set_progress_sentence(set, standing)
-    parts = [ set_label_sentence(set),
+  def set_progress_sentence(set, standing, goal: nil)
+    parts = [ set_label_sentence(set), (t("goals.tile_words", number: goal.position) if goal),
       t("library.set_progress.count", count: standing.held, owned: number_with_delimiter(standing.held), total: number_with_delimiter(standing.total)) ]
     parts.concat(standing.complete? ? [ t("library.set_progress.complete") ] : tier_words(standing))
-    parts.join(", ")
+    parts.compact.join(", ")
+  end
+
+  def set_tile_label(tile, goal: nil)
+    if tile.own?
+      TileLabel.new(name: custom_set_display_name(tile.own_set), kind: own_set_kind_line(tile.own_set), sentence: own_set_tile_name(tile.own_set, goal:))
+    else
+      TileLabel.new(name: SetLabel.for(tile.set), kind: set_kind_name(tile.set.kind), sentence: set_progress_sentence(tile.set, tile.standing, goal:))
+    end
+  end
+
+  def set_tile_path(tile)
+    tile.own? ? custom_set_path(token: tile.own_set.token) : library_set_path(kind: tile.set.kind, key: tile.set.key)
   end
 
   def set_album_value_text(standing)
@@ -30,15 +43,6 @@ module SetRowsHelper
       t("library.set_progress.tier", tier: set_tier_name(standing.reached_tier).downcase)
     end
     [ count, tier ].compact.join(", ")
-  end
-
-  def set_tier_mark(standing)
-    if standing.complete?
-      tag.span(class: "set-tier set-tier--complete") { tag.span(class: "set-tier__stamp") + tag.span(set_tier_name("complete")) }
-    elsif before_completion?(standing.reached_tier)
-      tier = standing.reached_tier
-      tag.span(class: "set-tier set-tier--#{tier}") { safe_join([ *reached_rank_lead(tier), metal_notches(tier), tag.span(set_tier_name(tier)) ].compact) }
-    end
   end
 
   def set_tier_ticks?(standing)
@@ -132,14 +136,6 @@ module SetRowsHelper
 
     def tier_tick_mark(tier)
       rank_tier?(tier) ? rank_mark(tier) : set_notches(NOTCHES.fetch(tier))
-    end
-
-    def reached_rank_lead(tier)
-      [ pixel_icon("check", class: "set-tier__check"), rank_mark(tier) ] if rank_tier?(tier)
-    end
-
-    def metal_notches(tier)
-      set_notches(NOTCHES.fetch(tier)) if NOTCHES.key?(tier)
     end
 
     def tier_words(standing)

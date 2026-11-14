@@ -6,9 +6,15 @@ en:
       line: You are signed in as %{name}. Go back to the Gameble app to keep playing there.
       title: Sign in to the app
   push_notices:
+    card_wanted:
+      body: "%{card}, missing from your goals, is on the market."
+      title: A card you want is on sale
     invitation_sent:
       body: "%{name} wants to be your friend."
       title: Friend request
+    reserve_full:
+      body: "Your %{number} capsules are waiting. Open one so the next ones keep coming."
+      title: Reserve full
     trade_accepted:
       body: "%{name} accepted your trade."
       title: Trade accepted
@@ -27,49 +33,122 @@ en:
       cancel: Cancel
       close: Close
       kept: 'Kept, without your Steam id or your name: your past trades, your first
-        discoveries, your contributions to the community goal, reports, the moderation
-        history and the log of game actions. This cannot be undone.'
+        discoveries, your contributions to the weekly mission, your market history (listings,
+        bids, entrusted cards, notices and PiCoin movements, your wallet emptied), reports,
+        the moderation history, the market''s alt-account signals, settings versions and
+        chart publications and the log of game actions. This cannot be undone.'
       label: Type %{word} to confirm
+      market_html: "Your balance of %{balance} PiCoins is destroyed without refund once your running listings are withdrawn and your bids released."
       note: 'Erased for good: your Steam id, your sign-in methods (and, at Clerk, the user that holds your email address), the phones your notifications go to, your name, your profile and its link,
-        the time of your last visit, your last data export and your latest activity,
-        your collection, your showcase, your set tiers, your achievements, your
-        card back unlocks and your active card back, your capsules, opened or not, your daily bonuses and your community goal rewards,
-        your friends, your invitations and your friend code, and your activity feed
-        entries: pulls, discoveries, reposts and every trade that names you. Your
+        the time of your last visit, your last data export, the announcements you closed, the release notes you saw and your latest activity,
+        your collection, your showcase, your set tiers, your custom sets, your goals, your achievements, your
+        card back unlocks and your active card back, your capsules, opened or not, your luck scores, your daily bonuses and your weekly mission rewards,
+        your friends, your invitations, your friend code, when you last opened each of your trades, your reactions to feed entries and your activity feed
+        entries: pulls, discoveries, reposts, purchases announced in the feed and every trade that names you. Your
         open trades will be cancelled.'
       submit: Delete for good
       title: Delete my account
       word: DELETE
+  avatars:
+    names:
+      alien: Alien
+      archivist: Archivist
+      astronaut: Astronaut
+      botanist: Botanist
+      cartographer: Cartographer
+      cat: Cat
+      chef: Chef
+      default: Classic
+      elder: Elder
+      executive: Executive
+      grand_master: Grand Master
+      guardian: Guardian
+      mechanic: Mechanic
+      novice: Novice
+      oracle: Oracle
+      owl: Owl
+      pilot: Pilot
+      punk: Punk
+      robot: Robot
+      slime: Slime
+      streamer: Streamer
+  achievement_claims:
+    create:
+      claimed: Reward claimed.
+      throttled: Too many attempts in a minute. Try again in a moment.
   achievements:
     back_reward: Unlocks the %{back} card back
+    avatar_reward: Unlocks the %{avatar} avatar
+    claim:
+      button: Claim
+      label: Claim the reward of %{name}
     conditions:
       boosters_10: Open 10 capsules
       boosters_100: Open 100 capsules
       boosters_500: Open 500 capsules
+      a_discovery_of_ours: Repost a card you pioneered
+      capital_gain: Resell an edition for at least twice what you paid for it at auction
+      competitive_tender: Sell a card that drew bids from 3 different players
+      a_strictly_professional_relationship: Complete three trades with the same player
+      diligence_beyond_the_call_of_duty: 10 capsules in a row with every card revealed one by one
+      diversified_portfolio: Hold five copies of the same game at once
+      excellence_in_mediocrity: Five Common cards in one standard capsule
       first_booster: Open a capsule
+      first_claim_all_rights_reserved: Be the pioneer of a card in a season
       first_complete_set: Complete a set
       first_epic: Get an Epic card
       first_legendary: Get a Legendary card
       first_repost: Repost a card
       first_trade: Complete a trade
+      historical_asset_management: A game released before 2000 and one released in 2025 or later in one capsule
+      hostile_takeover: Win an auction after being outbid on it twice
+      insider_trading: Resell 5 different editions for at least twice what you paid for them at auction
+      leave_request_denied: Collect the daily bonus 7 days in a row (UTC days)
+      luck_is_a_marketing_concept: 10 standard capsules in a row with no Rare or better card
+      market_concentration: Hold 10 different games of the same studio at once
+      night_owl: Open a capsule between 1 and 4 AM, your local time
+      no_time_to_waste: Open 10 capsules in under 30 seconds
+      packaging_irregularity: Two copies of the same game in one capsule
+      quarterly_targets_met: Sell 25 cards at auction
+      statistical_non_compliance: Two Rare or better cards in one standard capsule
+      streamlined_opening_procedure: 10 capsules in a row opened with "Reveal all"
       three_complete_sets: Complete 3 sets
     names:
-      boosters_10: 10 capsules
-      boosters_100: 100 capsules
-      boosters_500: 500 capsules
-      first_booster: First capsule
-      first_complete_set: First complete set
-      first_epic: First Epic
-      first_legendary: First Legendary
-      first_repost: First repost
-      first_trade: First trade
-      three_complete_sets: Three complete sets
+      boosters_10: Probation Period Completed
+      boosters_100: Outstanding Consumption Record
+      boosters_500: Loyalty Beyond Reasonable Limits
+      a_discovery_of_ours: A Discovery of Ours
+      a_strictly_professional_relationship: A Strictly Professional Relationship
+      capital_gain: Capital Gain
+      competitive_tender: Competitive Tender
+      diligence_beyond_the_call_of_duty: Diligence Beyond the Call of Duty
+      diversified_portfolio: Diversified Portfolio
+      excellence_in_mediocrity: Excellence in Mediocrity
+      first_booster: Your First Authorized Acquisition
+      first_claim_all_rights_reserved: First Claim, All Rights Reserved
+      first_complete_set: File Closed in Full
+      first_epic: Noted Above Expectations
+      first_legendary: An Exceptional Administrative Incident
+      first_repost: Unpaid Promotion
+      first_trade: Approved Mutual Assistance
+      historical_asset_management: Historical Asset Management
+      hostile_takeover: Hostile Takeover
+      insider_trading: Insider Trading
+      leave_request_denied: Leave Request Denied
+      luck_is_a_marketing_concept: Luck Is a Marketing Concept
+      market_concentration: Market Concentration
+      night_owl: Night Owl
+      no_time_to_waste: No Time to Waste
+      packaging_irregularity: Packaging Irregularity
+      quarterly_targets_met: Quarterly Targets Met
+      statistical_non_compliance: Statistical Non-Compliance
+      streamlined_opening_procedure: Streamlined Opening Procedure
+      three_complete_sets: Archival Excellence
     show:
       earned_label: Achievements earned
       groups:
         earned: Earned · %{count}
         to_earn: To earn · %{count}
-      more: More
       progress: "%{progress} of %{threshold}"
       summary:
         one: "%{earned} achievement earned out of %{total}"
@@ -85,7 +164,148 @@ en:
   authorization:
     forbidden: Your account has no access to this page.
     sign_in_required: Sign in to do that.
+  average_price:
+    basis:
+      one: Based on %{count} sale
+      other: Based on %{count} sales
+      zero: Based on %{count} sales
+    few_sales: few sales
+    no_sale: No sale
+    words:
+      few_sales: average price %{amount}, few sales
+      no_sale: no sale
+      priced: average price %{amount}
   back_office:
+    chart_switches:
+      cancel: CANCEL
+      confirm: "Publish %{chart} for every player?"
+      heading: PUBLIC CHARTS
+      intro: One switch per chart; nothing opens by itself.
+      names:
+        edition_sales: An edition's sales
+        rarity_prices: Prices in days of capsules and index
+        reactor: The Reactor
+      public_since: "public since %{date}"
+      publish: PUBLISH
+      published: "%{chart} is public."
+      read_only: Only an administrator can publish or unpublish a chart.
+      staff_only: staff only
+      unpublished: "%{chart} is visible to staff only."
+    release_notes:
+      assistant:
+        heading: "Claude's help"
+        condense: "Condense with Claude"
+        condensing: "Claude is reading the commits…"
+        translate: "Translate into English"
+        translating: "Claude is translating…"
+        hint: "CONDENSE reads the version's commits and suggests a shorter note, to check commit by commit before you use it. TRANSLATE fills the English from the French. Nothing is saved until you save."
+        no_key: "Claude's help is off: the Claude API key (ANTHROPIC_API_KEY) is not set."
+        translated: "The English is filled from the French. Read it over, then save."
+        condensed:
+          one: "Claude read %{count} commit. Check its suggestion below."
+          other: "Claude read %{count} commits. Check its suggestion below."
+        waiting: "The answer shows here within a minute; you can keep writing meanwhile."
+        failures:
+          nothing_to_translate: "Write the French title or text first."
+          no_changes: "GitHub gave no new features or fixes for this version."
+          stale_page: "This page is out of date. Reload it, then ask Claude again."
+          unavailable: "Claude could not answer. Try again in a moment; the fields have not changed."
+      review:
+        heading: "Claude's suggestion"
+        summary:
+          one: "%{count} commit: %{kept} kept, %{dropped} dropped, %{forgotten} forgotten."
+          other: "%{count} commits: %{kept} kept, %{dropped} dropped, %{forgotten} forgotten."
+        proposal: "Suggested note"
+        sources: "The version's commits"
+        apply: "Use this suggestion"
+        apply_hint: "Replaces the French title and text. Then translate into English and save."
+        too_long: "The suggestion is over %{length} characters: shorten it once you use it."
+        statuses:
+          kept:
+            one: "Kept in line %{lines}"
+            other: "Kept in lines %{lines}"
+          dropped: "Dropped: %{reason}"
+          forgotten: "Forgotten by Claude: check it"
+      create:
+        created: "The note is created, prefilled with %{features} new features and %{fixes} fixes from the commits between %{since} and %{head}. Rewrite them for players."
+        created_blank: "The note is created. GitHub did not give the release's commits: write it from scratch."
+        skipped: "%{version} needs no note: the reminder is gone."
+      edit:
+        body: Text
+        format_hint: "A line starting with ## opens a section, a line starting with a dash is one of its items, any other line is a paragraph. %{length} characters at most. A contributor written @login links to their GitHub profile; nothing else is read as formatting."
+        heading: "The note of %{version}"
+        intro:
+          draft: "A draft: players see nothing. Mark it ready once it is written in both languages."
+          ready: "Ready: players see it once, on the hub, as soon as production runs this release or a later one without its own note. Never on a release candidate."
+          skipped: "This release needs no note: players see nothing for it."
+        locales:
+          en: English
+          fr: Français
+        preview_heading: "Preview"
+        preview_language: "Language of the preview"
+        ready_hint: "Production shows the newest ready note whose version it runs or follows; a rollback takes it away by itself."
+        save: "Save the note"
+        state_heading: "Its state"
+        title: Title
+        to_draft: "Back to draft"
+        to_ready: "Mark ready"
+        to_skipped: "No note for this release"
+      index:
+        create: "Write the note"
+        edit: Edit
+        empty: "No note yet."
+        heading: "The release notes"
+        intro: "A note per production release, shown once to every player on the hub, in their language, once production runs it. Production runs %{running}."
+        list_heading: "Every note, newest release first"
+        new_heading: "A new note"
+        no_release: "no release"
+        prefill_hint: "The note starts from the release's commits on GitHub: its new features and fixes, to rewrite for players."
+        reads:
+          one: "seen by %{count} player"
+          other: "seen by %{count} players"
+        states:
+          draft: Draft
+          live: "Shown now"
+          ready: "Ready"
+          skipped: "No note"
+        untitled: "Untitled"
+        version: Version
+      save:
+        saved: "The note is saved."
+      states_changed:
+        draft: "The note of %{version} is back to draft."
+        ready: "The note of %{version} is ready."
+        skipped: "%{version} needs no note."
+    announcements:
+      create:
+        created: "The announcement is saved."
+      fields:
+        message_en: "Message in English"
+        message_fr: "Message in French"
+      index:
+        create: "Save the announcement"
+        dismissals:
+          one: "closed by one player"
+          other: "closed by %{count} players"
+          zero: "closed by no player"
+        empty: "No announcement yet."
+        heading: "The announcements"
+        intro: "A message shown to every player and visitor on a red banner under the top bar, in their language, %{length} characters at most. One announcement at a time; each player closes it for good. A new announcement shows again to everyone."
+        list_heading: "Every announcement, newest first"
+        new_heading: "A new announcement"
+        publish: "Show on the banner"
+        save: "Save the wording"
+        show_now: "Show it on the banner now"
+        states:
+          hidden: "Not shown"
+          shown: "On the banner"
+        withdraw: "Take off the banner"
+      publish:
+        published: "The announcement is on the banner. Any other announcement left it."
+      update:
+        updated: "The announcement is updated."
+      withdraw:
+        withdrawn: "The announcement left the banner."
     bans:
       actions:
         ban: BAN
@@ -133,23 +353,258 @@ en:
           m: size M
           s: size S
           xl: size XL
+    market_closings:
+      create:
+        closed: "The market is closed and the announcement is on the banner."
+      announcement_refused: "Each announcement needs text in both languages, at most 280 characters. The market was not closed."
+      stale: "Another administrator has just changed the market. The page was redrawn; check it and close again if needed."
+    market_health:
+      alert:
+        administrators_only: "Only an administrator can prepare this change."
+        ignore: "Ignore"
+        no_proposal: "No change within the bounds answers this alert. Adjust the settings by hand."
+        prepare: "Prepare this change"
+        proposal_minimum: "Its minimum price rises to %{minimum} so that a seller never loses."
+        proposal_stamp: "Proposal: raise the %{rarity} stamp from %{from} to %{to}."
+        title: "Alert"
+      days: "%{value} d"
+      income:
+        price: "Price"
+        rarity: "Rarity"
+        target: "Target"
+      indicators:
+        days_of_income:
+          title: "Prices in days of income"
+          todo: "A price far above its target calls for lower minimums or stamps, far below for the opposite. Nothing here changes by itself."
+          what: "A rarity's typical price divided by the daily income of a standard player: how many days of capsules a card costs."
+          why: "It shows whether the targets hold: a Legendary should take weeks, a Common minutes."
+        destroyed_share:
+          threshold: "Alert below %{value}."
+          title: "PiCoins destroyed against created, 30 days"
+          todo: "If the share stays under its threshold, raise a stamp so that every sale burns more."
+          what: "Over the last 30 days, stamps, commissions and forfeited balances destroyed this share of the PiCoins that entrusting created."
+          why: "When less is destroyed than created, money piles up in the wallets and prices rise for everyone."
+        picoins_per_player:
+          threshold: "Alert above %{value}."
+          title: "PiCoins per active player, 90 days"
+          todo: "If it keeps climbing past its threshold, raise the stamps so that more PiCoins are burned."
+          what: "The PiCoins in circulation divided by the players who opened a capsule in the last 90 days."
+          why: "The more each player holds, the higher prices go for everyone, newcomers included."
+        top_share:
+          threshold: "Alert above %{value}."
+          title: "Share held by the top 1%"
+          todo: "If it rises past its threshold, raise the stamp of the rarity the richest trade most."
+          what: "The share of all PiCoins held by the richest hundredth of the players who hold any."
+          why: "A high share means a few players set the prices and the others cannot follow."
+      lines:
+        todo: "What to do"
+        what: "What is happening"
+        why: "Why it matters"
+      no_threshold: "No alert threshold is set."
+      no_value: "—"
+      not_enough_data: "Not enough data yet"
+      show:
+        series:
+          heading: SERIES · 90 DAYS
+          rarities: Rarity shown
+        heading: "The economy's health"
+        indicators_heading: "The four indicators"
+        intro: "Each indicator is computed from the nightly snapshots and explains itself. Nothing on this page changes the market."
+        oldest_due:
+          age: "The oldest listing due to close is %{age} overdue."
+          heading: "The oldest listing due to close"
+          none: "No listing is due."
+        reconciliation:
+          balanced: "The night's reconciliation of %{day} found every wallet and the circulation balanced."
+          difference: "The night's reconciliation of %{day} found %{wallets} wallets off and a circulation difference of %{circulation} PiCoins."
+          heading: "The last reconciliation"
+        snapshot:
+          day: "Snapshot of %{day}."
+          destroyed_value: "%{destroyed} (%{forfeited} of them forfeited)"
+          facts:
+            circulation: "In circulation"
+            created: "Created"
+            destroyed: "Destroyed"
+            median_earnings: "Median daily earnings"
+            picoins_per_player: "PiCoins per active player"
+            top_share: "Top 1% share"
+          heading: "The day's snapshot"
+    market_openings:
+      create:
+        opened: "The market is open and the announcement is on the banner."
+    market_settings:
+      announcement_refused: "Each announcement needs text in both languages, at most 280 characters. The settings were not changed."
+      invalid: "Some settings were refused. Check the marked fields."
+      saved: "The settings are saved and the announcement is on the banner."
+      stale: "Another administrator has just changed the settings."
+    market_signals:
+      banned: "banned"
+      sentences:
+        bids_on_tied_seller: "Bids on the other account's listings, which another signal ties to it, in the last 30 days. Listings: %{listings}, bids: %{bids}."
+        minimum_price_sales: "Sold to the other account at the minimum price in the last 30 days: %{sales}."
+        near_maximum_opening: "Opened %{per_day} capsules or more a day on %{days} of the last 7 days, up to %{peak} in one day."
+        one_way_trades: "Trades in the last 7 days where it gave far more than it got: %{trades}. Copies given: %{given}, received: %{received}."
+        sales_outside_price: "Sold to the other account in the last 30 days at under half or over twice the edition's average price: %{sales} (%{below} below, %{above} above)."
+      show:
+        account: "Account"
+        caption: "Accounts matching an alt-account signal"
+        empty: "No account matches a signal."
+        facts: "Facts"
+        heading: "Alt-account signals"
+        intro: "Accounts that open capsules, trade, sell or bid the way an alt account feeding another would. A signal is a hint, not proof: it changes nothing on the account, and any action goes through the ban on the players page. The signals are replaced every night and no player sees them."
+        other_account: "Other account"
+        refreshed_at: "Refreshed"
+        signal: "Signal"
+      signals:
+        bids_on_tied_seller: "Bids on the listing of a tied account"
+        minimum_price_sales: "Repeated minimum-price sales"
+        near_maximum_opening: "Near-maximum capsule opening"
+        one_way_trades: "Repeated one-way trades"
+        sales_outside_price: "Sales outside the market price"
+    markets:
+      announcement:
+        hint: "Shown on the red banner in place of the current announcement, in each player's language, %{length} characters at most."
+        legend: "The announcement"
+      closing:
+        administrators_only: "Only an administrator can close the market. Moderators see this page read-only."
+        close: "Close the market"
+        heading: "Close the market"
+      navigation:
+        health: "Economy health"
+        label: "Market pages"
+        settings: "Market and settings"
+        signals: "Alt-account signals"
+      opening:
+        administrators_only: "Only an administrator can open the market. Moderators see this page read-only."
+        confirmations: "Confirmations"
+        heading: "Open the market"
+        odds: "The odds of every draw are published and truthful."
+        open: "Open the market"
+        reopen: "Reopen the market"
+        reopen_heading: "Reopen the market"
+        terms: "The terms of the market are in force and players can read them."
+      settings:
+        administrators_only: "Only an administrator can change the economy settings. Moderators see them read-only."
+        announcement_legend: "Announcement of this change"
+        groups:
+          alerts: "Alerts"
+          auctions: "Auctions"
+          averages: "Averages and the feed"
+          cap: "Daily cap"
+          commission: "Commission"
+          rarities: "By rarity"
+        heading: "Economy settings"
+        hints:
+          bounds: "From %{min} to %{max}."
+          currently: "Currently %{value}."
+          optional: "Optional: leave it blank to switch it off."
+        labels:
+          alert_destroyed_share_basis_points: "Alert: share of PiCoins destroyed (%)"
+          alert_picoins_per_player: "Alert: PiCoins per player"
+          alert_top_share_basis_points: "Alert: share held by the richest player (%)"
+          average_sale_count: "Sales in the average price (count)"
+          average_window_days: "Window of the average price (days)"
+          commission_basis_points: "Commission on a sale (%)"
+          daily_cap: "Daily cap (PiCoins per player)"
+          duration_long_hours: "Long auction (hours)"
+          duration_medium_hours: "Medium auction (hours)"
+          duration_short_hours: "Short auction (hours)"
+          feed_threshold_multiple: "Feed threshold (multiple of the average)"
+          increment_basis_points: "Minimum raise of a bid (%)"
+          preselected_duration_hours: "Preselected auction duration (hours)"
+          soft_close_seconds: "Soft close (seconds)"
+          unusual_maximum_multiple: "Unusual maximum (multiple of the average)"
+        moments:
+          auction_creation: "Applies from the next auction created."
+          close: "Applies to the sales that close from now on."
+          listing: "Applies from the next listing."
+          now: "Applies at once."
+        not_yet_open: "The economy settings become editable once the market has been opened for the first time."
+        prepared:
+          field: "Prepared change, it was %{value}."
+          note: "A change is prepared from an alert. Nothing is saved until you save it with the Brotherhood's announcement."
+        rows:
+          entrustment: "Entrustment pays"
+          income_days_target: "Target days of income"
+          minimum_price: "Minimum price"
+          stamp: "Stamp"
+        save: "Save the settings"
+        violations:
+          below_floor: "Below the no-loss floor: at least %{floor}."
+          durations_not_ascending: "The short, medium and long durations must grow in that order."
+          less_than_half: "At least half the current value: %{limit}."
+          more_than_double: "At most twice the current value: %{limit}."
+          not_a_number: "Enter a number."
+          out_of_range: "Enter a value from %{min} to %{max}."
+          preselected_not_a_duration: "The preselected duration must be one of the three durations."
+      show:
+        heading: "The market"
+        intro: "Open the market to the players, or reopen it after a suspension. The teaser stays at the market's address until the market itself replaces it."
+        state:
+          never_opened: "The market has never been opened."
+          open: "The market is open. First opened:"
+          suspended: "The market is suspended. Nothing can be entrusted until it reopens."
+        state_heading: "State"
     dashboard:
       show:
-        bans: The banned players
-        cards: The card press
         heading: The Brotherhood's back-office
-        history: The history
-        import_runs: The Steam import
-        jobs: The job queue
-        players: The players
-        queue:
-          one: One reported player awaits the officers.
-          other: "%{count} reported players await the officers."
-          zero: No reported player awaits the officers.
-        reports: The reports
-        roadmap: The roadmap
-        seasons: The catalog seasons
-        themes: The themes
+        groups:
+          moderation: Moderation
+          catalog: Catalog
+          communication: Communication
+          market: Market
+          technical: Technical
+        tiles:
+          reports:
+            title: The reports
+            text: The reported players awaiting a decision.
+          players:
+            title: The players
+            text: Find a player, ban or erase them.
+          bans:
+            title: The banned players
+            text: The banned players, and lifting a ban.
+          history:
+            title: The history
+            text: Every ban, lifted ban, dismissal and erasure.
+          import_runs:
+            title: The Steam import
+            text: Start an import, review and promote the batch.
+          seasons:
+            title: The seasons
+            text: Publish the catalog's next season.
+          themes:
+            title: The themes
+            text: Sort the Steam tags into themes.
+          cards:
+            title: The card press
+            text: Both renderings of a card side by side.
+          release_notes:
+            title: The release notes
+            text: What every player sees after an update.
+          announcements:
+            title: The announcements
+            text: The red banner, in English and French.
+          roadmap:
+            title: The roadmap
+            text: The landing's milestones and stories.
+          market:
+            title: The market
+            text: Open the market and announce it.
+          jobs:
+            title: The job queue
+            text: The queued, running and failed jobs.
+        status:
+          reports:
+            one: One waiting
+            other: "%{count} waiting"
+          themes:
+            one: One tag to sort
+            other: "%{count} tags to sort"
+          import_ready: Batch to review
+          import_running: Running
+          release_note_missing: "%{version} without a note"
+          announcement_shown: Live
     history:
       index:
         action: Action
@@ -287,6 +742,11 @@ en:
       index:
         action: Ban or lift the ban
         caption: Players, the newest account first
+        census:
+          active_recently: Seen in the last 7 days
+          joined_recently: Joined in the last 7 days
+          matching: Matching “%{query}”
+          total: Players
         empty: No player has an account yet.
         heading: The players
         history: The history
@@ -297,7 +757,11 @@ en:
           id. BAN suspends them without waiting for a report; LIFT THE BAN gives them
           back their sign-in and their profile. An administrator can ERASE the account
           of a banned player, which frees their Steam id, so they could register again without the ban. An officer acts only on a lower rank than their own.
+        joined_at: Joined
+        last_seen_at: Last seen
+        never_seen: Never
         no_match: No player matches “%{query}”.
+        only_one: Showing one player.
         player: Player
         reports: The reports
         role: Role
@@ -308,6 +772,8 @@ en:
         search_label: Search for a player
         search_placeholder: Name or Steam id
         search_submit: Search
+        show_all: Show every player
+        sign_ins: Sign-in
         state: Standing
         states:
           banned: Banned
@@ -334,81 +800,58 @@ en:
         latest_at: Latest report
         player: Player
         total: Total
-    roadmap:
-      back_to_milestone: Back to the milestone
-      columns:
-        actions: Actions
-        order: Order
-        position: Place
-        shown: Landing
-        status: Status
-        wording_en: English
-        wording_fr: French
+    roadmaps:
+      translate:
+        nothing: "Every line already has its English: nothing to translate."
+        unavailable: "Claude could not answer. Try again in a moment; the fields have not changed."
+        translated:
+          one: "Claude translated %{count} line. Read it over, then save."
+          other: "Claude translated %{count} lines. Read them over, then save."
       fields:
         shown: Shown on the landing
         status: Status
         wording_en: English wording
         wording_fr: French wording
-      move:
-        down: Down
-        down_label: Move “%{wording}” down
-        up: Up
-        up_label: Move “%{wording}” up
+      milestone:
+        add_story: Add a story
+        down: Move the milestone down
+        legend: Milestone
+        remove: Remove the milestone
+        remove_confirm: Remove this milestone and all its stories? They are deleted
+          when you save.
+        up: Move the milestone up
+      show:
+        translate: "Translate the empty lines into English"
+        translating: "Claude is translating…"
+        translate_hint: "Claude fills the English of every line without one, from the French. Read them over, then save."
+        add_milestone: Add a milestone
+        heading: The roadmap
+        intro: Every milestone of the landing's roadmap and the stories under it, in
+          one form. Edit, add, move and remove rows, then save everything at once;
+          nothing changes on the site before that. The order of the rows is the order
+          on the landing and on the roadmap page.
+        locales:
+          en: English
+          fr: French
+        milestones_heading: Milestones and stories
+        preview_heading: On the home page
+        preview_hint: What the landing's roadmap would show with the rows as they
+          stand below, saved or not. Hidden rows stay out of it, and the landing keeps
+          only its first milestones and stories.
+        preview_language: Language of the preview
+        save: Save the roadmap
       statuses:
         done: Done
         in_progress: In progress
         to_come: To come
-      visibility:
-        hidden: Hidden
-        shown: Shown
-    roadmap_milestones:
-      edit:
-        add_story: Add a story
-        all_milestones: The whole roadmap
-        delete: Delete
-        delete_confirm: Delete the story “%{wording}”? It cannot be brought back.
-        delete_label: Delete “%{wording}”
-        edit_story: Edit
-        edit_story_label: Edit “%{wording}”
-        heading: Milestone “%{wording}”
-        intro: Created for the epic %{epic}. Its wording, status and visibility are
-          yours; the next deploys leave them as they are.
-        no_stories: No story under this milestone yet.
-        save: Save the milestone
-        stories: Its stories
-        stories_caption: Stories of the milestone, in order
-      index:
-        caption: Roadmap milestones, in order
-        edit: Edit
-        edit_label: Edit “%{wording}”
-        empty: No milestone yet. The next deploy creates one for each epic of the
-          initiative.
-        epic: Epic
-        heading: The roadmap
-        intro: 'The roadmap the landing shows. Every deploy gives each new epic of
-          the initiative its milestone, hidden and to come, worded with the epic''s
-          title: word it in both languages before you show it. Milestones are never
-          created or deleted here; hide the one whose epic is gone.'
-        stories: Stories
-      move:
-        moved: The milestone has moved, officer.
+      story:
+        down: Move the story down
+        legend: Story
+        remove: Remove the story
+        remove_confirm: Remove this story? It is deleted when you save.
+        up: Move the story up
       update:
-        updated: The milestone is saved, officer.
-    roadmap_stories:
-      create:
-        created: The story is added, officer.
-      destroy:
-        deleted: The story is deleted, officer.
-      edit:
-        heading: A story of “%{milestone}”
-        save: Save the story
-      move:
-        moved: The story has moved, officer.
-      new:
-        heading: A new story for “%{milestone}”
-        save: Add the story
-      update:
-        updated: The story is saved, officer.
+        saved: The roadmap is saved, officer.
     seasons:
       index:
         caption: Catalog seasons, by number
@@ -566,6 +1009,11 @@ en:
     card_label: "%{title} — %{details}"
     cards_per_pack: Cards per capsule
     close: Close
+    continue: Continue
+    daily:
+      collect: Collect
+      ready: Ready
+      title: Daily capsule
     hint_swipe: Swipe the card to store it · or tap it
     hint_tap: Tap the card to reveal it
     in_reserve: In reserve
@@ -577,19 +1025,21 @@ en:
     open_next: Open the next one
     origin:
       bonus: DAILY CAPSULE
-      reward: GOAL REWARD
+      reward: MISSION REWARD
     origin_label: Origin
     reserves:
       empty_special: No special capsule yet
       empty_standard: No standard capsule yet
       label: Capsule reserves
     repost: Repost
+    first_copy: New
     reserve: Reserve
     reserve_empty: Reserve empty
     reserve_full: Reserve full
     result: Capsule result
     reveal_all: Reveal all
     see_card: See the card
+    skip: Skip
     state: State
     states:
       arming: Arming
@@ -652,9 +1102,11 @@ en:
       empty_next: Next capsule in %{time}
       face_down: Card %{position} of %{total}, face down. Reveal.
       face_up: "%{card}, %{rarity}. See the card."
+      face_up_goals: "%{card}, %{rarity}, %{goals}. See the card."
       face_up_store: "%{card}, %{rarity}. Store the card."
-      failed: The opening did not go through. Check your connection or reload the
-        page, then try again.
+      face_up_store_goals: "%{card}, %{rarity}, %{goals}. Store the card."
+      failed: No connection. Your capsule is safe. Try again.
+      goal_reached: Goal reached
       hint_done:
         one: Capsule inventoried · +%{n} card in the collection
         other: Capsule inventoried · +%{n} cards in the collection
@@ -670,7 +1122,7 @@ en:
       reposted: Card reposted to the feed.
       origin_bonus: DAILY CAPSULE
       origin_opening: 'OPENING · %{origin}'
-      origin_reward: GOAL REWARD
+      origin_reward: MISSION REWARD
       reserve_count:
         one: "%{n} capsule"
         other: "%{n} capsules"
@@ -684,6 +1136,7 @@ en:
       tab_standard: "STANDARD · %{n}"
       tray_count: "%{n} / %{total}"
       tray_slot: "%{card}, %{rarity}. Enlarge."
+      tray_slot_goals: "%{card}, %{rarity}, %{goals}. Enlarge."
       zoom_line: "%{rarity} · %{year}"
     strip_title: Season %{number} · Grand catalogue
     strip_title_plain: Grand catalogue
@@ -696,39 +1149,64 @@ en:
   boosters:
     show:
       title: Capsule opening
+  bottom_sheet:
+    close: Close
   card_backs:
-    chosen:
-      text: "%{name} will show on your face-down cards."
-      title: Card back equipped
     conditions:
       achievement: Unlock the matching achievement.
       always: Every player has it.
-      event: Given to those who took part in the event.
-      goal: Take part in the community goal.
       set_tier: Collect half of the %{set} set.
     names:
+      amethyste: Amethyst
+      argent: Silver
+      assidu: Assiduous
       aurore: Dawn
       centurion: Centurion
-      confrere: Confrère
+      contrat: Contract
+      emeraude: Emerald
       etoile-dor: Golden star
-      millesime-2017: Vintage 2017
-      saison-1: Season 1
-      soldes-hiver: Winter sales
+      rubis: Ruby
+      siege-social: Headquarters
       standard: Standard
+      trefle-fane: Wilted clover
     unlocked:
       title: Card back unlocked
   card_details:
+    actions:
+      collection: Collection
+      links: Links
+      market: Market
     copies:
       one: "%{count} copy"
       other: "%{count} copies"
+    copies_reserved: "%{copies}, including %{reserved}"
+    reserved:
+      and: " and "
+      in_trade:
+        one: "%{count} in a trade"
+        other: "%{count} in trade"
+      on_sale:
+        one: "%{count} on sale"
+        other: "%{count} on sale"
+    edition_line: "%{rarity} · %{season}"
     editions_line: "%{rarity}: %{seasons}"
     editions_more:
       one: "%{count} more rarity"
       other: "%{count} more rarities"
+    entrust:
+      button: Entrust
+      reserved:
+        one: "%{count} reserved copy"
+        other: "%{count} reserved copies"
+        zero: No reserved copies
+    list:
+      button: Put up for sale
     facts:
+      average_price: Average price S%{number}
       copies: Copies
       editions: Editions
       genre: Genre
+      goals: Goals
       pioneer: Pioneer
       publisher: Publisher
       rarity: Rarity
@@ -737,18 +1215,21 @@ en:
       steam_reviews: Steam reviews
       year: Year
     kicker: Card file
+    more_editions:
+      one: "%{count} more edition"
+      other: "%{count} more editions"
     next: Next card
     no_copies: None
     no_editions: None
     open: "%{title}, %{year}, %{rarity}, season %{season}"
     open_not_owned: "%{title}, %{year}, %{rarity}, season %{season}, not owned"
     pioneer:
-      anonymous: An anonymous player
       dated: on %{date}
     position: "%{position} / %{total}"
     preview:
       description: 'A card of Gameble, your Steam games as collectible cards. Sign
         in: ten capsules wait for you.'
+      image_alt: The card %{title} (%{rarity}) with its Steam art
       title: "%{title} — %{rarity}"
     previous: Previous card
     season_number: Season %{number}
@@ -769,6 +1250,17 @@ en:
       other: "%{percent} positive · %{reviews} reviews"
     store: See on Steam
     swipe: swipe to browse
+    trade:
+      asked: Already asked
+      copies:
+        one: "%{count} copy"
+        other: "%{count} copies"
+      intro: These friends have a free copy. The trade opens with this card already asked for, and you can add or change cards before you send it.
+      propose: Propose
+      show_more:
+        one: Show %{count} more friend
+        other: Show %{count} more friends
+      title: Trade for this card
   cards:
     face:
       image_missing: Image unavailable
@@ -782,6 +1274,7 @@ en:
       pitch_title: Your Steam games, as collectible cards.
       profile: Profile
       sign_in: Open my first capsules
+      trade: Trade
       update_browser: Your browser is too old to sign in to Gameble. Update it to
         play.
   catalog:
@@ -798,6 +1291,190 @@ en:
       uncommon: Uncommon
     sets:
       ufos: The UFOs
+  charts:
+    staff_only: VISIBLE TO STAFF
+    circulation:
+      words:
+        series:
+          circulation: In circulation
+        tooltip: "%{series}: %{value}"
+    duration:
+      days: "%{value} d"
+      days_spoken:
+        one: "%{value} day"
+        other: "%{value} days"
+        zero: "%{value} days"
+      hours: "%{hours} h %{minutes}"
+      hours_spoken:
+        one: "%{count} hour %{minutes}"
+        other: "%{count} hours %{minutes}"
+        zero: "%{count} hours %{minutes}"
+      minutes: "%{count} min"
+      minutes_spoken:
+        one: "%{count} minute"
+        other: "%{count} minutes"
+        zero: "%{count} minutes"
+    edition_sales:
+      caption: Each sale of this edition within the average price window, in PiCoins
+      columns:
+        average: Average price (PiCoins)
+        day: Day
+        sale: Sale price (PiCoins)
+      empty: "No sale in the last %{window} days."
+      few_sales:
+        one: "%{count} sale in %{window} days, too few sales for an average price; last sale at %{last}."
+        other: "%{count} sales in %{window} days, too few sales for an average price; last sale at %{last}."
+        zero: "No sale in %{window} days."
+      legend:
+        average: Average price
+        floor: "%{rarity} floor · %{amount}"
+        sale: A sale
+      summary:
+        one: "%{count} sale in %{window} days; last sale at %{last}, average price %{average}."
+        other: "%{count} sales in %{window} days; last sale at %{last}, average price %{average}."
+        zero: "No sale in %{window} days."
+      title: SALES OF THIS EDITION
+      tooltip: "%{series}: %{value}"
+    indicators:
+      alert: "ALERT %{value}"
+      alert_name: Alert threshold
+      alert_phrase: "alert at %{value}"
+      columns:
+        day: Day
+      days_of_income:
+        title: "PRICE IN DAYS OF INCOME · %{rarity}"
+      destroyed_share:
+        title: DESTROYED / MINTED · ROLLING 30 D
+      no_threshold: no threshold
+      no_value: "%{indicator}: no value yet."
+      picoins_per_player:
+        title: PICOINS PER ACTIVE PLAYER · 90 D
+      summary: "%{indicator}: %{value}, %{threshold}."
+      target: "TARGET %{value}"
+      target_name: Target
+      target_phrase: "target %{value}"
+      ticks:
+        days: "%{value} d"
+        picoins: "%{value}"
+        share: "%{value}%"
+      tooltip: "%{series}: %{value}"
+      top_share:
+        title: TOP 1% SHARE
+    hide_table: HIDE THE TABLE
+    missing: "—"
+    missing_spoken: no value
+    one_below: 1
+    rarity_prices:
+      change_html: "%{change} in 90 d"
+      columns:
+        day: Day
+      empty: No price yet.
+      heading: WHAT A CARD COSTS
+      index:
+        caption: Price index per rarity, base 100 on the first day with a price
+        legend: "%{rarity} · %{index}"
+        summary: "%{rarity} cards cost %{days} of capsules; their index is at %{index}, the highest of the five."
+        title: PRICE INDEX
+      line: A card is counted in days of capsules, and that measure stays fair when PiCoins multiply.
+      regular: "Regular player: 40 to 50 capsules a day, the median income of active players."
+      subtitle: average price, in days of a regular player's capsules
+      tiles: Price of each rarity
+      tooltip: "%{series}: %{value}"
+      window: Last 90 days
+    reactor:
+      circulation:
+        caption: PiCoins in circulation at the end of each day
+        summary: "%{last} PiCoins in circulation on %{last_day}, against %{first} on %{first_day}."
+        title: PICOINS IN CIRCULATION
+      columns:
+        balance: Balance (PiCoins)
+        circulation: In circulation (PiCoins)
+        day: Day
+        destroyed: Destroyed (PiCoins)
+        minted: Minted (PiCoins)
+      empty: No figure over these 30 days yet.
+      figures:
+        circulation: IN CIRCULATION
+        destroyed: DESTROYED · 30 D
+        minted: MINTED · 30 D
+        ratio: DESTROYED / MINTED
+      flows:
+        caption: PiCoins minted and destroyed per day
+        summary: "Over 30 days, %{minted} PiCoins minted and %{destroyed} destroyed (%{ratio}). %{circulation} in circulation."
+        title: MINTED AND DESTROYED PER DAY
+      heading: THE BROTHERHOOD'S REACTOR
+      line: "« The 100-6-Tron mints every PiCoin it hands you and burns every stamp and every effort to ash. Here are its books, unvarnished. »"
+      window: Last 30 days
+      words:
+        balance: "Day's balance: %{amount}"
+        series:
+          destroyed: Destroyed (stamps and efforts)
+          minted: Minted (cards entrusted)
+        tooltip: "%{series}: %{value}"
+    show_table: SHOW THE TABLE
+    table_suffix: ": %{title}"
+    spoken:
+      millions:
+        one: "%{number} million PiCoins"
+        other: "%{number} million PiCoins"
+        zero: "%{number} million PiCoins"
+      minus: "minus %{amount}"
+      plus: "plus %{amount}"
+      thousands:
+        one: "%{number} thousand PiCoins"
+        other: "%{number} thousand PiCoins"
+        zero: "%{number} thousand PiCoins"
+  custom_sets:
+    album:
+      delete: Delete
+      edit: Edit
+    delete_dialog:
+      cancel: Cancel
+      close: Close
+      confirm: Delete
+      text: The set leaves your sets, with its goal if it is one. Your cards stay in your collection.
+      title: Delete “%{name}”?
+    deleted:
+      text: "“%{name}” is no longer one of your sets."
+      title: Set deleted
+    editor:
+      cancel: Cancel
+      chips:
+        all: All
+        missing: Missing
+        owned: Owned
+      close: Close
+      discard:
+        close: Close
+        confirm: Leave without saving
+        keep: Keep editing
+        text: Your changes to this set will be lost.
+        title: Leave without saving?
+      edit_title: Edit the set
+      empty: No game to show.
+      filters: Show
+      load_more: Load more
+      loading: Loading the games…
+      name: Set name
+      new_title: New set
+      none: No game found for “%{query}”.
+      owned: "%{title}, owned"
+      placeholder: Search a game of the catalog
+      range: "%{min} to %{max}"
+      save: Save
+      search: Search a game
+      strings:
+        games:
+          one: "%{count} game"
+          other: "%{count} games"
+          zero: "%{count} games"
+        in_set: ", in the set"
+        name_count: "%{count} / %{max}"
+        picked: Selected · %{count}
+      unowned: "%{title}, not owned"
+    library:
+      name: My Steam library
+    throttled: Too many changes to your sets in a minute. Try again in a moment.
   daily_bonuses:
     create:
       collected: A capsule joins your reserve. The next one will be ready on %{time}.
@@ -826,6 +1503,9 @@ en:
     - Friday
     - Saturday
     formats:
+      chart_day: "%b %-d"
+      day_month: "%B %-d"
+      day_month_first: "%B %-d"
       long_day: "%B %-d, %Y"
       long_day_first: "%B %-d, %Y"
       month_year: "%B %Y"
@@ -845,6 +1525,15 @@ en:
     - December
   errors:
     accounts:
+      incomplete_release_note: "A ready note needs its title and its text in both languages."
+      invalid_release_note: "A title holds 80 characters at most, a text 1500."
+      invalid_release_note_state: "That state does not exist."
+      invalid_release_version: "Write the version as vMAJOR.MINOR.PATCH, like v1.3.0."
+      release_note_not_found: "That note could not be found."
+      release_version_taken: "That release already has a note."
+      announcement_not_found: "That announcement could not be found."
+      announcement_not_shown: "That announcement is no longer on the banner."
+      invalid_announcement: "Write the announcement in both languages, 280 characters at most each."
       invalid_push_device: That device could not be registered for notifications. Try again.
       administrator_required: Only an administrator can do that, officer.
       already_banned: That player is already banned, officer.
@@ -853,6 +1542,7 @@ en:
       cannot_dismiss_self: You cannot dismiss the reports against you, officer.
       cannot_report_self: You cannot report your own profile.
       clerk_unavailable: The sign-in service is not answering. Try again in a moment.
+      email_known_apple: An account already exists with this email through Apple. Sign in with Apple, then add this sign-in from the settings.
       email_known_discord: An account already exists with this email through Discord. Sign in with Discord, then add this sign-in from the settings.
       email_known_email: An account already exists with this email through an email code. Sign in with your email, then add this sign-in from the settings.
       email_known_google: An account already exists with this email through Google. Sign in with Google, then add this sign-in from the settings.
@@ -878,16 +1568,21 @@ en:
       reason_too_long: The reason for a ban holds 500 characters at most, officer.
       sign_in_failed: The sign-in failed on our side. Try again in a moment.
       staff_required: Only the moderation team can do that.
+      steam_identity_required: Link a Steam account first.
       steam_taken: This Steam account already belongs to another Gameble account.
     catalog:
       already_numbered: The cards of that season are numbered already, officer.
-      at_edge: That entry cannot move any further that way, officer.
+      card_season_not_published: That card is in no published season, so it has no preview
+        image.
+      duplicate_row: That row appears twice in the roadmap, officer.
       empty_season: The draft season holds no card yet, officer. Run an import first.
       empty_tier: The draft season is too small to fill all five rarities, officer.
         Import more games first.
       invalid_card: 'The scribes cannot enter that card in the ledger: its particulars
         are incomplete or out of order.'
-      invalid_direction: An entry of the roadmap moves only up or down, officer.
+      invalid_roadmap: Some rows of the roadmap need fixing, officer. Nothing was saved.
+      invalid_share_image: The preview image of that card is not a PNG of a card, in
+        one of the Brotherhood's tongues.
       invalid_status: That status is not one of the roadmap's, officer.
       invalid_tag: That is not a Steam tag the ledgers know, officer.
       invalid_theme_name: A theme needs a name in French and in English, of 60 characters
@@ -902,11 +1597,13 @@ en:
         pass completes.
       no_draft: There is no draft season to publish, officer.
       no_published_season: No published season bears that number, officer.
+      row_not_found: A milestone or a story of this form is no longer on the roadmap, officer. Reload the page and look again.
       staged_batch_waiting: Staged cards wait beside the draft season, officer. Promote
         them or discard them before publishing.
       stale_draft: That draft is no longer the one in the ledgers, officer. Reload
         the page and look again.
-      story_not_found: That story is no longer on the roadmap, officer.
+      stale_render: That card changed while its preview image was drawn, so that image
+        was not kept.
       ufo_share_over_limit: The UFOs hold %{share} of the draft season's cards, officer,
         above the %{limit} allowed. Attach more tags to themes on the themes page
         and rescore the latest import, then publish.
@@ -922,15 +1619,35 @@ en:
         Published, they would land in the UFOs and leave the franchise, studio and
         hall of fame sets short, unseen. Run steam:fill_card_sources, then publish.'
     game:
+      unknown_chart: This chart does not exist.
+      achievement_already_claimed: You have already claimed this reward.
+      achievement_not_earned: You have not earned this achievement.
       already_collected: You have already collected today's capsule. The next one
         will be ready on %{time}.
       already_friends: You are already friends.
       already_reposted: You reposted this card today. Try again tomorrow.
       already_sent: Invitation already sent.
       back_locked: This card back is still locked.
+      avatar_locked: This avatar is still locked.
+      unknown_avatar: This avatar does not exist.
       card_already_showcased: This card is already in your showcase.
       card_not_owned: You do not own this card.
       card_not_showcased: This card is not in your showcase.
+      custom_set_not_found: That set does not exist or is not yours.
+      goal_set_complete: This set is already complete.
+      library_set_empty: Your Steam library holds no catalog game yet.
+      goal_set_not_found: This set is not in the published season.
+      game_not_in_catalog: A chosen game is not in the catalog. Reload the page and try again.
+      name_required: NAME REQUIRED · Give your set a name.
+      name_taken: NAME TAKEN · Another of your sets has this name.
+      name_too_long: '40 characters at most: shorten the name of the set.'
+      too_few_games:
+        one: 3 GAMES AT LEAST · Add %{count} more game to save the set.
+        other: 3 GAMES AT LEAST · Add %{count} more games to save the set.
+        zero: 3 GAMES AT LEAST · Add %{count} more games to save the set.
+      too_many_games: 50 GAMES AT MOST · Remove a game to add another.
+      too_many_goals: 5 goals at most. Remove a goal to add another one.
+      too_many_sets: 10 SETS AT MOST · Remove a set to create another.
       friend_profile_private: "%{name}'s profile is private: trades are closed."
       insufficient_copies: 'You do not have enough free copies of an offered card:
         some are already in another trade.'
@@ -942,6 +1659,8 @@ en:
       invalid_request: Ask for one to four different cards, with a quantity of at
         least one each.
       invalid_reserve: That reserve does not exist. Reload the page and try again.
+      invalid_reveal_mode: The way the capsule was revealed could not be read. Reload
+        the page.
       invalid_time: The time sent could not be read. Reload the page.
       no_pack_available: Your reserve is empty. The next capsule is on its way.
       no_season: No season of cards is open yet. Come back later for the daily capsule.
@@ -949,10 +1668,14 @@ en:
       not_allowed: That is not yours to do in this trade.
       not_found: That invitation is no longer there.
       not_friends: You can only trade with a friend.
+      not_latest_pack: Only your most recently opened capsule records how it was revealed.
       own_code: That is your own code.
       own_link: That is your own link.
       own_profile_private: 'Your profile is private: trades are closed.'
+      pack_not_available: This capsule is no longer in your reserve.
+      pack_not_found: That capsule could not be found.
       player_required: Sign in with an active account to do that.
+      entry_not_found: That feed entry could not be found.
       position_out_of_range: The showcase has no such place.
       repost_limit_reached: You have reposted a lot this past hour. Try again later.
       request_exceeds_holdings: Your friend does not hold that many copies of a card
@@ -965,8 +1688,7 @@ en:
       showcase_edge: This card cannot move any further.
       showcase_full: 'Showcase full: remove a card to add another.'
       title_not_earned: You have not earned that title.
-      trade_already_open: You already have an open trade with this friend. Settle
-        it first.
+      trade_already_sent: You already sent this proposal to %{name}.
       trade_changed: This trade changed since you opened it. Check its new terms,
         then answer again.
       trade_expired: 'That trade has expired: its 7 days are over.'
@@ -975,11 +1697,41 @@ en:
       trade_not_open: That trade is already closed.
       trade_side_empty: 'Nothing to receive yet: choose what you want from %{name}''s
         collection, then send it back.'
+      unknown_achievement: That achievement does not exist.
       unknown_back: That card back does not exist.
       unknown_code: No player has that code.
       unknown_direction: Unknown direction.
+      unknown_reaction: That reaction does not exist.
       unknown_season: You did not earn this card back in that season.
       unknown_player: This invitation link is not valid.
+      amounts_changed: The amounts changed while you were choosing. They are drawn again below; check them and validate once more.
+      empty_batch: Choose at least one copy to entrust.
+      administrator_required: Only an administrator can do that.
+      market_already_closed: The market is already closed.
+      market_already_open: The market is already open.
+      invalid_announcement: Each announcement needs text in both languages, at most 280 characters. The market was not opened.
+      invalid_settings: Some settings were refused. Nothing was changed.
+      odds_not_confirmed: Confirm that the odds are published and truthful before opening the market.
+      settings_changed: The market settings changed while you were on this page. Reload it and check them.
+      terms_not_confirmed: Confirm that the market terms are in force before opening the market.
+      listing_not_found: This listing does not exist.
+      listing_not_closable: This auction cannot be closed.
+      auction_ended: This auction has ended.
+      bid_standing: A bid just arrived. The sale can no longer be cancelled.
+      below_minimum: "At least %{amount} is needed."
+      listing_withdrawn: This listing was withdrawn.
+      more_than_available: "You can commit at most %{amount}."
+      own_listing: You cannot bid on your own listing.
+      market_busy: The Archives are busy right now. Try again in a moment.
+      market_closed: The market is closed for now.
+      copy_not_free: This card is no longer available.
+      invalid_duration: Choose one of the listed durations.
+      invalid_price: Enter a whole number of PiCoins, above zero.
+      stamp_not_covered: "You are short of %{amount} PiCoins for the stamp."
+      start_below_minimum: "At least %{amount} for a %{rarity}."
+      no_rarity: One of these cards has no rarity yet, so the Brotherhood cannot value it.
+      not_enough_copies: You do not have that many free copies of one of these cards.
+      nothing_fits: No card fits within your cap for today. It renews at 00:00 UTC.
     steam:
       already_published: The cards of that run are already published in a season,
         officer. Start a new import to fill the next draft.
@@ -1019,15 +1771,40 @@ en:
         discoveries: Discoveries
         pulls: Pulls
         reposts: Reposts
+        sales: Sales
         trades: Trades
       filters_label: Filter by type
+      filters_opener: 'Type: %{type}'
       first_discovery: First discovery
-      more: More
+      headline:
+        pulled: Pulled
+        reposted: Reposted
+        bought_html: Bought for %{amount}
+        set_reached:
+          complete: Completes the set
+          metal_html: Reaches %{tier}
+          rank_html: Reaches the %{tier} tier
+        sets_reached:
+          one: Reaches %{count} tier
+          other: Reaches %{count} tiers
+          zero: Reaches %{count} tiers
+        trade_html: "%{card} for %{partner_card}"
+        traded_html: Trade with %{partner}
+        verdict: The Flukeometer's verdict
+        verdict_title: Last week's luckiest member
       nameless: Nameless player
       no_friends: Add friends to follow their pulls.
+      pages:
+        label: Pages of the feed
+        newer: Newer entries
+        newest: Newest
+        next: Older entries
       pulled_html: "%{name} pulled %{card}"
       repost_tag: Repost
       reposted_html: "%{name} reposted %{card}."
+      sale_html: "%{name} bought %{card} for %{amount}."
+      sale_tag: Sale
+      screen_title: Activity feed
       set_reached:
         adept_html: "%{name} reaches the Adept tier in the %{set} set."
         apprentice_html: "%{name} reaches the Apprentice tier in the %{set} set."
@@ -1059,11 +1836,172 @@ en:
       title: Activity feed
       trade_tag: Trade
       traded_html: "%{name} and %{partner} traded %{card} for %{partner_card}"
+      verdict_html: "The Flukeometer has ruled: %{name} is last week's luckiest member. %{register}"
+      verdict_register: See the leaderboard
+      verdict_tag: Verdict
+  filters:
+    price:
+      maximum: Maximum price
+      minimum: Minimum price
+      title: Price
+  fortune_panels:
+    panel:
+      no_standing: No capsule opened this week.
+      title: The Flukeometer
+  fortune_registers:
+    show:
+      empty:
+        all_time: No member has opened a capsule yet.
+        week: No member has opened a capsule this week yet.
+      hidden_player: Private member
+      intro: 'The Brotherhood ranks its members by the luck of their capsules: what
+        their cards scored against what the capsules promise. Each week, the luckiest
+        10% are Privileged.'
+      head:
+        member: Member
+        rarities: Rarities pulled
+      mine:
+        label: "Your luck · %{period}"
+        rank: "#%{rank} of %{total}"
+      pages_label: Pages
+      periods:
+        all_time: Total
+        week: This week
+      privileged_cut: "Privileged threshold · the luckiest 10%"
+      row:
+        capsules: Capsules
+        hidden: "–"
+        luck: Luck
+        open_card: See %{name}'s card
+      sorts:
+        capsules: Most capsules
+        luck: Luckiest
+      sorts_label: Order
+      summary:
+        capsules:
+          all_time: Capsules opened
+          week: Capsules this week
+        members:
+          all_time: Members ranked
+          week: Active this week
+        privileged: Privileged of %{total}
+      title: The Flukeometer
+  fortunes:
+    gauge:
+      crowd:
+        one: "%{count} ranked player on a scale from −500 to +500, the largest group near %{index}."
+        other: "%{count} ranked players on a scale from −500 to +500, the largest group near %{index}."
+      empty: No player is ranked for this period yet.
+      marked: You stand at %{index}, rank %{rank} of %{total}.
+      privileged: PRIVILEGED
+      you: YOU
+    labels:
+      aggressively_average:
+        text: "Your pulls match the forecast exactly. The Brotherhood thanks you for your compliance."
+        title: "Aggressively Average"
+      black_cat_friend:
+        text: "Statistically, you have walked under several ladders this week."
+        title: "Black Cat Friend"
+      broke_a_mirror:
+        text: "A mirror was broken somewhere, and the bill was sent to you."
+        title: "Broke a Mirror"
+      cursed_by_excel:
+        text: "Even the spreadsheet that computes your luck has started to pity you."
+        title: "Cursed by Excel"
+      enemy_of_merit:
+        text: "Your results exceed what merit alone can explain. Management has been informed."
+        title: "Enemy of Merit"
+      ghosted_by_luck:
+        text: "Luck has seen your capsules and chosen not to reply."
+        title: "Ghosted by Luck"
+      human_horseshoe:
+        text: "Fellow members now rub your sleeve before opening a capsule."
+        title: "Human Horseshoe"
+      indecently_lucky:
+        text: "Your pulls defy statistical expectations. The Brotherhood is watching you."
+        title: "Indecently Lucky"
+      main_character:
+        text: "The plot seems to revolve around you this week. The Brotherhood asks you to stay humble."
+        title: "Main Character"
+      mildly_annoyed:
+        text: "A Common where an Uncommon was owed. Nothing the Brotherhood would call a pattern."
+        title: "Mildly Annoyed"
+      probably_cheating:
+        text: "Your capsules are under review by the audit department. Please keep your hands visible."
+        title: "Probably Cheating"
+      punching_bag:
+        text: "The odds practise on you. The Brotherhood admires your resilience."
+        title: "RNG Punching Bag"
+      rngs_favourite:
+        text: "The random number generator has stopped being random for you. An inquiry has been opened."
+        title: "RNG's Favourite"
+      saint_of_commons:
+        text: "Your misfortune balances the books for the whole Brotherhood. Thank you for your service."
+        title: "Saint of Commons"
+      smiled_upon:
+        text: "Probability leans your way. The Brotherhood sees no cause for concern at this stage."
+        title: "Smiled Upon"
+      suspiciously_lucky:
+        text: "Your capsules perform above forecast. The Brotherhood congratulates you, cautiously."
+        title: "Suspiciously Lucky"
+    odds:
+      capsule: Capsule
+      expected_each: Points expected each
+      formula: "Luck score: (%{actual} earned − %{expected} expected) ÷ √%{variance} = %{z}"
+      intro: Every capsule promises an average score and a usual swing around it. Your
+        luck is how far your points land from that promise, measured in swings.
+      opened: Opened
+      title: Behind the luck
+      total: Total
+      variance_each: Swing² each
+    periods:
+      all_time: All time
+      last_week: Last week
+      week: This week
+    periods_label: Period
+    privileged: PRIVILEGED
+    privileged_title: Privileged
+    profile:
+      actual_points: Points earned
+      details: Details
+      empty:
+        all_time: No capsule opened yet.
+        week: No capsule opened this week yet.
+      expected_points: Points expected
+      explainer: 'Each card scores by rarity, duplicates included: 0 for a Common, 1 for
+        an Uncommon, 5 for a Rare, 20 for an Epic, 100 for a Legendary. The index compares
+        the points earned with what the capsules promise on average: 0 is exactly average,
+        and only extraordinary luck brings it near +500 or -500.'
+      packs:
+        bonus: Daily capsules
+        regular: Standard capsules
+        reward: Mission rewards
+      rank: Rank %{rank} of %{count}
+      title: Fortune
+    scale: "/ ±%{limit}"
+    share:
+      bottom: Bottom
+      percent: "%{percent}%"
+      top: Top
   friend_profiles:
     show:
       trade: Trade
     unavailable:
       body: This profile is not available.
+  friend_searches:
+    candidate:
+      accept_from: Accept %{name}'s invitation
+      friend: Friend
+      invite_named: Invite %{name}
+      invited: Invited
+      invites_you: Invites you
+    show:
+      found:
+        one: "%{count} player found"
+        other: "%{count} players found"
+        zero: No player found
+      none: No player named “%{query}”.
+      title: Search for a player
   friends:
     collection_link:
       label: See the collection
@@ -1074,6 +2012,21 @@ en:
       see_profile_of: See the profile of %{name}
       trade: Trade
       trade_with: Trade with %{name}
+    invite:
+      add: Add
+      add_label: Add a friend
+      code_field: Friend code
+      code_label: Your friend code
+      copied: Link copied ✓ Paste it in a message.
+      hint: "Give your code or send your link: one click and they add you."
+      manual: "Could not copy: your link is %{url}"
+      or_code: or with their friend code
+      search_label: Search for a player by name
+      search_placeholder: Search a name
+      search_submit: Search
+      send_link: Send my link
+      share_text: Join me on Gameble, the trading card game where every card is a Steam game.
+      title: Invite a friend
     more_actions:
       menu: More actions for %{name}
       remove: Remove
@@ -1094,31 +2047,24 @@ en:
       text: "%{name} leaves your friends and you leave theirs. No message is sent;
         either of you can invite the other again."
       title: Remove %{name}?
-      trade: Your trade in progress with %{name} is cancelled and its cards are freed.
+      trade:
+        one: Your trade in progress with %{name} is cancelled and its cards are freed.
+        other: Your %{count} trades in progress with %{name} are cancelled and their
+          cards are freed.
+        zero: No trade in progress with %{name} is cancelled.
     removed:
       text: "%{name} is no longer one of your friends."
       title: Friend removed
     show:
-      share: Share
-      share_text: Join me on Gameble, the trading card game where every card is a Steam game.
       accept: Accept
-      add: Add
-      add_by_code: Add with a code
-      by_link: By link
       cancel: Cancel
       cancel_invitation_to: Cancel the invitation to %{name}
-      code_label: Your friend code
-      copied: Copied ✓
-      copy: Copy
       empty: No friends yet.
       empty_invite: Invite one with your link or your code.
       friends: Friends
       ignore: Ignore
       invitations: Invitations
-      invite: Invite a friend
       invites_you: "%{name} invites you"
-      manual: Copy the link by hand.
-      more: More
       nameless: Nameless player
       no_invitations: No invitation pending.
       pending: Pending
@@ -1148,13 +2094,29 @@ en:
       collected: Management thanks you for your contribution. A rare capsule has been
         added to your reserve.
       throttled: Too many attempts in a minute. Try again in a moment.
+      title: Mission accomplished
+  goals:
+    button:
+      add: Mark as goal
+      remove: Goal %{number} · Remove
+      remove_label: Goal %{number}, %{set}. Remove from goals
+    card_words: 'goal %{number}: %{set}'
+    full:
+      hint: Remove a goal to add another one.
+      limit: 5 goals at most
+      link: See my goals
+    name: 'Goal %{number}: %{set}'
+    reached:
       title: Goal reached
+    throttled: Too many changes to your goals in a minute. Try again in a moment.
+    tile_words: goal %{number}
   invitations:
     cancelled: Invitation cancelled.
     new_friend:
       text: "%{name} is now one of your friends."
       title: New friend
     sent: Invitation sent to %{to}.
+    sent_title: Invitation sent
     throttled: Too many attempts in a minute. Try again in a moment.
   invite_links:
     show:
@@ -1181,16 +2143,16 @@ en:
         title: Ten capsules await you
       brotherhood:
         goal:
-          ends: Ends %{time}. The next goal opens right away.
+          ends: Ends %{time}. The next mission opens right away.
           kicker: This week
           local_time: ", local time"
           participants:
             one: "%{count} participant"
             other: "%{count} participants"
             zero: "%{count} participants"
-          reached: 'Goal reached: every participant is rewarded.'
+          reached: 'Mission accomplished: every participant is rewarded.'
           text: Every capsule opened and every trade concluded moves the same gauge.
-          title: One goal for all
+          title: One mission for all
         label: 02 · The Brotherhood
         lore:
           call: The rest is written with you. The Brotherhood is looking for narrators
@@ -1250,6 +2212,8 @@ en:
       description: Every card is a Steam game. Open capsules, complete sets, trade
         with friends and join the Brotherhood in its search for lost games. Free to
         play.
+      share_image_alt: 'Gameble in golden pixel letters over a starry sky, with a collectible
+        card and a ringed planet: every card is a Steam game.'
       footer:
         credits: Credits
         how_it_works: How it works
@@ -1307,7 +2271,7 @@ en:
           title: Grow your collection
         join:
           badge: New member
-          text: Sign in with Steam, Discord, Google or an email code and your account is created automatically.
+          text: Sign in with Steam, Apple, Discord, Google or an email code and your account is created automatically.
           title: Join it
         label: 03 · How it works
         subtitle: Open, reveal, collect, trade. These four gestures are all you need
@@ -1322,6 +2286,7 @@ en:
         feed: Activity feed
         label: 04 · Live
         open_feed: Open the activity feed
+        open_register: See The Flukeometer
         season: Current season
         season_name: Season %{number} · Grand catalogue
         subtitle: The latest entries of the activity feed, and the current season.
@@ -1353,6 +2318,7 @@ en:
         all: See the whole roadmap
         label: 06 · Roadmap
         line_label: Roadmap milestones, from the oldest to the most distant
+        market: Visit the market's building site
         statuses:
           done: Done
           in_progress: In progress
@@ -1366,20 +2332,20 @@ en:
       unlock:
         label: 05 · To do and to unlock
         soon: Soon
-        subtitle: Sets to complete, friends to trade with, a shared goal every week.
+        subtitle: Sets to complete, friends to trade with, a shared mission every week.
         tiles:
           achievements:
-            first_legendary: First Legendary
-            first_pack: First capsule
-            first_set: First complete set
-            first_trade: First trade
-            text: First capsule, first Epic, first Legendary, first complete set,
-              first trade…
+            first_legendary: An Exceptional Administrative Incident
+            first_pack: Your First Authorized Acquisition
+            first_set: File Closed in Full
+            first_trade: Approved Mutual Assistance
+            text: Your First Authorized Acquisition, Noted Above Expectations, File Closed
+              in Full, Approved Mutual Assistance…
             title: Achievements
             to_earn: To earn
           backs:
-            text: Your face-down cards wear the back of your choice. Meet goals to
-              unlock new ones.
+            text: Your face-down cards wear the back of your choice. Unlock achievements
+              and fill your sets to earn new ones.
             title: Card backs
           collection:
             text: See at a glance the cards you are missing to complete your collection.
@@ -1388,9 +2354,9 @@ en:
           goal:
             reached: Reached
             reward: Every participant received a capsule with at least one Epic.
-            text: Every Monday, a new goal for the whole Brotherhood. Every capsule
+            text: Every Monday, a new mission for the whole Brotherhood. Every capsule
               opened and every trade counts.
-            title: Community goal
+            title: Weekly mission
             week: Week 41
           sets:
             complete: Dark Souls
@@ -1409,6 +2375,9 @@ en:
   layouts:
     application:
       application_name: Gameble
+      description: Every card is a Steam game. Open capsules, complete sets, trade
+        with friends and join the Brotherhood in its search for lost games. Free to
+        play.
       title: Gameble
   library:
     album:
@@ -1423,29 +2392,86 @@ en:
     collection:
       title: Collection
     entry:
-      all_cards: All cards
-      completed: Completed
+      all_cards_tile:
+        open: Open
+        title: All my cards
+        unique: unique cards
+      all_sets_tile:
+        open: Open
+        title: All sets
+        unit:
+          one: set
+          other: sets
+          zero: sets
+      custom_sets:
+        count: Visible to you only · %{sets} / %{max}
+        count_full: Visible to you only · %{sets} / %{max} · remove a set to create another
+        kind:
+          one: Custom set · %{games} game
+          other: Custom set · %{games} games
+          zero: Custom set · %{games} games
+        new: New set
+        new_rule: "%{min} to %{max} games · %{sets} sets at most"
+        title: My sets
+        unfold:
+          one: and 1 more set · See all
+          other: and %{count} more sets · See all
+          zero: and no more set · See all
       found:
         one: 1 set found
         other: "%{count} sets found"
         zero: No set found
+      goals:
+        album: Album
+        count_html: "<b>%{count}</b> / %{max}"
+        custom_kind: Custom set
+        empty: No goal. Open a set's album and mark it as a goal.
+        free:
+          one: One free goal · mark a set from its album
+          other: "%{count} free goals · mark a set from its album"
+        next: "%{missing} more for %{tier}"
+        next_complete: "%{missing} more for the complete set"
+        row: 'Goal %{number}: %{set}, %{kind}, %{count}, %{next}'
+        suggestion_add_label: "Mark as goal: %{set}"
+        suggestion_left:
+          one: 1 card left to complete
+          other: "%{missing} cards left to complete"
+          zero: No card left to complete
+        suggestions: 'No goal yet. The sets you are closest to completing:'
+        title: Goals
       in_progress: In progress
-      load_more: Load more
       loading: Loading the sets in progress…
-      no_progress: No set in progress yet. Find one above.
+      no_other_progress: No other set in progress. Browse all the sets to pick another.
+      no_progress: No set in progress yet. Browse all the sets to pick one.
       none: No set found for “%{query}”.
-      results: Results
-      search: Find a set
-      search_button: Search
+      see_all: See all
+      see_all_label: See all, sets in progress
+      steam_library:
+        kind:
+          one: Steam · %{games} catalog game
+          other: Steam · %{games} catalog games
+          zero: Steam · %{games} catalog games
+        last_sync_html: 'Last sync: <b>%{date}</b>'
+        not_shared: Steam does not share your library. Make the game details of your
+          Steam profile public.
+        synced_html: Synced with Steam on <b>%{date}</b>
+        title: My Steam library
     filters:
       active: 'Active filters:'
       apply: Apply
       clear: Clear all
       groups:
         genre: Genre
+        goals: Goals
+        price: Price
         rarity: Rarity
         sets: Set
         state: State
+      price:
+        order: Order by average price
+        order_ascending: Average price, lowest first
+        order_default: Usual order
+        order_descending: Average price, highest first
       search:
         label: Search by title or publisher
         placeholder: Search a title or a publisher
@@ -1459,6 +2485,9 @@ en:
         new: New
         owned: Owned
       title: Filters
+    filter_row:
+      more: More
+      more_title: More filters
     grid:
       copies:
         one: "%{number} copy"
@@ -1484,6 +2513,13 @@ en:
           zero: No more cards shown.
       past_the_end: 'No more cards here: the grid ends on an earlier page. Go back
         to the last page.'
+      reserved:
+        in_trade:
+          one: "%{count} in a trade"
+          other: "%{count} in trade"
+        on_sale:
+          one: "%{count} on sale"
+          other: "%{count} on sale"
       result:
         one: 1 card shown.
         other: "%{count} cards shown."
@@ -1502,9 +2538,37 @@ en:
       unique: Unique cards
     seen:
       throttled: Too many requests in a minute. Try again in a moment.
+    sets:
+      empty: No set matches these filters.
+      filters:
+        goals: Goals
+        kind: Kind
+        state: State
+        tier: Tier reached
+      heading: All sets
+      pages_label: Pages of sets
+      past_the_end: 'No more sets here: the list ends on an earlier page. Go back
+        to the last page.'
+      result:
+        one: 1 set shown.
+        other: "%{count} sets shown."
+        zero: No set shown.
+      search:
+        label: Search by name or kind
+        placeholder: Search a set by name or kind
+      shown:
+        one: Set %{from} of %{total} shown.
+        other: Sets %{from} to %{to} of %{total} shown.
+        zero: No more sets shown.
+      states:
+        complete: Complete
+        in_progress: In progress
+        not_started: Not started
+      title: All sets · Gameble
     set_kinds:
       franchise: Franchise
       hall_of_fame: Hall of fame
+      mine: My sets
       studio: Studio
       theme: Theme
       ufo: UFO
@@ -1555,6 +2619,465 @@ en:
       progress:
         one: "%{owned} unique card out of %{total}"
         other: "%{owned} unique cards out of %{total}"
+  market:
+    copy_filters:
+      clear_filters: Clear filters
+      doubles: Doubles
+      filters_active: Active filters
+      filters_legend: Filter by rarity or by doubles
+      no_match: No edition matches these filters.
+      search_label: Search your editions
+      search_placeholder: Search a game
+      matches:
+        zero: No edition
+        one: "%{number} edition"
+        other: "%{number} editions"
+    exchanges:
+      show:
+        heading: The Brotherhood's Exchange
+    bids:
+      answers:
+        beaten:
+          body_html: "Your offer of %{offer} is beaten at once, and your PiCoins are returned. New price: %{price}. To get ahead, offer at least %{minimum}."
+          title: ANOTHER PLAYER HAD A HIGHER MAXIMUM
+        equal:
+          body_html: "Your offer of %{offer} is beaten at once, and your PiCoins are returned. New price: %{price}. To get ahead, offer at least %{minimum}."
+          title: ANOTHER PLAYER HAD ALREADY OFFERED THIS MAXIMUM
+        leading:
+          action: RAISE MY MAXIMUM
+          body_html: "Current price %{price}. Your maximum: %{maximum}."
+          title: YOU ARE LEADING
+        raised:
+          body_html: "Your maximum: %{maximum}. The price does not change."
+          title: MAXIMUM RAISED
+      form:
+        available: AVAILABLE
+        fixed: It is the most you accept to pay. If you win, you will pay as little as possible.
+        final: A bid cannot be cancelled.
+        label: MY MAXIMUM
+        minimum_html: "At least %{amount}"
+        minimum_raise_html: "More than your current maximum, %{amount}"
+        shortcuts:
+          label: Quick amounts
+          minimum: "MINIMUM · %{amount}"
+          raise: "+%{percent}% · %{amount}"
+        sign_in: Sign in to bid
+        soft_close: A bid in the last %{minutes} minutes moves the end to %{minutes} minutes after that bid.
+      not_recorded: Your amount was not recorded.
+      refusals:
+        price_moved: "The price just changed. At least %{amount} is needed now."
+        throttled: Too many bids at once. Wait a moment.
+      strings:
+        button_bid: "BID · %{amount}"
+        button_idle: BID
+        button_name: "Bid, maximum %{amount} PiCoins"
+        button_raise: "RAISE · %{amount}"
+        live_hold: "%{amount} PiCoins will be held, then returned if another player does better."
+        live_raise: "%{amount} more PiCoins will be held. The price does not change."
+      unusual:
+        body_html: "%{amount} PiCoins is %{multiple} times the current price. This amount will be held on your balance and a bid cannot be cancelled."
+        cancel: CANCEL
+        close: Close
+        confirm_html: "CONFIRM %{amount}"
+        title: UNUSUAL AMOUNT
+    listings:
+      events:
+        extended:
+          body_html: "A bid just arrived in the last %{minutes} minutes. The end moved to %{time}."
+          title: AUCTION EXTENDED
+        outbid:
+          action: SEE THE LISTING
+          body_html: "%{name} moved ahead on %{card}. Your %{amount} are available again. The Brotherhood never bids for you."
+          title: YOU WERE OUTBID
+      history:
+        covered_html: "%{leader} keeps the lead over %{name}: the price goes up to %{amount}"
+        created_html: "Listed by %{name}"
+        extension_html: "Auction extended until %{time}"
+        heading: HISTORY
+        leading: Leading
+        raise_html: "%{name} raised their maximum"
+        voided: "Bid voided: player removed"
+      outcome:
+        cancelled:
+          body: The seller cancelled this sale.
+          title: SALE CANCELLED
+        closing: "Closing…"
+        lost:
+          body_html: "%{name} wins %{card} for %{price}. Your PiCoins were returned."
+          title: AUCTION ENDED
+        no_bid:
+          body: No bids.
+          title: AUCTION ENDED
+        seller:
+          body_html: "%{name} buys %{card} for %{price}. You receive %{received}."
+          title: SOLD
+        viewer:
+          body_html: "%{name} wins %{card} for %{price}."
+          title: AUCTION ENDED
+        withdrawn:
+          body: This listing was withdrawn from the market.
+          title: LISTING WITHDRAWN
+        won:
+          body_html: "You pay %{price}. The card joins your collection."
+          body_surplus_html: "You pay %{price}. The remaining %{surplus} is returned to you. The card joins your collection."
+          see_card: SEE THE CARD
+          title: "YOU WON %{card}"
+      show:
+        listed: Listed
+        ends: Ends
+        average_price: Average price
+        back: Market
+        leader: "Leading:"
+        price: CURRENT PRICE
+        seller: Seller
+        time: ENDS IN
+      status:
+        leading: "Price %{amount}, leading %{name}. Ends at %{time}."
+        leading_you: "Price %{amount}, you are leading. Ends at %{time}."
+        no_leader: "Price %{amount}, no bids. Ends at %{time}."
+    suspended_banner:
+      back: Back to the market
+      body: The Brotherhood is auditing its procedures. Auctions in progress end normally. Nothing can be entrusted, sold or bid on for now.
+      title: THE MARKET IS SUSPENDED
+    cancellations:
+      create:
+        cancelled: Sale cancelled.
+        throttled: Slow down, the Archives are counting. Try again in a minute.
+      dialog:
+        close: Close
+        confirm: CANCEL THE SALE
+        keep: KEEP THE SALE
+        text: "%{card} comes back to you. The stamp is not refunded."
+        title: CANCEL THIS SALE?
+    chips:
+      bids: MY BIDS
+      bids_outbid:
+        one: "%{number} outbid"
+        other: "%{number} outbid"
+      sales: MY SALES
+    my_bids:
+      groups:
+        in_progress:
+          empty: No bid in progress.
+          heading: IN PROGRESS
+        recent:
+          empty: No bid finished recently.
+          heading: FINISHED RECENTLY
+      show:
+        empty_action: SEE THE LISTINGS
+        empty_soon:
+          one: One listing ends within the hour. A bid only binds you if you win.
+          other: "%{number} listings end within the hour. A bid only binds you if you win."
+          zero: A bid only binds you if you win.
+        empty_title: No bid in progress
+        heading: My bids
+        summary:
+          balance: "%{committed} committed · %{available} available"
+          outbid:
+            one: "%{number} outbid offer."
+            other: "%{number} outbid offers."
+            zero: You lead all your bids in progress.
+          soonest: "The most pressing one ends in %{time}."
+    my_sales:
+      cancel: CANCEL
+      cancel_name: "Cancel the sale, %{card}"
+      groups:
+        ended:
+          empty: No finished sale.
+          heading: FINISHED
+        in_progress:
+          empty: No sale in progress.
+          heading: IN PROGRESS
+      no_bid_note: No bid, the card is returned. The stamp is not refunded.
+      received_html: "Received %{amount}, after the Brotherhood's Effort"
+      relist: PUT UP FOR SALE AGAIN
+      relist_name: "Put up for sale again, %{card}"
+      show:
+        empty_action: PUT UP FOR SALE
+        empty_body: Choose a spare card, set a starting price and a duration. The card stays yours until it sells.
+        empty_title: Nothing for sale yet
+        heading: My sales
+        summary:
+          selling:
+            one: "%{number} sale in progress"
+            other: "%{number} sales in progress"
+            zero: No sale in progress.
+          with_offers:
+            one: ", %{number} with a bid."
+            other: ", %{number} with a bid."
+            zero: ", no bid yet."
+    rows:
+      closing: "Closing…"
+      labels:
+        end: End
+        maximum: My maximum
+        price: Price
+      relever: RAISE
+      relever_name: "Raise, %{card}"
+      status:
+        cancelled: CANCELLED
+        in_progress: IN PROGRESS
+        leading: LEADING
+        lost: LOST
+        no_bid: NO BID
+        outbid: OUTBID
+        sold: SOLD
+        withdrawn: WITHDRAWN
+        won: WON
+    entrustments:
+      create:
+        throttled: Slow down, the Archives are counting. Try again in a minute.
+      new:
+        all_cards: All cards
+        bar_action: "Entrust ▸"
+        bar_label: Your entrusting selection
+        card_only: "Only %{title}."
+        cap_full: Your daily cap is reached. It renews at 00:00 UTC.
+        cap_label: Daily cap
+        closed: The market is closed for now. Nothing can be entrusted until it reopens.
+        closed_action: Back to the market
+        empty: No card to entrust.
+        empty_action: Open capsules
+        free:
+          one: "%{count} free copy"
+          other: "%{count} free copies"
+        grid_label: Your editions to entrust
+        heading: Entrust to the Brotherhood
+        intro: Choose the cards to entrust to the Brotherhood. Each copy earns you PiCoins.
+        keys_hint: "Arrow keys move between cards, Space or Enter ticks, + and - change the copies."
+        kicker: The Archives
+        not_returned: Entrusted cards are not given back.
+        prompt: Tick the cards to entrust.
+        receive: You receive
+        recap: Summary
+        season: "Season %{number}"
+        sheet_title: Entrust
+        sign_in: Sign in to entrust cards to the Brotherhood.
+        sign_in_action: Sign in
+        select_all: "Select all (%{number})"
+        select_failed: The editions could not be loaded. Nothing was ticked, try again.
+      result:
+        close: Dismiss
+        copies:
+          one: "%{count} copy entrusted"
+          other: "%{count} copies entrusted"
+        kicker: The Archives thank you
+        minted_html: "+%{amount} minted for you"
+        stayed:
+          cap_left_html: "You had %{amount} of cap left today. It renews at 00:00 UTC."
+          heading:
+            one: "%{count} card was not entrusted"
+            other: "%{count} cards were not entrusted"
+          line_html:
+            one: "%{title}, season %{season}: %{count} copy stays in your collection (%{amount})"
+            other: "%{title}, season %{season}: %{count} copies stay in your collection (%{amount} each)"
+          more:
+            one: "and %{number} more card"
+            other: "and %{number} more cards"
+      strings:
+        more:
+          zero: ""
+          one: "and %{count} more"
+          other: "and %{count} more"
+        amount: "%{amount} PiCoins"
+        bar_count:
+          one: "%{count} copy"
+          other: "%{count} copies"
+          zero: 0 copies
+        cap_text: "%{used} of %{cap} today"
+        count: "×%{count}"
+        line: "%{title}, season %{season}"
+        max: of %{max}
+        max_phone: "/%{max}"
+        over_cap:
+          one: "%{count} copy will exceed your daily cap and stay in your collection: %{cards}."
+          other: "%{count} copies will exceed your daily cap and stay in your collection: %{cards}."
+          zero: Nothing exceeds your daily cap.
+        quantity_label: Copies of %{title} to entrust
+        rare_note:
+          one: "Note: %{count} copy of Rare or better, %{cards}."
+          other: "Note: %{count} copies of Rare or better, %{cards}."
+          zero: No copy of Rare or better.
+        stays:
+          one: "%{count} stays"
+          other: "%{count} stay"
+          zero: None stays
+        status:
+          one: "%{count} copy, %{amount}"
+          other: "%{count} copies, %{amount}"
+          zero: "No copy, %{amount}"
+        submit:
+          one: Entrust 1 copy
+          other: Entrust %{count} copies
+          zero: Entrust
+        value_text: "%{count} of %{max}"
+    sales:
+      create:
+        throttled: Slow down, the Archives are counting. Try again in a minute.
+      new:
+        all_cards: All cards
+        average_price: Average price
+        back: "◀ Back to the cards"
+        card_only: "Only %{title}."
+        cell_minimum: "minimum %{amount}"
+        choose: Choose the card to sell.
+        closed: The market is closed for now. Nothing can be sold until it reopens.
+        closed_action: Back to the market
+        commission_name: Brotherhood Effort
+        commission_text: "%{percent} of the final price, at the sale"
+        duration_days:
+          one: "%{count} DAY"
+          other: "%{count} DAYS"
+        duration_hours: "%{count} H"
+        duration_label: DURATION
+        empty: No card available to sell.
+        empty_action: Open a capsule
+        entrust_action: ENTRUST CARDS
+        free:
+          one: "%{count} available"
+          other: "%{count} available"
+        heading: Put a card up for sale
+        intro: Choose a card, set its price and let the members bid.
+        kicker: The Archives
+        received: Sold at the starting price, you receive
+        relisting: These amounts are those of your previous sale.
+        rules: The card is reserved during the sale. You can cancel as long as no offer is leading.
+        season: "Season %{number}"
+        sign_in: Sign in to put a card up for sale.
+        sign_in_action: Sign in
+        stamp_name: Gamebler Fiscal Stamp
+        stamp_text: paid now, never refunded
+        start_label: STARTING PRICE
+        step: "Step %{step} of 2"
+        submit: PUT UP FOR SALE
+      strings:
+        amount: "%{amount} PiCoins"
+        invalid_price: Enter a whole number of PiCoins, above zero.
+        minimum_hint: "At least %{amount} for a %{rarity}"
+        minimum_refusal: "At least %{amount} for a %{rarity}."
+        stamp_short: "You are short of %{amount} PiCoins for the stamp."
+        status: You receive %{amount} PiCoins
+        step: "Step %{step} of 2"
+  markets:
+    filters:
+      clear_search: CLEAR THE SEARCH
+      groups:
+        season: Season
+      hide_mine: Hide my sales
+      wanted: Wanted cards
+      no_match: No listings match these filters.
+      nobody: "Nobody is selling “%{query}”"
+      nobody_body: No listing matches for now. Listings arrive all day long.
+      search_label: Search a game
+      search_placeholder: Search a game
+      season_chip: "Season %{number}"
+    screen:
+      all_heading: ALL LISTINGS
+      chips_label: Market sections
+      desk:
+        available: AVAILABLE
+        committed:
+          one: "%{amount} committed to your bids"
+          other: "%{amount} committed to your bids"
+          zero: No PiCoins committed to your bids
+        kicker: THE BROTHERHOOD'S COUNTER
+        listings:
+          one: "%{number} listing open."
+          other: "%{number} listings open."
+          zero: No listing open.
+        purse_label: Your PiCoins
+      empty: No listings for now.
+      entrust: ENTRUST CARDS
+      entrust_short: ENTRUST
+      exchange:
+        empty: The first prices show the day after the first sales.
+        open: SEE THE EXCHANGE
+        title: THE BROTHERHOOD'S EXCHANGE
+        window: what a card costs, in days of capsules · 90 d
+      found_heading: LISTINGS FOUND
+      heading: Market
+      list_label: Listings
+      listings: LISTINGS
+      mine:
+        label: Your market activity
+        leading:
+          one: leading bid
+          other: leading bids
+          zero: leading bids
+        outbid:
+          one: outbid offer
+          other: outbid offers
+          zero: outbid offers
+        raise: RAISE
+        see: SEE
+        selling:
+          one: sale in progress
+          other: sales in progress
+          zero: sales in progress
+        with_offers:
+          one: "%{number} with a bid"
+          other: "%{number} with a bid"
+          zero: no bid yet
+      more: Load more
+      newcomer:
+        body: "Everything here is paid in PiCoins. Entrust your spare copies to the Archives: the Brotherhood credits you on the spot."
+        spare:
+          one: "You have %{number} spare copy."
+          other: "You have %{number} spare copies."
+          zero: You have no spare copy yet.
+        title: Welcome to the counter
+      pages_label: More listings
+      sell: PUT UP FOR SALE
+      sell_short: SELL
+      soon_heading: ENDING SOON
+      soon_label: Listings ending within the hour
+      soon_note: within the hour
+      sorts_label: Sort the listings
+    show:
+      closing: No date is being communicated at this stage. Management thanks you for your patience, which remains free of charge to this day.
+      heading: The Brotherhood is building the market
+      intro: Management is pleased to inform you that work has begun. This project is being carried out solely in your interest.
+      kicker: Building site
+      plans:
+        auction:
+          text: Members will put their cards up for auction. The finest will at last change hands at their fair price, which is to say the highest.
+          title: An auction house
+        currency:
+          text: It is earned only by entrusting cards to the Brotherhood, which keeps them safe in its common reserve, for the good of all. It cannot be bought or withdrawn.
+          title: A single currency
+        fees:
+          text: Every fee will be announced in advance and justified by Management. Transparency is one of our costs.
+          title: Fees, announced
+        open:
+          text: No seniority required. The Brotherhood draws no distinction between its members, provided they bid.
+          title: Open to every member
+    sorts:
+      ending: Ending soon
+      newest: Newest
+      price_asc: Price, low to high
+      price_desc: Price, high to low
+    tile:
+      label: "%{card}, %{rarity}, season %{season}, %{price}, %{offers}, ends at %{time}"
+      offers:
+        one: "%{count} offer"
+        other: "%{count} offers"
+        zero: "%{count} offers"
+      ownership:
+        missing: Not owned
+        owned:
+          one: "Owned ×%{count}"
+          other: "Owned ×%{count}"
+          zero: "Owned ×%{count}"
+        owned_spoken:
+          one: "%{count} copy in your collection"
+          other: "%{count} copies in your collection"
+          zero: no copy in your collection
+        wanted: Wanted
+        wanted_spoken: missing from your goals
+    time_left:
+      hours: "%{hours} h %{minutes}"
+      minutes: "%{minutes} min"
+      under: under a minute
   number:
     format:
       delimiter: ","
@@ -1566,6 +3089,9 @@ en:
     precision:
       format:
         delimiter: ''
+  pack_reveals:
+    create:
+      throttled: Too many requests in a minute. Try again in a moment.
   packs:
     create:
       throttled: Too many openings in a minute. Try again in a moment.
@@ -1617,40 +3143,75 @@ en:
         collect: Collect
         collect_label: Collect the reward capsule
         collected: Collected
-        line: The Brotherhood invites its members to join forces and open %{target}
-          capsules this week.
-        players: All players
-        previous_missed: 'Last week: %{total} / %{target} · goal missed'
-        previous_reached: 'Last week: %{total} / %{target} · goal reached'
+        line: Open %{target} capsules this week.
+        previous_missed: 'Last week: %{figures}, missed'
+        previous_reached: 'Last week: %{figures}'
         progress: "%{total} contributions of %{target} this week"
-        reached: Goal reached
-        reward: Reward
-        reward_text: A rare capsule for every contributor
-        title: Community goal
+        reached: Accomplished
+        reward: 'Reward: %{reward}'
+        reward_text: a rare capsule per contributor
+        title: Weekly mission
+      goals:
+        see_all: See all
+        title: Goals in progress
       kicker:
         title: Command bridge
+      live:
+        open: Open the feed
+        title: Activity feed
+      market:
+        outbid:
+          one: "%{number} offer outbid"
+          other: "%{number} offers outbid"
+          zero: No offer outbid
+        soon: Ending soon
+        title: Market
+        volume:
+          down: "▼ %{percent}%"
+          flat: "= 0%"
+          from: 14 days ago
+          period: over 7 days
+          spoken_down: Down %{percent}% on the 7 days before.
+          spoken_flat: Level with the 7 days before.
+          spoken_up: Up %{percent}% on the 7 days before.
+          title: PiCoins traded
+          to: yesterday
+          up: "▲ %{percent}%"
       menu:
         achievements: Achievements
         achievements_meta:
           one: "%{earned} achievement earned out of %{total}"
           other: "%{earned} achievements earned out of %{total}"
-        all_cards: All cards
         collection: Collection
         collection_meta:
           one: "%{owned} unique card out of %{total}"
           other: "%{owned} unique cards out of %{total}"
+        community: Discord
+        extras: Extras
+        extras_back: Back to the menu
+        extras_label: Extras
         feed: Activity feed
-        friends: Friends
         friends_online:
           one: "%{number} online"
           other: "%{number} online"
         how_it_works: How it works
+        invitations_waiting:
+          one: "%{number} invitation waiting for your answer"
+          other: "%{number} invitations waiting for your answer"
         label: Bridge menu
+        market: Market
+        market_outbid:
+          one: "%{number} auction outbid"
+          other: "%{number} auctions outbid"
         open_booster: Open a capsule
         reserve:
           one: "%{number} capsule in reserve"
           other: "%{number} capsules in reserve"
         reserve_empty: Reserve empty
+        rewards_waiting:
+          one: "%{number} reward to claim"
+          other: "%{number} rewards to claim"
+        source_code: GitHub
         special:
           one: "%{number} special capsule"
           other: "%{number} special capsules"
@@ -1659,9 +3220,6 @@ en:
         trades_waiting:
           one: "%{number} trade waiting for you"
           other: "%{number} trades waiting for you"
-      sets:
-        see_all: See all
-        title: Sets in progress
       showcase:
         chosen_kicker: Showcase
         empty:
@@ -1704,21 +3262,63 @@ en:
         counts: Every capsule opened counts toward it, and so does every completed
           trade, which makes both players contributors.
         reward:
-          one: 'When the goal is reached, every player who contributed earns a reward
+          one: 'When the mission is accomplished, every player who contributed earns a reward
             capsule: %{count} card, at least one of them %{rarity} or better. If you
             contributed, you collect it on the hub and it joins your special reserve.'
-          other: 'When the goal is reached, every player who contributed earns a reward
+          other: 'When the mission is accomplished, every player who contributed earns a reward
             capsule: %{count} cards, at least one of them %{rarity} or better. If
             you contributed, you collect it on the hub and it joins your special reserve.'
-        title: The community goal
-        week: Every week, for seven days from %{time}, all players aim at one goal
+        title: The weekly mission
+        week: Every week, for seven days from %{time}, all players take on one mission
           together.
       intro: The rules of the game, as it applies them.
       local_time: ", local time"
+      market:
+        auction: An auction lasts %{short}, %{medium} or %{long}, as the seller chooses.
+          Each bid must beat the current price by at least %{increment} of that price,
+          rounded up to the next hundred.
+        close: At close, the winner pays the final price and recovers the rest of
+          their maximum; the seller receives the price less the Brotherhood Effort
+          (%{commission}). With no bid at all, the card goes back to its seller and
+          the stamp is not refunded.
+        days:
+          one: "%{count} day"
+          other: "%{count} days"
+        entrust: Entrusting a card to the Brotherhood's Archives takes it out of your
+          collection and earns you PiCoins according to its rarity, up to %{cap} PiCoins
+          entrusted a day.
+        fees: 'Listing a card costs a Gamebler''s Tax Stamp, set by its rarity and
+          destroyed for good. When it sells, the Brotherhood takes its Brotherhood
+          Effort: %{commission} of the final price, paid by the seller and destroyed
+          as well. The Brotherhood went to great lengths and wants it known.'
+        hours:
+          one: "%{count} hour"
+          other: "%{count} hours"
+        maximum:
+          held: the whole maximum is held from your balance, then released as soon
+            as someone outbids you;
+          intro: 'To bid, you set My maximum, the ceiling you accept to pay:'
+          price: the displayed price is the second-highest maximum plus one increment,
+            never above the highest maximum;
+          raise: raising your own maximum while you lead holds more PiCoins, but moves
+            neither the price nor the end.
+          soft_close: a bid placed in the last %{minutes} that changes the price or
+            the leader moves the end to %{minutes} after it;
+          tie: when maximums are equal, the earlier one leads;
+          unusual: a maximum that reaches %{multiple} times the current price asks
+            for a confirmation;
+        picoins: PiCoins are the game's currency. The 100-6-Tron creates them only
+          when a card is entrusted to the Brotherhood; they are never bought, never
+          withdrawn and worth nothing outside Gameble.
+        table:
+          caption: Amounts in PiCoins
+          entrustment: Entrusting pays
+          minimum_price: Minimum price
+          stamp: Stamp
+        title: The market
       minutes:
         one: "%{count} minute"
         other: "%{count} minutes"
-      more: More
       packs:
         bonus: 'The daily capsule has better odds and never holds a %{common} card:'
         chance: Chance per card
@@ -1732,7 +3332,7 @@ en:
           other: 'A capsule holds %{count} cards. Each card is drawn on its own: first
             its rarity, with the odds below, then a game of that rarity. The same
             card can therefore come up more than once.'
-        reward: 'The community goal''s reward capsule:'
+        reward: 'The weekly mission''s reward capsule:'
         tables:
           bonus: Daily capsule
           epic_or_better: Replacement card
@@ -1834,31 +3434,42 @@ en:
           of Gameble, reachable at %{contact}.
         cookies: 'Gameble only uses strictly necessary cookies, exempt from consent:
           the session cookie, which protects forms and keeps you signed in for 30
-          days after your last visit, or until you sign out, and the one that remembers
-          your reduced motion choice, for one year. Cloudflare may add a security
+          days after your last visit, or until you sign out, the one that remembers
+          your reduced motion choice, for one year, and, when you are not signed in, the one
+          that remembers the announcement you closed, for one year. Cloudflare may add a security
           cookie that filters out bots. Your browser''s storage also keeps your trade
           drafts and the interface''s state, on your device only. No advertising or
           audience measurement trackers.'
         deletion: When you delete your account, your Steam id, your sign-in methods (and, at Clerk, the user that holds your email address, which is deleted there too), your profile name,
-          the time of your last visit, your last data export, your latest activity,
-          your collection, your showcase, your set tiers, your achievements, your
-          card back unlocks and your choice of active card back, your capsules, your daily bonuses, your community goal rewards, your friendships,
-          your invitations, your friend code and your activity feed entries are erased,
+          the time of your last visit, your last data export, the announcements you closed, the release notes you saw, your latest activity,
+          your collection, your showcase, your set tiers, your custom sets, your Steam library list, your goals, your achievements, your
+          card back unlocks and your choice of active card back, your capsules, your luck scores, your daily bonuses, your weekly mission rewards, your friendships,
+          your invitations, your friend code, when you last opened each trade, your activity feed entries and your reactions are erased,
           your open trades are cancelled and your profile disappears. What also concerns
           other players, the community or moderation (past trades, first discoveries,
-          contributions to the community goal, reports, moderation history, the log
+          contributions to the weekly mission, reports, moderation history, the log
           of game actions) is kept without your Steam id or your name, for the periods
           given above.
+        market_deletion: 'On the market, deleting your account deletes your market
+          notices and the feed entries announcing your sales, erases your name from
+          the bid histories, withdraws your open listings and releases your maximums.
+          Your PiCoin balance is destroyed without refund, once your listings and
+          leading bids are resolved. The PiCoin record is kept without identity, for
+          the period stated above.'
+        market_visibility: 'On the market, your profile name appears on your listings,
+          in the bid histories where you bid and in the feed entries announcing your
+          sales, visible to everyone, signed-out visitors included, whatever your
+          profile setting. Your maximums, though, are never shown to other players.'
         nothing_else: No analytics, no ads, no real money. Your data is neither sold
           nor handed over.
         purposes:
           game: 'running your account and the game (collection, capsules, trades,
-            friends, profile, activity feed): performance of the terms of use you
-            accept by signing in (GDPR Article 6(1)(b));'
+            market, friends, profile, activity feed): performance of the terms of
+            use you accept by signing in (GDPR Article 6(1)(b));'
           intro: 'Why, and on what basis:'
-          moderation: 'moderating the community (reports, bans, moderation history):
-            the publisher''s legitimate interest in enforcing the rules and protecting
-            players (Article 6(1)(f));'
+          moderation: 'moderating the community (reports, bans, moderation history,
+            alt-account signals): the publisher''s legitimate interest in enforcing
+            the rules and protecting players (Article 6(1)(f));'
           no_automation: No decision about you is made by automated means.
           requests: 'answering your messages and your requests about your data: legal
             obligation (Article 6(1)(c)).'
@@ -1875,27 +3486,42 @@ en:
             from them after 7 days, a little longer if a backup failed;'
           banned_steam_id: 'the Steam id of a suspended account: as long as the suspension
             lasts, to refuse a new sign-up;'
-          clerk: 'the Clerk user created for a Discord, Google or email code sign-in, with
+          clerk: 'the Clerk user created for an Apple, Discord, Google or email code sign-in, with
             your email address and its sessions: as long as the account exists; it is
             deleted from Clerk when you delete your account;'
           errors: 'technical errors received by Sentry: 30 days;'
           intro: 'How long your data is kept:'
           leftovers: 'what a deleted account leaves behind that concerns other players
             or the community (past trades, first discoveries, contributions to the
-            community goal, the log of game actions): as long as the game exists,
+            weekly mission, the log of game actions): as long as the game exists,
             without a Steam id or a name.'
           logs: 'the server''s logs: 30 days;'
+          market: 'your wallet, your PiCoin entries, your listings, your bids and
+            your market notices: as long as the account exists; when the account is
+            deleted, the market notices and the feed entries announcing your sales
+            are deleted, your name is erased from the bid histories and the balance
+            is destroyed, but the PiCoin record stays, without identity, as long as
+            the game exists;'
           moderation: 'the moderation history, reasons included: a ban as long as
             it lasts, then one year after it is lifted; a dismissal of reports, one
             year; the history of a deleted account, until one year after the deletion;
             the log of game actions keeps each decision''s date and the accounts concerned,
             without the reason;'
+          reactions: 'your reactions to feed entries: as long as the account exists and the
+            entry stays in the feed; other players see how many reacted and, if your profile
+            is public, your name among the latest who reacted;'
           reports: 'a report: until a moderator handles it, then one year; if it targets
             an account deleted before it was handled, one year after the deletion;'
+          signals: 'alt-account signals: replaced every day, they keep only the facts
+            of the latest calculation;'
+          steam_library: 'the list of your Steam library''s games: as long as the account
+            exists and the sync is on; it is erased at once when you turn "Sync my Steam
+            games" off in the settings or delete your account;'
         rights:
           access: 'access: from the settings, with "Export" under "My data", which
             downloads a copy of your data in a reusable file, your sign-in methods
-            included;'
+            and your Steam library list, and your market data: your wallet, your PiCoin
+            entries, your listings and your bids with your own maximums, included;'
           authority: CNIL
           banned_html: 'suspended account: it can no longer sign in; the reason for
             the suspension is shown when you try to sign in; write to %{contact} to
@@ -1909,14 +3535,15 @@ en:
             processing, object to processing based on legitimate interest and receive
             a reusable copy of it. You can also say what becomes of your data after
             your death. We reply within one month.
-          objection_html: 'objection: make your profile private in the settings, or
+          objection_html: 'objection: make your profile private in the settings, turn
+            "Sync my Steam games" off so Gameble stops reading your Steam library, or
             write to %{contact};'
           rectification_html: 'rectification: a Steam profile name is read again at each
             Steam sign-in; for anything else, write to %{contact};'
         services:
-          clerk: 'Clerk, Inc. handles sign-in through Discord, Google or an email code,
+          clerk: 'Clerk, Inc. handles sign-in through Apple, Discord, Google or an email code,
             as our processor: it holds the Clerk user created for you (your email address,
-            the identifier Discord or Google gives for you, and your sign-in sessions),
+            the identifier Apple, Discord or Google gives for you, and your sign-in sessions),
             and may process it in the United States among other places. Your browser
             contacts it directly on the sign-in screen and in the settings. Gameble
             keeps only the Clerk user''s identifier and a one-way hash of your verified
@@ -1937,11 +3564,14 @@ en:
             and your internal player id, never your name or your Steam id. Your browser
             also sends it the page''s security reports directly, with your IP address.
             Data hosted in the European Union;'
-          steam: Steam (Valve) handles sign-in and provides your profile name;
+          steam: Steam (Valve) handles sign-in and provides your profile name and, once
+            a day while the sync is on, the games of your Steam library;
         stored:
-          activity: 'your game activity: cards, capsules, trades, friends and invitations,
-            friend code, activity feed entries;'
-          identities: 'your sign-in methods: Steam, Discord, Google or an email code, each
+          activity: 'your game activity: card collection, showcase, set tiers, custom sets, goals, achievements,
+            card back unlocks and active card back, capsules, daily bonuses, weekly
+            mission rewards, trades, friendships, invitations, friend code, activity feed
+            entries, your reactions to feed entries and latest activity;'
+          identities: 'your sign-in methods: Steam, Apple, Discord, Google or an email code, each
             with its identifier at that provider, the date it was added and, for the
             last three, a one-way hash of your verified email address, never the address
             itself;'
@@ -1949,11 +3579,21 @@ en:
           last_seen: the date your account was created, the time of your last visit,
             and your last data export (its file and its time), kept until the next
             one;
+          market: 'your market activity: your PiCoin wallet (available and committed
+            balance), every PiCoin entry, your listings, your bids with the maximums
+            you set, and your market notices;'
           moderation: the reports you make, those aimed at your profile (their author
             is not disclosed to you) and the moderation decisions that concern you,
             with their reason;
-          settings: your settings (profile visibility, reduced motion);
+          settings: your settings (profile visibility, reduced motion, Steam games sync);
+          signals: alt-account signals, worked out each day from your capsule, trade,
+            sale and bid activity, which only the moderation staff read and from which
+            no decision is taken automatically;
           steam: your Steam id and your Steam profile name;
+          steam_library: 'if you sign in with Steam and leave "Sync my Steam games" on
+            in the settings: the list of the catalog games your Steam library holds,
+            read from Steam once a day for your "My Steam library" set, with the date
+            of its last sync and, when Steam stops sharing your library, since when;'
           technical: 'technical data: IP address and browser, in the server logs and
             error tracking.'
         title: Privacy
@@ -1998,43 +3638,109 @@ en:
         no_guarantee: The service is free and provided as is. It may be interrupted
           for maintenance or changed. Should it close for good, the closure would
           be announced on the site at least 30 days in advance.
-        no_money: 'No real money flows through it: nothing is bought, nothing is sold.'
+        no_money: 'No real money flows through it: nothing is bought with money, and
+          cards are sold for PiCoins, the game''s currency, never for money.'
         no_property: 'Cards, capsules and card backs are parts of the game: they are
-          not your property and have no value, neither in money nor outside Gameble.
-          No card may be sold or exchanged for money, in Gameble or outside it.'
+          not your property and have no value in money, in Gameble or outside it.
+          Their price in PiCoins is only a rule of the game.'
         notice_html: 'Even without a Gameble account, you can report illegal content
           or ask for the removal of a game whose rights you hold: write to %{contact}
           with the page''s address and the reason for your request.'
+        picoins: 'PiCoins are the game''s currency: they are earned only by entrusting
+          cards to the Brotherhood or by selling at auction, and they are never bought
+          and never withdrawn.'
+        real_money: 'Trading cards or PiCoins for real money is forbidden, in Gameble
+          or outside it: no sale, no purchase, no transfer, no go-between. An account
+          that does so may be suspended.'
         title: Terms of use
       title: Legal notice and privacy
-      updated: 'Last updated: 20 October 2026'
-    more:
-      personalization: Personalization
-      settings: Profile and settings
-      subtitle: The rest of the ship
-      title: More
+      updated: 'Last updated: 10 November 2026'
+  own_profiles:
+    avatar_sheet:
+      heading: Avatar
+      intro: Your portrait on your profile, in trades and beside your name.
+      unlock: 'Achievement: %{achievement}'
+      worn: Worn
+    show:
+      all_achievements: See all
+      change_avatar: Change avatar
+      card_back: Card back · only you
+      card_list: See the card list
+      change: Change
+      choose_title: Choose a title
+      customize: Customize
+      title: Me
+      title_label: Title
   personalizations:
     show:
       card_back:
-        active: Active card back
-        choose: Choose
-        current: Active
+        chips:
+          active: Active
+          locked: Locked
+          unlocked: Unlocked
+        earned:
+          achievement: Earned with the achievement %{name} · %{condition}
+          always: Given to every player
+          set: Earned at the %{tier} tier of the %{set} set · %{seasons}
+          set_any: Earned with the %{set} set
+        equipped: Card back equipped. %{name} will show on your face-down cards.
+        equipped_with_season: Card back equipped. %{name}, with the mark of season %{season},
+          will show on your face-down cards.
+        failed: The card back could not be equipped. Try again.
+        groups:
+          achievement: Achievements
+          base: Basic
+          hall_of_fame: Sets · Hall of fame
+          theme: Sets · Themes
         heading: Card back
         intro: Only you see it, on your face-down cards when you open a capsule.
-        locked: Card back locked
-        mark_label: Wear the mark of season %{season}
+        label: "%{name}, %{state}. %{sentence}."
+        label_to_equip: "%{label} Equip."
+        label_with_tail: "%{name}, %{state}. %{sentence}, %{tail}."
         marks: Season mark
-      more: More
+        on_date: on %{date}
+        on_sign_up: when you signed up
+        progress:
+          shown: "%{held} / %{total} cards"
+          shown_missing: "%{held} / %{total} cards · %{missing} to go"
+          spoken:
+            one: "%{held} of %{total} cards"
+            other: "%{held} of %{total} cards"
+          spoken_missing:
+            one: "%{held} of %{total} cards, %{missing} to go"
+            other: "%{held} of %{total} cards, %{missing} to go"
+        season_label: Equip %{name} with the mark of season %{season}
+        seasons:
+          one: season %{list}
+          other: seasons %{list}
+        seasons_connector: " and "
+        states:
+          active: active
+          locked: locked
+          unlocked: unlocked
+        to_earn:
+          achievement: Unlock the achievement %{name} · %{condition}
+          set: Reach half of the %{set} set
+          set_absent: Set not in the current season
+        unlocked:
+          one: unlocked
+          other: unlocked
+      fraction: "%{count} of %{total}"
       profile_title:
-        apply: Apply
         empty: No title yet. Reach a tier of a set, or complete it, to earn one.
         heading: Profile title
         intro: Your title shows on your profile, in the activity feed and in your trades.
         none: No title
       showcase:
         empty: Your best card will show here once you choose it from a card's page.
-        title: Showcase
-      title: Personalization
+  picoin_amount:
+    accessible: "%{amount} PiCoins"
+  player_name:
+    anonymous: An anonymous player
+  profile_avatars:
+    chosen:
+      text: "%{name} is now your portrait."
+      title: Avatar changed
   profile_titles:
     chosen:
       title: Title equipped
@@ -2050,6 +3756,9 @@ en:
       title: Title removed
     title: "%{rank} · %{set}"
   public_profiles:
+    card:
+      full_profile: See the full profile
+      this_week: This week
     collection:
       heading: Collection · %{name}
       title: Collection · %{name} · Gameble
@@ -2069,6 +3778,9 @@ en:
       distinct_cards:
         one: "%{count} card collected"
         other: "%{count} cards collected"
+      goals:
+        row: "%{set}, %{kind}, %{count}, %{next}"
+        title: Goals
       keys:
         achievements: Achievements
         cards: Cards
@@ -2083,17 +3795,19 @@ en:
           other: "%{count} sets started"
         title: Sets
       showcase:
-        info: Drag the cards to change their order, or move a card one place with
-          the arrows under it.
-        info_label: How to change the order
-        info_movable_removable: Drag the cards to change their order, move a card one
-          place with the arrows under it, or take it out with the cross.
-        info_removable: Take a card out of the showcase with the cross under it.
+        info: Up to five cards. Drag them to change their order, and add one from
+          its page with “%{add}”.
+        info_label: How the showcase works
         move_failed: The new order could not be saved.
-        move_left: Move %{title} left
-        move_right: Move %{title} right
         moved: "%{title} is now in place %{position} of %{count}."
+        removal:
+          cancel: Keep it
+          close: Close
+          confirm: Remove
+          text: "%{title} leaves your showcase. You keep the card."
+          title: Remove from showcase?
         remove: Remove %{title} from the showcase
+        return: Back to the card
         title: Showcase
       stats:
         activity: Activity
@@ -2112,6 +3826,28 @@ en:
   rate_limit:
     reading_throttled: Too many pages read in a minute. Try again in a moment.
     throttled: Too many sign-in attempts. Try again in a minute.
+  reactions:
+    add: Add a reaction
+    choose: Choose a reaction
+    group: Reactions
+    names:
+      gg: GG
+      heart: Heart
+      middle_finger: Middle finger
+      thumb: Thumb up
+      wow: Wow
+    reacted: 'Reaction sent: %{reaction}.'
+    remove: 'Remove your reaction: %{reaction}'
+    removed: Reaction removed.
+    throttled: Too many reactions in a minute. Try again in a moment.
+    who:
+      and: " and "
+      and_others:
+        one: "%{names} and %{count} other"
+        other: "%{names} and %{count} others"
+      players:
+        one: "%{count} player"
+        other: "%{count} players"
   reports:
     create:
       sent: Thank you. The moderation team will review this profile. The player will
@@ -2185,6 +3921,12 @@ en:
   season_mark:
     title: Season %{season}
   settings:
+    library_sync_dialog:
+      cancel: Cancel
+      close: Close
+      confirm: Turn off
+      text: The MY STEAM LIBRARY set and the list of your Steam games will be erased.
+      title: Turn off the sync?
     private_dialog:
       cancel: Cancel
       close: Close
@@ -2217,8 +3959,9 @@ en:
         retry: Retry
       language:
         label: Language
+      how_it_works: How it works
       legal: Legal notice
-      more: More
+      source_code: Source code
       motion:
         label: Reduced motion
         'off': 'No'
@@ -2233,6 +3976,14 @@ en:
       sign_ins:
         label: Sign-ins
         link_steam: Link Steam
+      steam_library:
+        hint: Gameble reads the games of your Steam account once a day for your MY STEAM LIBRARY set.
+        label: Sync my Steam games
+        last_sync: 'Last sync:'
+        never_synced: Not synced yet.
+        'off': 'No'
+        'on': 'Yes'
+        sync_now: Sync now
       summary:
         cards:
           one: "%{count} card"
@@ -2253,6 +4004,10 @@ en:
         label: Profile visibility
         private: Private
         public: Public
+    sync_library:
+      started: The sync of your Steam library has started.
+      throttled: The sync was just started. Try again in a few minutes.
+      unavailable: Turn on the Steam games sync first.
   sign_in_methods:
     create:
       added: The sign-in is added to your account.
@@ -2261,10 +4016,11 @@ en:
     clerk:
       back: Use another address
       code_label: Code received by email
+      apple: Apple
       discord: Discord
       email_label: Email address
       google: Google
-      javascript_needed: Discord, Google and email codes need JavaScript.
+      javascript_needed: Apple, Discord, Google and email codes need JavaScript.
       messages:
         captcha: The security check did not complete. Try again.
         code_expired: That code expired. Ask for a new one.
@@ -2280,20 +4036,87 @@ en:
       send_code: Send me a code
       verify: Confirm
     providers:
+      apple: Apple
       discord: Discord
       email: Email code
       google: Google
       steam: Steam
     show:
       native_continue: Sign in in the browser
-      native_line: Sign in with Steam, Discord, Google or an email code in your phone's browser, then come back here.
+      native_line: Sign in with Steam, Apple, Discord, Google or an email code in your phone's browser, then come back here.
       heading: Sign in
       line: Choose how you want to come aboard.
       separator: or
       title: Sign in
+  release_notes:
+    credited: "%{change} (thanks %{people})"
+    close: "Close the release notes"
+    done: "Got it"
+    kicker: "Update installed"
+    prompt: "> logbook"
+    sections:
+      features: "New"
+      fixes: "Fixes"
   shell:
+    release_reminder:
+      label: "Release notes reminder"
+      message: "Production runs %{version} and players have no note for it."
+      skip: "No note needed"
+      write: "Write the note"
+    announcement:
+      close: "Close the announcement"
+      label: "Announcement"
+    balance_chip:
+      committed:
+        one: "%{amount} committed"
+        other: "%{amount} committed"
+      label: Balance
+      link: "Your balance, to the market:"
+    bank:
+      label: Capsule reserve
+      next_in: Next capsule in
+      open: Open a capsule
+      special: Special
+      standard: Capsules
+    bell:
+      answer: Answer
+      collect: Collect
+      daily: Your daily capsule is ready.
+      empty: Nothing new for now.
+      invitation: "%{name} invites you to be friends."
+      label:
+        zero: What is new, all seen
+        one: What is new, %{count} unseen
+        other: What is new, %{count} unseen
+      market:
+        lead_voided_html: "The leading player on %{card} was removed. The auction restarts from its starting price."
+        outbid_html: "%{name} went past your maximum on %{card}."
+        sold_html: "%{card} sold. You receive %{amount}."
+        unsold_html: "%{card} received no offers. The card is returned to you."
+        wanted_html: "%{card}, missing from your goals, is on sale from %{amount}."
+        withdrawn_html: "%{card} was withdrawn from the market. Your %{amount} are available again."
+        won_html: "You won %{card} for %{amount}."
+      mission: "This week's mission: open %{target} capsules together."
+      mission_reached: "This week's mission is accomplished: %{target} capsules opened together."
+      mission_reward: 'The weekly mission is accomplished: a rare capsule awaits you.'
+      reaction_anonymous:
+        one: "%{count} player reacted to your post."
+        other: "%{count} players reacted to your post."
+      reaction_named:
+        zero: "%{name} reacted to your post."
+        one: "%{name} and %{count} other reacted to your post."
+        other: "%{name} and %{count} others reacted to your post."
+      reaction_trade: "%{card} for %{partner_card}"
+      read_all: Mark all as read
+      see: See
+      title: What is new
+      trade: "%{name} awaits your answer to a trade."
+      trade_accepted: "%{name} accepted your trade."
+      trade_declined: "%{name} declined your trade."
     live:
       marker: Live
+    market_status:
+      outbid: "%{name} went past your maximum on %{card}."
     packs:
       full: Reserve full
       in_reserve:
@@ -2309,16 +4132,30 @@ en:
     player:
       back_office: Back-office
       fallback_name: Player
+      friends: Friends
       menu: Player menu
-      personalization: Personalization
-      profile: My public profile
+      pending:
+        one: "%{number} thing waiting for you"
+        other: "%{number} things waiting for you"
+      profile: My profile
       settings: Settings
       sign_out: Sign out
+      support: Support
     rarity:
+      columns:
+        copies: Copies
+        overall: All seasons
+        rarity: Rarity
+        season: This season
+      figure:
+        one: "%{owned} of %{total} owned"
+        other: "%{owned} of %{total} owned"
       label: Rarities
       legend: Rarities
+      totals: Total
     screens:
       achievements: Achievements
+      all_sets: All sets
       back_office: Back-office
       booster: Capsule
       card: Card
@@ -2327,7 +4164,11 @@ en:
       friends: Friends
       how_it_works: How it works
       legal: Legal notice
-      more: More
+      listing: Listing
+      market: Market
+      me: Me
+      my_bids: My bids
+      my_sales: My sales
       profile: Profile
       set: Set
       sets: Sets
@@ -2342,15 +4183,21 @@ en:
     tabs:
       all_cards: All cards
       booster: Capsule
-      collection: Collection
       hub: Bridge
       label: Main navigation
       landing: Home
-      more: More
+      market: Market
+      market_outbid:
+        one: "%{number} auction outbid"
+        other: "%{number} auctions outbid"
+      me: Me
+      sets: Sets
       trades: Trades
       trades_waiting:
         one: "%{number} trade waiting for you"
         other: "%{number} trades waiting for you"
+    ticker:
+      open: Open the activity feed
     toast:
       close: Close
       region: Notifications
@@ -2371,6 +4218,7 @@ en:
     add_edition: Add S%{season} to showcase
     full: 'Showcase full: remove a card to add another.'
     not_found: This card does not exist.
+    open: Open my showcase
     remove: Remove from showcase
     remove_edition: Remove S%{season} from showcase
     removed:
@@ -2533,9 +4381,6 @@ en:
       recent: Recently finished
       theirs: Waiting for their answer
       yours: Waiting for you
-    one_at_a_time:
-      text: A trade is already open with %{name}.
-      title: One trade at a time
     outcome:
       accepted: done %{age}
       cancelled: cancelled %{age}
@@ -2552,7 +4397,9 @@ en:
       text: "%{name} has 7 days to answer. Your cards are reserved until then."
       title: Proposal sent
     side:
+      already_owned: "Owned ×%{count}"
       copies_label: 'Copies:'
+      of_collection: in your collection (%{total})
       for_friend_to_choose: For %{name} to choose
       friend_gives: "%{name} gives"
       friend_offered: "%{name} offered"
@@ -2569,6 +4416,16 @@ en:
       you_give: You give
       you_received: You received
       yours_to_choose: Yours to choose
+    suggestions:
+      card: "%{title} (%{goals})"
+      goal: 'goal %{number}: %{set}'
+      heading: Suggestions
+      key: 'For your goals:'
+      label_mutual: 'Suggestion from %{name}: %{cards} against %{given}. %{presence}.'
+      label_open: 'Suggestion from %{name}: %{cards}, %{name} chooses in return. %{presence}.'
+      line: The Brotherhood has identified opportunities for collaboration among its members.
+      summary_mutual: "%{cards} against %{given}"
+      summary_open: "%{cards} · for %{name} to choose in return"
     throttled: Too many actions in one minute. Try again in a moment.
     title: Trades
     undo_dialog:

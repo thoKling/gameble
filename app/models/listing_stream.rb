@@ -1,0 +1,17 @@
+module ListingStream
+  EVENTS = [
+    Game::Market::BidPlaced, Game::Market::AuctionSold, Game::Market::AuctionUnsold, Game::Market::ListingCancelled, Game::Market::ListingWithdrawn,
+    Game::Market::LeadVoided
+  ].freeze
+
+  BATCHES = :listing_stream_batches
+  BATCH = AfterCommitBatch.new(BATCHES) { |listing_ids| ListingStreamJob.perform_later(listing_ids.uniq) }
+
+  class << self
+    def streamables(token) = [ "market-listing", token ]
+
+    def call(event)
+      BATCH.add([ event.data[:listing_id] ])
+    end
+  end
+end

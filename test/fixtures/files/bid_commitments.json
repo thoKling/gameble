@@ -1,0 +1,5 @@
+[
+  { "maximum": 30000, "own_maximum": null, "needed": 30000 },
+  { "maximum": 35000, "own_maximum": 30000, "needed": 5000 },
+  { "maximum": 30001, "own_maximum": 30000, "needed": 1 }
+]

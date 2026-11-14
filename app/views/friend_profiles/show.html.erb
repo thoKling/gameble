@@ -1,10 +1,11 @@
 <% content_for :back_button, true %>
+<% content_for :phone_back do %><%= phone_back_link t("shell.screens.friends"), friends_path %><% end %>
 <% content_for :title, friend_name(@owner) %>
 <% content_for :head do %><meta name="robots" content="noindex"><% end %>
 <%= turbo_frame_tag friend_profile_frame_id(@owner.token), target: "_top" do %>
   <section class="friend-profile" aria-labelledby="friend-profile-name-<%= @owner.token %>">
     <div class="friend-profile__head">
-      <%= pixel_icon("avatar-default", class: "friend-profile__avatar") %>
+      <%= player_avatar(@owner, class_name: "friend-profile__avatar") %>
       <div class="friend-profile__who">
         <h2 id="friend-profile-name-<%= @owner.token %>" class="friend-profile__name"><%= friend_name(@owner) %></h2>
         <%= active_title_tag(@owner_title, class_name: "friend-profile__title") %>
@@ -17,7 +18,7 @@
         <% if @trades_closed %>
           <%= trades_closed_line(@trades_closed, @owner) %>
         <% else %>
-          <%= render ButtonComponent.new(href: @open_trade_token ? trade_path(token: @open_trade_token) : new_trade_path(friend: @owner.token)) do %><%= t(".trade") %><% end %>
+          <%= render ButtonComponent.new(href: new_trade_path(friend: @owner.token)) do %><%= t(".trade") %><% end %>
         <% end %>
       </div>
       <%= render "friends/more_actions", player: @owner, menu_id: friend_profile_actions_menu_id(@owner.token),
@@ -26,6 +27,6 @@
       <%= render "friends/collection_link", friend: @owner %>
     </div>
     <%= render "reports/dialog", owner: @owner, id: friend_report_dialog_id(@owner.token), from: "friends" %>
-    <%= render "friends/remove_dialog", friend: @owner, open_trade: @open_trade_token.present?, id: friend_profile_remove_dialog_id(@owner.token) %>
+    <%= render "friends/remove_dialog", friend: @owner, open_trades: @open_trade_count, id: friend_profile_remove_dialog_id(@owner.token) %>
   </section>
 <% end %>

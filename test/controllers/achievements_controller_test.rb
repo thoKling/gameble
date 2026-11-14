@@ -1,17 +1,21 @@
 require "test_helper"
 require_relative "../support/game_packs"
 require_relative "../support/steam_sign_in"
+require_relative "../support/market"
+require_relative "../support/market_sales"
 
 class AchievementsControllerTest < ActionDispatch::IntegrationTest
   include GamePacks
   include SteamSignIn
+  include MarketSales
+  include MarketSettings
 
   setup do
     @player = accounts_players(:player)
   end
 
   def unlock(*keys)
-    keys.each { |key| Game::AchievementUnlock.create!(player_id: @player.id, achievement: key, unlocked_at: Time.current) }
+    keys.each { |key| Game::AchievementUnlock.create!(player_id: @player.id, achievement: key, unlocked_at: Time.current, claimed_at: Time.current) }
   end
 
   def opened_packs(count)
@@ -38,30 +42,37 @@ class AchievementsControllerTest < ActionDispatch::IntegrationTest
     assert_select "header.top-bar[data-screen-label=Succès]"
     assert_select ".top-bar__title", "Succès"
     assert_select "main h1", "Succès"
-    assert_select ".achievements__count[aria-hidden=true]", "3 / 10"
-    assert_select ".achievements__head .visually-hidden", "3 succès obtenus sur 10"
+    assert_select ".achievements__count[aria-hidden=true]", "3 / #{total_achievements}"
+    assert_select ".achievements__head .visually-hidden", "3 succès obtenus sur #{total_achievements}"
     assert_select ".achievements__label", "Succès obtenus"
-    assert_select ".achievements__gauge[aria-hidden=true] .achievements__segment", 10
+    assert_select ".achievements__gauge[aria-hidden=true] .achievements__segment", total_achievements
     assert_select ".achievements__segment--lit", 3
     assert_select "h2#achievements-earned", "Obtenus · 3"
-    assert_select "h2#achievements-to_earn", "À obtenir · 7"
-    assert_equal [ "Première capsule", "Première Épique", "10 capsules" ], group_names(:earned)
-    assert_equal [ "Première Légendaire", "Premier set complet", "Premier échange", "100 capsules", "500 capsules",
-      "Trois sets complets", "Premier repost" ], group_names(:to_earn)
+    assert_select "h2#achievements-to_earn", "À obtenir · #{total_achievements - 3}"
+    assert_equal %w[achievements-to_earn achievements-earned], css_select(".achievements__group h2").map { it["id"] }
+    assert_equal [ "Première acquisition approuvée", "A surpassé les attentes", "Période d'essai validée" ], group_names(:earned)
+    assert_equal [ "Nous n'en demandions pas autant", "Dossier complété", "Entraide mutuelle", "Historique de consommation exemplaire",
+      "Loyauté au-delà du raisonnable", "Excellence administrative", "Contribution non rémunérée", "Non-conformité statistique",
+      "Irrégularité de conditionnement", "L'excellence dans la médiocrité", "Gestion du patrimoine historique",
+      "La chance est un concept marketing", "Demande de congé refusée", "Procédure d'ouverture simplifiée",
+      "Zèle au-delà des obligations", "Portefeuille diversifié", "Concentration du marché", "Premier arrivé, premier servi",
+      "Une découverte qui nous appartient", "Une relation strictement professionnelle", "Pas de temps à perdre", "Oiseau de nuit",
+      "OPA hostile", "Appel d'offres concurrentiel", "Plus-value réalisée", "Objectifs trimestriels atteints", "Délit d'initié" ],
+      group_names(:to_earn)
 
-    hundred = tile(:to_earn, "100 capsules")
+    hundred = tile(:to_earn, "Historique de consommation exemplaire")
     assert_equal "Ouvrir 100 capsules", hundred.at_css(".achievement__condition").text
-    bar = hundred.at_css("progress.achievement__bar[aria-hidden=true]")
+    bar = hundred.at_css("[aria-hidden=true] progress.achievement__bar")
     assert_equal [ "64", "100" ], [ bar["value"], bar["max"] ]
-    assert_equal "64 / 100", hundred.at_css(".achievement__progress[aria-hidden=true]").text
+    assert_equal "64 / 100", hundred.at_css("[aria-hidden=true] .achievement__progress").text
     assert_equal "64 sur 100", hundred.at_css(".visually-hidden").text
-    assert_equal "Ouvrir 500 capsules", tile(:to_earn, "500 capsules").at_css(".achievement__condition").text
+    assert_equal "Ouvrir 500 capsules", tile(:to_earn, "Loyauté au-delà du raisonnable").at_css(".achievement__condition").text
 
-    earned = tile(:earned, "10 capsules")
+    earned = tile(:earned, "Période d'essai validée")
     assert_nil earned.at_css("progress")
     assert_not earned["class"].include?("achievement--locked")
     assert earned.at_css("svg.pixel-icon.achievement__glyph")
-    assert tile(:to_earn, "Premier échange")["class"].include?("achievement--locked")
+    assert tile(:to_earn, "Entraide mutuelle")["class"].include?("achievement--locked")
     assert_select "[style]", false
   end
 
@@ -70,17 +81,19 @@ class AchievementsControllerTest < ActionDispatch::IntegrationTest
 
     get achievements_path(locale: :en)
 
-    assert_select ".achievements__count", "0 / 10"
-    assert_select ".achievements__head .visually-hidden", "0 achievements earned out of 10"
+    assert_select ".achievements__count", "0 / #{total_achievements}"
+    assert_select ".achievements__head .visually-hidden", "0 achievements earned out of #{total_achievements}"
     assert_select ".achievements__label", "Achievements earned"
     assert_select ".achievements__segment--lit", 0
     assert_select "#achievements-earned", false
-    assert_select "h2#achievements-to_earn", "To earn · 10"
-    assert_equal [ [ "0", "10" ], [ "0", "100" ], [ "0", "500" ], [ "0", "3" ] ],
+    assert_select "h2#achievements-to_earn", "To earn · #{total_achievements}"
+    assert_equal [ [ "0", "10" ], [ "0", "100" ], [ "0", "500" ], [ "0", "3" ], [ "0", "10" ], [ "0", "7" ], [ "0", "10" ], [ "0", "10" ], [ "0", "5" ], [ "0", "10" ], [ "0", "3" ],
+      [ "0", "3" ], [ "0", "25" ], [ "0", "5" ] ],
       css_select("progress.achievement__bar").map { [ it["value"], it["max"] ] }
-    assert_equal [ "0 / 10", "0 / 100", "0 / 500", "0 / 3" ], css_select(".achievement__progress").map(&:text)
-    assert_equal "0 of 10", tile(:to_earn, "10 capsules").at_css(".visually-hidden").text
-    assert_equal "Open a capsule", tile(:to_earn, "First capsule").at_css(".achievement__condition").text
+    assert_equal [ "0 / 10", "0 / 100", "0 / 500", "0 / 3", "0 / 10", "0 / 7", "0 / 10", "0 / 10", "0 / 5", "0 / 10", "0 / 3",
+      "0 / 3", "0 / 25", "0 / 5" ], css_select(".achievement__progress").map(&:text)
+    assert_equal "0 of 10", tile(:to_earn, "Probation Period Completed").at_css(".visually-hidden").text
+    assert_equal "Open a capsule", tile(:to_earn, "Your First Authorized Acquisition").at_css(".achievement__condition").text
   end
 
   test "every achievement earned: a full gauge and no group to earn" do
@@ -89,11 +102,26 @@ class AchievementsControllerTest < ActionDispatch::IntegrationTest
 
     get achievements_path(locale: :en)
 
-    assert_select ".achievements__count", "10 / 10"
-    assert_select ".achievements__segment--lit", 10
-    assert_select "h2#achievements-earned", "Earned · 10"
+    assert_select ".achievements__count", "#{total_achievements} / #{total_achievements}"
+    assert_select ".achievements__segment--lit", total_achievements
+    assert_select "h2#achievements-earned", "Earned · #{total_achievements}"
     assert_select "#achievements-to_earn", false
     assert_select "progress", false
+  end
+
+  test "Statistical Non-Compliance earned: its name, its condition and the outlier glyph in each locale" do
+    unlock("statistical_non_compliance")
+    sign_in(@player)
+    outlier = Nokogiri::HTML5.fragment(ShellHelper.pixel_source("achievement-outlier")).at_css("svg").inner_html
+
+    { en: [ "Statistical Non-Compliance", "Two Rare or better cards in one standard capsule" ],
+      fr: [ "Non-conformité statistique", "Deux cartes Rares ou mieux dans une capsule standard" ] }.each do |locale, (name, condition)|
+      get achievements_path(locale:)
+
+      earned = tile(:earned, name)
+      assert_equal condition, earned.at_css(".achievement__condition").text
+      assert_equal outlier, earned.at_css("svg.achievement__glyph").inner_html
+    end
   end
 
   test "the tiles that unlock a card back name it with its picture, earned or not" do
@@ -102,21 +130,39 @@ class AchievementsControllerTest < ActionDispatch::IntegrationTest
 
     get achievements_path(locale: :fr)
 
-    centurion = tile(:earned, "100 capsules")
+    centurion = tile(:earned, "Historique de consommation exemplaire")
     assert_equal "Débloque le dos Centurion", centurion.at_css(".achievement__back").text.strip
     assert centurion.at_css("img.achievement__back-image")
-    assert_equal "Débloque le dos Étoile d'or", tile(:to_earn, "Première Légendaire").at_css(".achievement__back").text.strip
-    assert_equal "Débloque le dos Aurore", tile(:to_earn, "Trois sets complets").at_css(".achievement__back").text.strip
-    assert_nil tile(:to_earn, "500 capsules").at_css(".achievement__back")
-    assert_nil tile(:to_earn, "Premier échange").at_css(".achievement__back")
+    assert_equal "Débloque le dos Étoile d'or", tile(:to_earn, "Nous n'en demandions pas autant").at_css(".achievement__back").text.strip
+    assert_equal "Débloque le dos Aurore", tile(:to_earn, "Excellence administrative").at_css(".achievement__back").text.strip
+    assert_nil tile(:to_earn, "Loyauté au-delà du raisonnable").at_css(".achievement__back")
+    assert_nil tile(:to_earn, "Entraide mutuelle").at_css(".achievement__back")
   end
 
-  test "the card back line reads in English" do
+  test "the tiles that unlock an avatar name it with its portrait, earned or not" do
+    unlock("first_booster")
     sign_in(@player)
 
-    get achievements_path(locale: :en)
+    get achievements_path(locale: :fr)
 
-    assert_equal "Unlocks the Dawn card back", tile(:to_earn, "Three complete sets").at_css(".achievement__back").text.strip
+    novice = tile(:earned, "Première acquisition approuvée")
+    assert_equal "Débloque l'avatar Novice", novice.at_css(".achievement__avatar").text.strip
+    assert novice.at_css("svg.achievement__avatar-image")
+    assert_equal "Débloque l'avatar Oracle", tile(:to_earn, "A surpassé les attentes").at_css(".achievement__avatar").text.strip
+    assert_nil tile(:to_earn, "Loyauté au-delà du raisonnable").at_css(".achievement__avatar")
+    assert_nil tile(:to_earn, "Entraide mutuelle").at_css(".achievement__avatar")
+  end
+
+  test "the four hardest achievements show the back they unlock, with its picture" do
+    sign_in(@player)
+    { "luck_is_a_marketing_concept" => "Wilted clover", "leave_request_denied" => "Assiduous",
+      "market_concentration" => "Headquarters", "a_strictly_professional_relationship" => "Contract" }.each do |key, back|
+      get achievements_path(locale: :en)
+      found = tile(:to_earn, I18n.t("achievements.names.#{key}", locale: :en))
+
+      assert_equal "Unlocks the #{back} card back", found.at_css(".achievement__back").text.strip
+      assert found.at_css("img.achievement__back-image")
+    end
   end
 
   test "an achievement of threshold one not yet earned shows no bar nor count" do
@@ -124,7 +170,7 @@ class AchievementsControllerTest < ActionDispatch::IntegrationTest
 
     get achievements_path(locale: :fr)
 
-    trade = tile(:to_earn, "Premier échange")
+    trade = tile(:to_earn, "Entraide mutuelle")
     assert_equal "Conclure un échange", trade.at_css(".achievement__condition").text
     assert_nil trade.at_css("progress")
     assert_nil trade.at_css(".achievement__progress")
@@ -136,7 +182,7 @@ class AchievementsControllerTest < ActionDispatch::IntegrationTest
 
     get achievements_path(locale: :fr)
 
-    ten = tile(:to_earn, "10 capsules")
+    ten = tile(:to_earn, "Période d'essai validée")
     bar = ten.at_css("progress")
     assert_equal [ "10", "10" ], [ bar["value"], bar["max"] ]
     assert_equal "10 / 10", ten.at_css(".achievement__progress").text
@@ -149,28 +195,47 @@ class AchievementsControllerTest < ActionDispatch::IntegrationTest
     assert_nil flash[:alert]
   end
 
-  test "on the phone the screen sits under the PLUS tab, with a way back to it" do
+  test "on the phone the screen sits under no tab, with a way back to the profile" do
     sign_in(@player)
 
     get achievements_path(locale: :fr)
 
-    assert_select "a.tab-bar__tab[href='/fr/more'][aria-current=page]", /Plus/
-    assert_select ".top-bar a.top-bar__phone-back[href='/fr/more']", /Plus/
+    assert_select "a.tab-bar__tab[aria-current]", false
+    assert_select ".top-bar a.top-bar__phone-back[href='/fr/me']", /Moi/
   end
 
-  test "menu 07 and the PLUS row lead a player to the achievements, with the count earned" do
+  test "menu 06 and the Me page lead a player to the achievements, with the count earned" do
     unlock("first_booster", "first_trade", "first_repost")
     sign_in(@player)
 
     get home_path(locale: :fr)
-    assert_select ".hub-menu a.menu-item[href='/fr/achievements'][aria-keyshortcuts='7']" do
+    assert_select ".hub-menu a.menu-item[href='/fr/achievements'][aria-keyshortcuts='6']" do
       assert_select ".menu-item__label", "Succès"
-      assert_select ".menu-item__meta[aria-hidden=true]", "3/10"
-      assert_select ".visually-hidden", "3 succès obtenus sur 10"
+      assert_select ".menu-item__meta[aria-hidden=true]", "3/#{total_achievements}"
+      assert_select ".visually-hidden", "3 succès obtenus sur #{total_achievements}"
     end
     get home_path(locale: :en)
-    assert_select ".hub-menu a.menu-item[href='/en/achievements'] .visually-hidden", "3 achievements earned out of 10"
-    get more_path(locale: :fr)
-    assert_select ".plus__list a.menu-item[href='/fr/achievements']", /Succès/
+    assert_select ".hub-menu a.menu-item[href='/en/achievements'] .visually-hidden", "3 achievements earned out of #{total_achievements}"
+    get me_path(locale: :fr)
+    assert_select "a.me-achievements__all[href='/fr/achievements']", /Tout voir/
   end
+
+  test "three editions resold at double their price show Insider Trading at 3 / 5, its avatar named" do
+    open_market!
+    buyer = accounts_players(:moderator)
+    %i[portal_one uncommon_card_one rare_card_one].each do |fixture|
+      card = catalog_card_seasons(fixture)
+      sold!(card, 5_000, seller: buyer, buyer: @player, sold_at: 2.days.ago)
+      sold!(card, 10_000, seller: @player, buyer:)
+    end
+    sign_in(@player)
+
+    get achievements_path(locale: :en)
+
+    insider = tile(:to_earn, "Insider Trading")
+    assert_equal "3 / 5", insider.at_css(".achievement__progress").text
+    assert_match "Executive", insider.at_css(".achievement__avatar").text
+  end
+
+  def total_achievements = Game::Achievements::CATALOGUE.size
 end

@@ -1,41 +1,54 @@
 package net.gameble.app
 
-import android.Manifest
 import android.content.Intent
-import android.content.pm.PackageManager
-import android.os.Build
 import android.os.Bundle
 import android.view.MotionEvent
+import android.view.View
 import android.widget.FrameLayout
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.content.ContextCompat
-import androidx.core.graphics.Insets
 import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import com.google.android.material.bottomnavigation.BottomNavigationView
-import com.google.firebase.messaging.FirebaseMessaging
-import dev.hotwire.navigation.activities.HotwireActivity
 import dev.hotwire.navigation.tabs.HotwireBottomNavigationController
+import dev.hotwire.navigation.tabs.HotwireBottomNavigationController.Visibility
 import dev.hotwire.navigation.tabs.navigatorConfigurations
 
-class MainActivity : HotwireActivity() {
+class MainActivity : GamebleActivity() {
     private val tabs by lazy { Tabs.all(this) }
     private lateinit var bottomNavigation: HotwireBottomNavigationController
     private val debugLog by lazy { if (BuildConfig.DEBUG) DebugLogPanel(this) else null }
-    private var pendingGrant: ((String?) -> Unit)? = null
-
-    private val notificationPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-        if (granted) fetchPushToken() else finishGrant(null)
-    }
+    private val tabSlide = TabSlide()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if (!PlayerSession.probablySignedIn(this)) return showNativeSignIn()
         setContentView(R.layout.activity_main)
-        keepScreensBelowStatusBar()
-        bottomNavigation = HotwireBottomNavigationController(this, findViewById<BottomNavigationView>(R.id.bottom_navigation))
+        tabsShown = true
+        val bottomNavigationView = findViewById<BottomNavigationView>(R.id.bottom_navigation)
+        bottomNavigationView.isItemActiveIndicatorEnabled = false
+        bottomNavigation = HotwireBottomNavigationController(this, bottomNavigationView, lazyLoadTabs = false)
         bottomNavigation.load(tabs)
+        setUpScreens()
+        bottomNavigation.setOnTabSelectedListener { index, tab ->
+            dropScreenTransition()
+            tabSlide.switched(findViewById(tab.configuration.navigatorHostId), index)
+            delegate.currentNavigator?.let { screenOnView(it) }
+            bottomNavigationView.post { announceScreenShown() }
+        }
+        val start = bottomNavigation.currentTab
+        tabSlide.switched(findViewById(start.configuration.navigatorHostId), tabs.indexOf(start))
         debugLog?.attachTo(findViewById<FrameLayout>(R.id.screens))
-        openNotificationPath(intent)
+        openPathFrom(intent)
+    }
+
+    private val renderTabBadges: (TopBarReport) -> Unit = { report -> Tabs.showBadges(report, bottomNavigation.view) }
+
+    override fun onStart() {
+        super.onStart()
+        if (::bottomNavigation.isInitialized) TopBarState.listen(this, renderTabBadges)
+    }
+
+    override fun onStop() {
+        TopBarState.stopListening(renderTabBadges)
+        super.onStop()
     }
 
     override fun dispatchTouchEvent(event: MotionEvent): Boolean {
@@ -47,39 +60,47 @@ class MainActivity : HotwireActivity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        openNotificationPath(intent)
+        openPathFrom(intent)
     }
 
-    fun requestPush(grant: (String?) -> Unit) {
-        pendingGrant = grant
-        val needsPermission = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-            ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
-        if (needsPermission) notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS) else fetchPushToken()
+    override fun currentScreen(): View = findViewById(bottomNavigation.currentTab.configuration.navigatorHostId)
+
+    override fun showTabs(shown: Boolean) {
+        tabsShown = shown
+        bottomNavigation.visibility = if (shown) Visibility.DEFAULT else Visibility.HIDDEN
+        ViewCompat.requestApplyInsets(findViewById(R.id.screens))
     }
 
-    private fun fetchPushToken() {
-        val token = runCatching { FirebaseMessaging.getInstance().token }.getOrNull() ?: return finishGrant(null)
-        token.addOnCompleteListener { task -> finishGrant(if (task.isSuccessful) task.result else null) }
+    override fun openDestination(path: String) {
+        val destination = Tabs.destination(path)
+        val tab = destination.tab ?: return openAboveTabs(path)
+        showTab(tab, Gameble.location(path).takeUnless { destination.atRoot })
     }
 
-    private fun finishGrant(token: String?) {
-        pendingGrant?.invoke(token)
-        pendingGrant = null
+    private fun openAboveTabs(path: String) {
+        LayerActivity.open(this, Gameble.location(path), TopBarState.label(delegate.currentNavigator?.location))
     }
 
-    private fun keepScreensBelowStatusBar() {
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.screens)) { view, insets ->
-            val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            view.setPadding(0, bars.top, 0, 0)
-            WindowInsetsCompat.Builder(insets)
-                .setInsets(WindowInsetsCompat.Type.systemBars(), Insets.of(bars.left, 0, bars.right, bars.bottom))
-                .build()
+    private fun showTab(index: Int, location: String?) {
+        bottomNavigation.selectTab(index)
+        bottomNavigation.view.post {
+            val navigator = delegate.currentNavigator ?: return@post
+            val visit = { if (location != null) navigator.route(location) }
+            if (navigator.isAtStartDestination()) visit() else navigator.clearAll(visit)
         }
     }
 
-    private fun openNotificationPath(intent: Intent?) {
+    private fun openPathFrom(intent: Intent?) {
+        intent?.getStringExtra(TOP_BAR_PATH)?.let { path ->
+            intent.removeExtra(TOP_BAR_PATH)
+            openDestination(path)
+        }
         val path = intent?.getStringExtra(PushService.PATH_EXTRA) ?: return
         intent.removeExtra(PushService.PATH_EXTRA)
-        delegate.currentNavigator?.route("${Gameble.ROOT_URL}$path")
+        delegate.currentNavigator?.route(Gameble.location(path))
+    }
+
+    companion object {
+        const val TOP_BAR_PATH = "top_bar_path"
     }
 }

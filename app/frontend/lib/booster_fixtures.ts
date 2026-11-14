@@ -8,9 +8,9 @@ import {
   revealMarked,
 } from "./booster_opening"
 import { lock, start, unlock } from "./booster_state"
-import type { BoosterBank, BoosterStart, BoosterState } from "./booster_types"
+import { NO_HELD, type BoosterBank, type BoosterStart, type BoosterState } from "./booster_types"
 import type { Rarity } from "./card_types"
-import type { OpeningAnswer, OpeningCard, OpeningSetTier } from "./opening"
+import type { HeldCapsule, OpeningAnswer, OpeningCard, OpeningSetTier } from "./opening"
 
 export const bank = (available: number, extra: Partial<BoosterBank> = {}): BoosterBank => ({
   available,
@@ -21,6 +21,7 @@ export const bank = (available: number, extra: Partial<BoosterBank> = {}): Boost
   nextAvailableAt: "2026-10-26T12:00:00.000Z",
   serverTime: "2026-10-26T11:00:00.000Z",
   nextPackSize: available > 0 ? 5 : null,
+  nextSpecialSize: null,
   ...extra,
 })
 
@@ -32,6 +33,8 @@ export const cardOf = (tier: Rarity, slug: string = tier): OpeningCard => ({
   title: slug,
   year: 2020,
   label: slug,
+  goals: "",
+  firstCopy: false,
   faces: { s: "", m: "", xl: "" },
 })
 
@@ -47,7 +50,12 @@ export const VALVE: OpeningSetTier = {
   url: "/en/library/studio/valve",
 }
 
-export const answerOf = (tiers: Rarity[], setTiers: OpeningSetTier[] = [], available = 1): OpeningAnswer => ({
+export const answerOf = (
+  tiers: Rarity[],
+  setTiers: OpeningSetTier[] = [],
+  available = 1,
+  goalsReached: string[] = [],
+): OpeningAnswer => ({
   pack: { token: "pack-token", kind: "regular", cardBack: { key: "standard", urls: null }, url: "/pack" },
   cards: tiers.map((tier, index) => cardOf(tier, `${tier}-${index}`)),
   bank: {
@@ -59,16 +67,21 @@ export const answerOf = (tiers: Rarity[], setTiers: OpeningSetTier[] = [], avail
     nextAvailableAt: null,
     scheduledAt: [],
     nextPackSize: available > 0 ? 5 : null,
+    nextSpecialSize: null,
   },
   serverTime: "2026-10-26T11:00:01.000Z",
   tierCountsBefore: { common: 3, uncommon: 0, rare: 0, epic: 0, legendary: 0 },
   setTiers,
+  goalsReached,
 })
 
 export const startWith = (overrides: Partial<BoosterStart> = {}): BoosterState =>
   start({
     bank: bank(2),
     reserve: "standard",
+    held: NO_HELD,
+    confirming: [],
+    openedTokens: [],
     opened: null,
     layout: "wide",
     now: 1000,
@@ -90,3 +103,41 @@ export const dealt = (
 
 export const revealedAll = (state: BoosterState, now = 0): BoosterState =>
   state.revealed.reduce((next, _, index) => revealMarked(next, index, now), state)
+
+export const heldOf = (tiers: Rarity[] = FIVE, token = "held-token"): HeldCapsule => ({
+  pack: {
+    token,
+    kind: "regular",
+    cardBack: { key: "standard", urls: null },
+    url: `/pack/${token}`,
+    revealUrl: `/pack/${token}/reveal`,
+  },
+  cards: tiers.map((tier, index) => cardOf(tier, `${tier}-${index}`)),
+  tierCountsBefore: { common: 3, uncommon: 0, rare: 0, epic: 0, legendary: 0 },
+})
+
+export const confirmationOf = (
+  held: HeldCapsule,
+  {
+    setTiers = [],
+    available = 1,
+    goalsReached = [],
+    next = null,
+  }: Partial<{
+    setTiers: OpeningSetTier[]
+    available: number
+    goalsReached: string[]
+    next: HeldCapsule | null
+  }> = {},
+): OpeningAnswer => ({
+  ...answerOf(
+    held.cards.map((card) => card.tier),
+    setTiers,
+    available,
+    goalsReached,
+  ),
+  pack: held.pack,
+  cards: held.cards,
+  tierCountsBefore: { common: 4, uncommon: 1, rare: 0, epic: 0, legendary: 0 },
+  next,
+})

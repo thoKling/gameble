@@ -19,12 +19,25 @@ module Game
       name.to_s if NAMES.include?(name.to_s)
     end
 
+    def self.name_of(kind)
+      NAMES.find { |name| KINDS.fetch(name).include?(kind.to_s) }
+    end
+
     def self.available(player_id, name, now: Time.current)
       Pack.where(player_id:).available(now).where(kind: KINDS.fetch(name.to_s))
     end
 
     def self.full?(count)
       count >= FULL
+    end
+
+    def self.full_at(player_id)
+      count, last = Pack.bank(player_id).pick(Arel.sql("COUNT(*)"), Arel.sql("MAX(available_at)"))
+      last if full?(count)
+    end
+
+    def self.refilled_by?(pack_id)
+      Pack.where(id: pack_id, kind: KINDS.fetch("standard")).exists?
     end
   end
 end

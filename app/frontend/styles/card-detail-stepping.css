@@ -35,21 +35,40 @@
     );
   }
 
-  /* Pinned above the tab bar while the panel scrolls under them. */
+  /* Pinned above the tab bar while the panel scrolls under them, wide enough
+     to cover the panel's brackets, which hang outside it. */
   .card-detail__actions {
     position: sticky;
     bottom: calc(var(--tabbar-height) + env(safe-area-inset-bottom, 0px));
     z-index: 2;
+    display: flex;
     flex-direction: column;
     align-items: stretch;
     min-height: var(--card-detail-actions-height);
-    padding: var(--space-4) 0;
+    margin-inline: var(--corner-brackets-offset);
+    padding: var(--space-4) calc(-1 * var(--corner-brackets-offset));
     background: var(--color-ground);
     box-shadow: 0 calc(-1 * var(--space-unit)) 0 0 var(--color-line);
   }
 
-  .card-detail__holder-actions + .card-detail__card-links {
-    margin-left: 0;
+  .card-detail__actions {
+    gap: var(--space-4);
+  }
+
+  .card-detail__action-group {
+    padding: 0;
+    background: none;
+    box-shadow: none;
+  }
+
+  /* The pinned bar keeps its height: the group titles stay for screen readers only. */
+  .card-detail__action-title {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
 
   .card-detail__holder-actions {

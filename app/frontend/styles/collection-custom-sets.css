@@ -1,0 +1,149 @@
+/* ---- The player's own sets: MES SETS and the Steam library on the entry, and the album's actions ---- */
+
+.custom-sets__head,
+.steam-library__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-4);
+}
+
+.custom-sets__note {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0;
+  color: var(--color-muted);
+  font: var(--font-label);
+  letter-spacing: var(--tracking-label);
+}
+
+.custom-sets__lock {
+  width: 10px;
+  height: 12px;
+}
+
+.new-set-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  box-sizing: border-box;
+  width: 100%;
+  height: 280px;
+  margin: 0;
+  padding: var(--space-5);
+  border: 0;
+  background: repeating-linear-gradient(-45deg, var(--color-panel-sunken) 0 8px, var(--color-panel) 8px 16px);
+  box-shadow: inset 0 0 0 var(--space-unit) var(--color-line-deep);
+  color: var(--color-text-bright);
+  font: var(--font-body);
+  text-align: center;
+  cursor: pointer;
+}
+
+.new-set-tile:hover {
+  box-shadow: inset 0 0 0 var(--space-unit) var(--color-accent);
+}
+
+.new-set-tile:focus-visible {
+  box-shadow:
+    var(--focus-ring-gap),
+    inset 0 0 0 var(--space-unit) var(--color-line-deep);
+}
+
+.new-set-tile__plus {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  background: var(--color-line);
+  box-shadow: var(--pixel-outline-3);
+}
+
+.new-set-tile__plus .pixel-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.new-set-tile__text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.new-set-tile__title {
+  font: var(--font-button);
+  letter-spacing: var(--tracking-button);
+  text-transform: uppercase;
+}
+
+.new-set-tile__rule {
+  color: var(--color-muted);
+  font: var(--font-label);
+  letter-spacing: var(--tracking-label);
+}
+
+.custom-sets__unfold {
+  display: none;
+}
+
+@media (max-width: 719px) {
+  .custom-sets__tiles:not(.is-unfolded) > li:nth-child(n + 3):not(.custom-sets__add) {
+    display: none;
+  }
+
+  .custom-sets__unfold:not([hidden]) {
+    display: inline-flex;
+    align-self: flex-start;
+  }
+
+  .new-set-tile {
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: var(--space-4);
+    height: 120px;
+    text-align: left;
+  }
+
+  .new-set-tile__plus {
+    width: 44px;
+    height: 44px;
+  }
+
+  .new-set-tile__text {
+    align-items: flex-start;
+  }
+}
+
+.steam-library__note {
+  margin: 0;
+  color: var(--color-muted);
+  font: var(--font-label);
+  letter-spacing: var(--tracking-label);
+}
+
+.steam-library__note b {
+  color: var(--color-text-bright);
+}
+
+.steam-library__not-shared {
+  margin: 0;
+  color: var(--color-muted);
+  font: var(--font-body-small);
+  letter-spacing: var(--tracking-body-small);
+}
+
+.set-album__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.set-album__actions .button-form {
+  margin: 0;
+}

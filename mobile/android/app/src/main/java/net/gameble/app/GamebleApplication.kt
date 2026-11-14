@@ -9,10 +9,13 @@ import dev.hotwire.core.turbo.config.PathConfiguration
 import dev.hotwire.navigation.config.defaultFragmentDestination
 import dev.hotwire.navigation.config.registerBridgeComponents
 import dev.hotwire.navigation.config.registerFragmentDestinations
-import dev.hotwire.navigation.fragments.HotwireWebBottomSheetFragment
+import net.gameble.app.bridge.BackComponent
 import net.gameble.app.bridge.HapticsComponent
+import net.gameble.app.bridge.PullToRefreshComponent
 import net.gameble.app.bridge.PushPermissionComponent
 import net.gameble.app.bridge.ShareComponent
+import net.gameble.app.bridge.SheetComponent
+import net.gameble.app.bridge.TopBarComponent
 import net.gameble.app.bridge.SignInComponent
 
 class GamebleApplication : Application() {
@@ -33,12 +36,16 @@ class GamebleApplication : Application() {
             )
         )
         Hotwire.defaultFragmentDestination = GamebleWebFragment::class
-        Hotwire.registerFragmentDestinations(GamebleWebFragment::class, HotwireWebBottomSheetFragment::class)
+        Hotwire.registerFragmentDestinations(GamebleWebFragment::class, GamebleSheetFragment::class)
         Hotwire.registerBridgeComponents(
+            BridgeComponentFactory("back", ::BackComponent),
             BridgeComponentFactory("sign-in", ::SignInComponent),
             BridgeComponentFactory("push-permission", ::PushPermissionComponent),
             BridgeComponentFactory("share", ::ShareComponent),
-            BridgeComponentFactory("haptics", ::HapticsComponent)
+            BridgeComponentFactory("haptics", ::HapticsComponent),
+            BridgeComponentFactory("sheet", ::SheetComponent),
+            BridgeComponentFactory("pull-to-refresh", ::PullToRefreshComponent),
+            BridgeComponentFactory("top-bar", ::TopBarComponent)
         )
         PushService.createChannel(this)
     }

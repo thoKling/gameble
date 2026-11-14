@@ -1,4 +1,4 @@
-import { atZero, owedBankDue, phaseForBank, reserveCount, type ScreenMoment } from "./booster_bank"
+import { atZero, heldSkippingQueued, owedBankDue, phaseForBank, reserveCount, type ScreenMoment } from "./booster_bank"
 import { handDone, storedAfterRebuild, topOfPile } from "./booster_rules"
 import {
   REVEAL_GUARD,
@@ -7,18 +7,25 @@ import {
   type BoosterStart,
   type BoosterState,
   type FocusTarget,
+  type HeldCapsules,
 } from "./booster_types"
+import { NO_MARKS } from "./opening_timings"
 import { celebrationResults, restoredCelebration, type CelebrationResult } from "./celebration"
 
 export function start({
-  bank,
+  bank: serverBank,
   reserve,
+  held: serverHeld,
+  confirming,
+  openedTokens,
   opened,
   layout,
   now,
   celebrationRemembered,
   preview,
 }: BoosterStart): BoosterState {
+  const alreadyOpened = openedTokens.map((token) => ({ token }))
+  const { bank, held } = heldSkippingQueued({ bank: serverBank, held: serverHeld }, [...confirming, ...alreadyOpened])
   const sealed = reserveCount(bank, reserve) > 0
   const fresh: BoosterState = {
     bank,
@@ -29,13 +36,20 @@ export function start({
     status: sealed ? "sealed" : "waiting",
     opening: false,
     pendingKey: null,
+    held,
+    confirming,
     answer: null,
+    provisional: false,
+    revealsOwed: [],
+    revealDue: null,
     revealed: [],
     revealedAt: [],
+    marks: NO_MARKS,
     revealing: [],
     legendary: null,
     legendaryRunning: false,
     revealingAll: false,
+    revealAllUsed: false,
     storing: false,
     stored: [],
     counts: null,
@@ -56,6 +70,8 @@ export function start({
     celebrationStill: false,
     celebrationAnnounced: false,
     celebrationSteps: 0,
+    goalsPending: [],
+    goalsReached: [],
     lockDepth: 0,
     focus: preview ? null : sealed ? "open" : "home",
   }
@@ -142,7 +158,12 @@ export function bannerEnded(state: BoosterState, key: number): BoosterState {
   return state.banner?.key === key ? { ...state, banner: null } : state
 }
 
-export function celebrate(state: BoosterState): BoosterState {
+export function goalsAnnounced(state: BoosterState): BoosterState {
+  return state.goalsPending.length === 0 ? state : { ...state, goalsPending: [], goalsReached: state.goalsPending }
+}
+
+export function celebrate(before: BoosterState): BoosterState {
+  const state = goalsAnnounced(before)
   const reached = state.celebrationPending
   if (reached === null) return state
   const results = celebrationResults(reached)
@@ -171,6 +192,10 @@ export function celebrationStepped(state: BoosterState): BoosterState {
     : state
 }
 
+export function celebrationDismissed(state: BoosterState): BoosterState {
+  return state.celebration === null ? state : { ...state, celebration: null, focus: "open" }
+}
+
 export function shownResult(state: BoosterState): number {
   const count = state.celebration?.length ?? 0
   return count > 0 ? state.celebrationSteps % count : 0
@@ -192,15 +217,23 @@ export function bankChanged(state: BoosterState, bank: BoosterBank): BoosterStat
   return { ...state, bank, bankGeneration: state.bankGeneration + 1 }
 }
 
-export function bankFetched(state: BoosterState, bank: BoosterBank, generation: number): BoosterState {
+export function bankFetched(
+  state: BoosterState,
+  serverBank: BoosterBank,
+  generation: number,
+  serverHeld: HeldCapsules | null = null,
+): BoosterState {
   if (generation !== state.bankGeneration) return state
-  const changed = bankChanged(state, bank)
+  const { bank, held } = serverHeld
+    ? heldSkippingQueued({ bank: serverBank, held: serverHeld }, state.confirming)
+    : { bank: serverBank, held: state.held }
+  const changed = { ...bankChanged(state, bank), held }
   const phase = phaseForBank(state.phase, reserveCount(bank, state.reserve))
   if (phase === state.phase) return changed
   return { ...changed, phase, status: phase === "sealed" ? "sealed" : "waiting", reason: null }
 }
 
-export function countdownAtZero(state: BoosterState): "page" | "bank" | "owe" {
+export function countdownAtZero(state: BoosterState): "bank" | "owe" {
   return atZero(moment(state))
 }
 

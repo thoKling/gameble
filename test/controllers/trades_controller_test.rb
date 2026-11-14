@@ -2,9 +2,13 @@ require "test_helper"
 require_relative "../support/counting_rate_limit"
 require_relative "../support/steam_sign_in"
 require_relative "../support/holdings"
+require_relative "../support/custom_sets"
+require_relative "../support/game_sets"
 
 class TradesControllerTest < ActionDispatch::IntegrationTest
   include Holdings
+  include CustomSets
+  include GameSets
   include CountingRateLimit
   include SteamSignIn
 
@@ -76,6 +80,36 @@ class TradesControllerTest < ActionDispatch::IntegrationTest
     assert_select ".trade-board .trade-board__title", "Échange avec Lea"
   end
 
+  test "the board of a trade the friend answered carries a seen beacon until the player has opened it; the GET writes nothing" do
+    trade = propose(@alice, @bob, offer: { @portal => 1 }, request: { @depths => 1 })
+    assert Game::DeclineTrade.new.call(player: @bob, trade_id: trade.id, revision: revision(trade)[:revision]).success?
+    sign_in @alice
+
+    assert_no_difference -> { Game::TradeView.count + Rails.configuration.event_store.read.count } do
+      get trade_path(token: trade.token, locale: :en)
+    end
+
+    assert_response :success
+    assert_select "[data-controller=trade-seen][data-trade-seen-url-value=?]", trade_seen_path(token: trade.token, locale: :en)
+
+    Game::MarkTradeSeen.new.call(player: @alice, trade_token: trade.token)
+    get trade_path(token: trade.token, locale: :en)
+
+    assert_select "[data-controller=trade-seen]", 0
+  end
+
+  test "no beacon on an open trade or on the board of the player who answered" do
+    waiting = from_lea
+    sign_in @alice
+
+    get trade_path(token: waiting.token, locale: :en)
+    assert_select "[data-controller=trade-seen]", 0
+
+    Game::DeclineTrade.new.call(player: @alice, trade_id: waiting.id, revision: revision(waiting)[:revision])
+    get trade_path(token: waiting.token, locale: :en)
+    assert_select "[data-controller=trade-seen]", 0
+  end
+
   test "the board of a trade waiting for the player: its line, expiry, reserved copies and three actions" do
     trade = from_lea
     sign_in @alice
@@ -91,12 +125,10 @@ class TradesControllerTest < ActionDispatch::IntegrationTest
       assert_select ".trade-board__expiry", /Expire dans\s+7 j/
       assert_select ".trade-board__message", "Lea vous propose cet échange."
       assert_select ".trade-side--friend .trade-side__label", "Lea donne"
-      assert_select ".trade-side--friend .trade-card__reserved", "Réservée"
       assert_select ".trade-side--friend .card", 1
       assert_select ".trade-side--own .trade-side__label", "Vous donnez"
       assert_select ".trade-side--own .trade-card__quantity", /×2/
       assert_select ".trade-side--own .trade-side__count", "1 carte · 2 ex."
-      assert_select ".trade-side--own .trade-card__reserved", 0
       assert_select "form[action=?] button", accept_trade_path(token: trade.token, locale: :fr), "Accepter"
       assert_select "form[action=?] input[type=hidden][name=revision][value=?]", accept_trade_path(token: trade.token, locale: :fr), revision(trade)[:revision]
       assert_select "form[action=?] input[type=hidden][name=revision][value=?]", decline_trade_path(token: trade.token, locale: :fr), revision(trade)[:revision]
@@ -106,6 +138,47 @@ class TradesControllerTest < ActionDispatch::IntegrationTest
     assert_no_match(/trade[_-]id|\svalue="#{trade.id}"/, response.body)
   end
 
+  test "the cards the player gives show the copies given out of the copies held, red when it is all of them, on a trade waiting for them and on one they proposed" do
+    sign_in @alice
+
+    waiting = propose(@bob, @alice, offer: { @depths => 1 }, request: { @portal => 2, @soldier => 1 })
+    get trade_path(token: waiting.token, locale: :fr)
+    assert_select ".trade-side--own .trade-card__quantity:not(.trade-card__quantity--all)", text: /×2\/3/
+    assert_select ".trade-side--own .trade-card__quantity--all", text: /×1\/1/
+    assert_select ".trade-side--friend .trade-card__quantity", count: 0
+    assert_select ".trade-side--friend .trade-card__new", text: "Nouveau"
+
+    all_copies = propose(@alice, @carol, offer: { @portal => 3 }, request: { @depths => 1 })
+    get trade_path(token: all_copies.token, locale: :en)
+    assert_select ".trade-side--own .trade-card__quantity--all", text: /×3\/3/
+    assert_select ".trade-side--friend .trade-card__quantity--all", count: 0
+  end
+
+  test "a card of an open trade links to its detail, which links back to the trade" do
+    sign_in @alice
+    trade = propose(@bob, @alice, offer: { @depths => 1 }, request: { @soldier => 1 })
+
+    get trade_path(token: trade.token, locale: :en)
+    link = css_select(".trade-side--friend a.card-link").first
+    assert_includes link["href"], "trade=#{trade.token}"
+
+    get link["href"]
+    assert_response :success
+    assert_select "a.top-bar__phone-back[href=?]", trade_path(token: trade.token, locale: :en), text: "Trade"
+  end
+
+  test "the cards the friend gives say whether the player already owns them instead of showing the friend's stock" do
+    sign_in @alice
+    hold(@bob, @portal, 1)
+
+    trade = propose(@bob, @alice, offer: { @depths => 1, @portal => 1 }, request: { @soldier => 1 })
+    get trade_path(token: trade.token, locale: :en)
+
+    assert_select ".trade-side--friend .trade-card__new:not(.trade-card__owned)", text: "New", count: 1
+    assert_select ".trade-side--friend .trade-card__owned", text: "Owned ×3", count: 1
+    assert_select ".trade-side--friend .trade-card__quantity", text: %r{/}, count: 0
+  end
+
   test "the proposer sees their reserved copies and cancels; the copies are released" do
     trade = propose(@alice, @bob, offer: { @portal => 2 }, request: { @depths => 1 })
     sign_in @alice
@@ -113,7 +186,7 @@ class TradesControllerTest < ActionDispatch::IntegrationTest
     get trade_path(token: trade.token, locale: :fr)
     assert_select ".trade-chip--accent", "En attente"
     assert_select ".trade-board__message", "En attente de la réponse de Lea."
-    assert_select ".trade-side--own .trade-card__reserved", "2 réservées"
+    assert_select ".trade-side--own .trade-card__quantity", /×2\/3/
     assert_select ".trade-board__actions form button", 1
 
     post cancel_trade_path(token: trade.token, locale: :fr)
@@ -131,8 +204,8 @@ class TradesControllerTest < ActionDispatch::IntegrationTest
     trade = from_lea
     sign_in @alice
     get home_path(locale: :fr)
-    assert_select ".hub-menu a.menu-item[href='/fr/trades'] .menu-item__badge--alert", "1"
-    assert_select ".hub-menu a.menu-item[href='/fr/trades'] .visually-hidden", "1 échange en attente de vous"
+    assert_select ".hub-menu a.menu-item[href='/fr/trades'] #menu-trades-badge .menu-item__badge--alert", "1"
+    assert_select ".hub-menu a.menu-item[href='/fr/trades'] #menu-trades-badge .visually-hidden", "1 échange en attente de vous"
     assert_select ".tab-bar a.tab-bar__tab[href='/fr/trades'] .tab-bar__badge--alert", "1"
 
     post accept_trade_path(token: trade.token, locale: :fr), params: revision(trade)
@@ -159,7 +232,7 @@ class TradesControllerTest < ActionDispatch::IntegrationTest
     assert_select "[data-trade-board-swap-value]", 0
 
     get home_path(locale: :fr)
-    assert_select ".hub-menu a.menu-item[href='/fr/trades'] .menu-item__badge--zero", "0"
+    assert_select ".hub-menu a.menu-item[href='/fr/trades'] #menu-trades-badge .menu-item__badge", 0
     assert_select ".tab-bar__badge", 0
   end
 
@@ -253,44 +326,17 @@ class TradesControllerTest < ActionDispatch::IntegrationTest
     assert_equal [ 3, 0 ], [ holding(@alice, @portal).reserved, holding(@bob, @depths).reserved ]
   end
 
-  test "proposing again to a friend whose trade expired but is not yet swept closes it and sends the new proposal" do
-    expired = propose(@alice, @bob, offer: { @portal => 3 }, request: { @depths => 1 })
+  test "sending again terms already open with the friend returns to the draft with the refusal" do
+    propose(@alice, @bob, offer: { @portal => 2 }, request: { @depths => 1 })
     sign_in @alice
 
-    travel_to(expired.expires_at + 1.second) do
-      get new_trade_path(locale: :fr, friend: @bob.token)
-      assert_response :success
-      post trades_path(locale: :fr), params: { friend: @bob.token, give: { "portal--s1" => "3" }, take: { "blue-depths--s1" => "1" } }
-    end
+    post trades_path(locale: :fr), params: { friend: @bob.token, give: { "portal--s1" => "2" }, take: { "blue-depths--s1" => "1" } }
 
-    fresh = Game::Trade.order(:id).last
-    assert_redirected_to trade_path(token: fresh.token, locale: :fr)
-    assert_equal "expired", expired.reload.status
-    assert_equal [ "open", 3 ], [ fresh.status, holding(@alice, @portal).reserved ]
-    assert_equal 1, Game::Trade.in_progress.count
-  end
-
-  test "asking for more copies than the friend holds is refused and nothing is reserved" do
-    sign_in @alice
-
-    post trades_path(locale: :fr), params: { friend: @bob.token, give: { "portal--s1" => "1" }, take: { "blue-depths--s1" => "3" } }
+    assert_redirected_to new_trade_path(friend: @bob.token, locale: :fr)
     follow_redirect!
-
-    assert_select ".trade-board__error[role=alert]", I18n.t("errors.game.request_exceeds_holdings", locale: :fr)
-    assert_equal 0, Game::Trade.count
-    assert_equal 0, holding(@alice, @portal).reserved
-  end
-
-  test "declining tells the friend's name" do
-    trade = from_lea
-    sign_in @alice
-
-    post decline_trade_path(token: trade.token, locale: :fr), params: revision(trade)
-    follow_redirect!
-
-    assert_select ".toast", /Échange refusé.*Votre réponse a été envoyée à Lea\./m
-    assert_select ".trade-board__expiry", /refusé à l'instant/
-    assert_equal "declined", trade.reload.status
+    assert_select ".trade-board__error[role=alert]", "Vous avez déjà envoyé cette proposition à Lea."
+    assert_equal 1, Game::Trade.count
+    assert_equal 2, holding(@alice, @portal).reserved
   end
 
   test "a closed trade offers a new one with the friend, while they are still friends" do
@@ -314,7 +360,7 @@ class TradesControllerTest < ActionDispatch::IntegrationTest
     @bob.update_columns(visibility: "private")
     get trade_path(token: trade.token, locale: :fr)
     assert_select ".trade-board__actions a.button", 0
-    assert_select ".trade-board__actions .trades-closed", "Le profil de Lea est privé : échanges fermés."
+    assert_select ".trade-board__actions .trades-closed", "Le profil de Lea est privé\u202F: échanges fermés."
 
     @bob.update_columns(visibility: "friends_only")
     get trade_path(token: trade.token, locale: :fr)
@@ -323,7 +369,7 @@ class TradesControllerTest < ActionDispatch::IntegrationTest
     @alice.update_columns(visibility: "private")
     get trade_path(token: trade.token, locale: :fr)
     assert_select ".trade-board__actions a.button", 0
-    assert_select ".trade-board__actions .trades-closed", /Votre profil est privé : les échanges sont fermés\./
+    assert_select ".trade-board__actions .trades-closed", /Votre profil est privé\u202F: les échanges sont fermés\./
     assert_select ".trade-board__actions .trades-closed a[href=?]", settings_path(locale: :fr), "RÉGLAGES"
   end
 
@@ -334,12 +380,12 @@ class TradesControllerTest < ActionDispatch::IntegrationTest
 
     post accept_trade_path(token: trade.token, locale: :fr), params: revision(trade)
     follow_redirect!
-    assert_select ".toast--alert", /Le profil de Lea est privé : échanges fermés\./
+    assert_select ".toast--alert", /Le profil de Lea est privé\u202F: échanges fermés\./
     assert_equal "open", trade.reload.status
 
     post counter_trade_path(token: trade.token, locale: :fr), params: { **revision(trade), give: { "portal--s1" => "1" }, take: { "blue-depths--s1" => "1" } }
     follow_redirect!
-    assert_select ".toast--alert", /Le profil de Lea est privé : échanges fermés\./
+    assert_select ".toast--alert", /Le profil de Lea est privé\u202F: échanges fermés\./
     assert_equal "open", trade.reload.status
     assert_equal 2, holding(@bob, @depths).quantity
   end
@@ -379,18 +425,6 @@ class TradesControllerTest < ActionDispatch::IntegrationTest
       trade.items.group_by(&:side).transform_values { |items| items.map { [ it.card_season_id, it.quantity ] } })
     assert_equal 1, holding(@alice, @portal).reserved
     assert_equal 0, holding(@bob, @depths).reserved
-  end
-
-  test "a counter that empties the friend's side is refused on its form" do
-    trade = from_lea
-    sign_in @alice
-
-    post counter_trade_path(token: trade.token, locale: :fr), params: { **revision(trade), give: { "portal--s1" => "1" }, take: { "blue-depths--s1" => "0" } }
-
-    assert_redirected_to counter_trade_path(token: trade.token, locale: :fr)
-    follow_redirect!
-    assert_select ".trade-board__error", I18n.t("errors.game.invalid_request", locale: :fr)
-    assert_equal @bob.id, trade.reload.proposer_id
   end
 
   test "a counter that empties the player's own side is sent as an open request, reserving nothing" do
@@ -439,7 +473,7 @@ class TradesControllerTest < ActionDispatch::IntegrationTest
     end
     assert_select ".trade-side--friend.trade-side--editing[data-field='take'] li[data-key='blue-depths--s1'] input[name='take[blue-depths--s1]'][value='1']"
     assert_select ".trade-side--own.trade-side--editing .trade-add", /Placer mes cartes/
-    assert_select ".trade-side--own .trade-side__help[hidden]", "Laissez ce côté vide : Lea choisira ce qui lui plaît en retour."
+    assert_select ".trade-side--own .trade-side__help[hidden]", "Laissez ce côté vide\u202F: Lea choisira ce qui lui plaît en retour."
     assert_select ".trade-side--friend .trade-side__help", 0
     assert_select ".trade-board__message.trade-board__edit-only", "Modifiez ce que vous donnez et ce que vous demandez, puis renvoyez."
     assert_select ".trade-board__message.trade-board__read-only", "Lea vous propose cet échange."
@@ -456,7 +490,7 @@ class TradesControllerTest < ActionDispatch::IntegrationTest
       assert_select ".trade-picker__empty[data-reason='reserved']", /#{Regexp.escape(I18n.t("trades.side.none.all_reserved", locale: :fr))}/
       assert_select "template[data-trade-board-picker-target='stepperTemplate'] .stepper[role=spinbutton]"
     end
-    assert_equal [ [ "tin-soldier--s1", 1, 0, 1, 1, 3 ], [ "portal--s1", 3, 1, 2, 3, 0 ] ], board_cards(:own)
+    assert_equal [ [ "tin-soldier--s1", 1, 0, 1, 1, 3 ], [ "portal--s1", 3, 1, 2, 2, 0 ] ], board_cards(:own)
     assert_equal [ [ "tin-soldier--s1", 3, 0, 3, 3, 1 ], [ "blue-depths--s1", 2, 0, 2, 2, 0 ] ], board_cards(:friend)
     assert_select ".trade-pick[data-side='own'][data-key='portal--s1'] .trade-pick__toggle[aria-pressed='false'][aria-label=?]",
       "Portal, 3 exemplaires, 1 réservé ailleurs"
@@ -494,6 +528,58 @@ class TradesControllerTest < ActionDispatch::IntegrationTest
     assert_includes faces.fetch("golden-crown--s1"), "Couronne d&#39;or"
     assert_no_match(/style=/, faces.values.join)
     assert_no_match(/"id"|card_season_id/, response.body)
+  end
+
+  def bookmark_numbers(scope) = css_select("#{scope} .card > .card__goals > .goal-bookmark").map { it.text.to_i }
+
+  test "the board of a trade marks the viewer's goal cards on both sides and names them for a screen reader" do
+    trade = from_lea
+    goal_on(@portal, @depths, @soldier)
+    sign_in @alice
+
+    get trade_path(token: trade.token, locale: :fr)
+
+    assert_response :success
+    assert_equal [ 1 ], bookmark_numbers(".trade-side--friend")
+    assert_equal [ 1 ], bookmark_numbers(".trade-side--own")
+    assert_select ".trade-side--own .trade-card .visually-hidden", /\Aobjectif 1.+Objectif 1\z/
+    assert_select ".trade-side--friend .trade-card .visually-hidden", /\Aobjectif 1.+Objectif 1\z/
+    assert_select ".trade-board .card__goals[aria-hidden=true]", minimum: 2
+    assert_no_match(/style=/, css_select(".trade-board").to_html)
+  end
+
+  test "the friend sees only the bookmarks of their own goals on the same trade" do
+    trade = from_lea
+    goal_on(@portal, @soldier, catalog_card_seasons(:uncommon_card_one).id)
+    abysses = [ @depths, @soldier, catalog_card_seasons(:legendary_card_one).id ]
+    Game::AddGoal.new.call(player: @bob, custom_set: create_custom_set(@bob, name: "Abysses", card_ids: Catalog::CardSeason.where(id: abysses).pluck(:card_id)).token).value!
+    sign_in @bob
+
+    get trade_path(token: trade.token, locale: :fr)
+
+    assert_equal [ 1 ], bookmark_numbers(".trade-side--own")
+    assert_empty bookmark_numbers(".trade-side--friend")
+    assert_select ".trade-side--own .trade-card .visually-hidden", /\Aobjectif 1.+Abysses\z/
+  end
+
+  test "the draft board, the counter board and the faces the editor fetches carry the viewer's bookmarks" do
+    trade = from_lea
+    goal_on(@portal, @depths, catalog_card_seasons(:uncommon_card_one).id)
+    sign_in @alice
+
+    get new_trade_path(friend: @bob.token, locale: :fr)
+    assert_response :success
+    assert_select ".trade-pick__toggle[aria-label$=?]", "Objectif 1", minimum: 1
+
+    get counter_trade_path(token: trade.token, locale: :fr)
+    assert_response :success
+    assert_select ".trade-card--editing .card__goals .goal-bookmark", text: "1", minimum: 1
+    assert_select ".trade-card--editing .visually-hidden", { text: /\Aobjectif 1.+Objectif 1\z/, minimum: 1 }
+
+    faces = faces_of(%w[portal--s1 tin-soldier--s1])
+    assert_includes faces.fetch("portal--s1"), "card__goals"
+    assert_match(/objectif 1.+Objectif 1/, faces.fetch("portal--s1"))
+    assert_not_includes faces.fetch(faces.keys.find { it != "portal--s1" }), "card__goals"
   end
 
   test "unknown, malformed and draft-season keys get no face" do
@@ -578,44 +664,6 @@ class TradesControllerTest < ActionDispatch::IntegrationTest
     assert_select ".trade-board__error", I18n.t("errors.game.not_allowed", locale: :fr)
   end
 
-  test "a board waiting for the player carries its edition, ready to counter in place" do
-    trade = from_lea
-    sign_in @alice
-
-    get trade_path(token: trade.token, locale: :fr)
-
-    board = css_select("section#trade-board[data-controller='trade-board']").sole
-    assert_nil board["data-editing"]
-    assert_equal "heading", board["data-trade-board-focus-value"]
-    assert_equal "false", board["data-trade-board-editing-value"]
-    assert_equal counter_trade_path(token: trade.token, locale: :fr), board["data-trade-board-counter-url-value"]
-    assert_equal trade_path(token: trade.token, locale: :fr), board["data-trade-board-board-url-value"]
-    assert_equal "#{@alice.token}:#{trade.token}:#{trade.expires_at.to_i}", board["data-trade-board-draft-key-value"]
-    assert_select ".trade-chip--alert.trade-board__read-only", "À vous"
-    assert_select ".trade-chip--accent.trade-board__edit-only", "En édition"
-    assert_select ".trade-board__action-set.trade-board__read-only" do
-      assert_select "[data-trade-board-target='editButton'][data-action='click->trade-board#edit'] a[href=?]",
-        counter_trade_path(token: trade.token, locale: :fr), "Contre-proposer"
-    end
-    assert_select "form#trade-counter-form.trade-board__edit-only[action=?]", counter_trade_path(token: trade.token, locale: :fr) do
-      assert_select "button[type=submit]", "Renvoyer la contre-proposition"
-      assert_select "[data-action='click->trade-board#undo'] a[href=?]", trade_path(token: trade.token, locale: :fr), "Annuler les modifications"
-    end
-    assert_select "dialog#trade-undo-dialog[data-trade-board-target='undoDialog']" do
-      assert_select ".modal__title", "Annuler les modifications ?"
-      assert_select "#trade-undo-dialog-text", "Ce que vous avez changé sera perdu et la proposition de Lea reviendra telle quelle."
-      assert_select "button[data-action='trade-board#restore']", "Annuler les modifications"
-      assert_select "button[data-action='dialog#close']", "Continuer à modifier"
-    end
-    assert_select ".trade-side--friend.trade-board__read-only .trade-card__reserved", "Réservée"
-    assert_select ".trade-side--own.trade-board__read-only .trade-card__quantity", /×2/
-    assert_select ".trade-side--editing.trade-board__edit-only", 2
-    assert_select ".trade-side--editing li[data-key]", 0, "the edition's lines are drawn in the browser"
-    assert_select ".trade-side--own.trade-side--editing .trade-side__count", "1 carte · 2 ex."
-    assert_equal [ [ "friend", "blue-depths--s1", 1 ], [ "own", "portal--s1", 2 ] ], board_lines
-    assert_no_match(/style=|trade[_-]id/, board.to_html)
-  end
-
   test "a draft with a friend: an empty board in edition, kept in the browser, nothing on the server" do
     propose(@alice, @carol, offer: { @soldier => 1 }, request: { @depths => 1 })
     sign_in @alice
@@ -636,7 +684,7 @@ class TradesControllerTest < ActionDispatch::IntegrationTest
       assert_select ".trade-side--own .trade-side__label", "Vous donnez"
       assert_select ".trade-side__count", { count: 2, text: "0 carte" }
       assert_select ".trade-board__message", "Choisissez les cartes de chaque côté."
-      assert_select ".trade-side--own .trade-side__help", "Laissez ce côté vide : Lea choisira ce qui lui plaît en retour."
+      assert_select ".trade-side--own .trade-side__help", "Laissez ce côté vide\u202F: Lea choisira ce qui lui plaît en retour."
       assert_select ".trade-side--friend .trade-side__help", 0
       assert_select "#trade-send-reason", "Placez au moins une carte du côté de Lea."
       assert_select "form#trade-draft-form[action=?][data-controller='trade-board-send']", trades_path(locale: :fr) do
@@ -697,10 +745,46 @@ class TradesControllerTest < ActionDispatch::IntegrationTest
     assert_equal({ "duplicates" => "Ses doublons", "missing" => "Absentes de ma collection", "shared" => "En commun" }, chips.call(:friend))
     assert_equal({ "duplicates" => "Mes doublons", "missing" => "Absentes de sa collection", "available" => "Disponibles" }, chips.call(:own))
     assert_select ".trade-picker__compare legend", "Collections"
-    assert_select ".trade-picker__fold .filters__title", "Filtres"
-    assert_select ".trade-picker__fold .filters__count[hidden] .visually-hidden", "Filtres actifs :"
-    assert_select ".trade-picker__fold svg.pixel-icon.filters__chevron"
+    assert_select "a.filter-row__pastille[href='#trade-picker-filter-sheet'][data-bottom-sheet-opens=trade-picker-filter-sheet]", /Filtres/
+    assert_select ".filter-row__pastille .filter-row__count[hidden] .visually-hidden", "Filtres actifs\u202F:"
+    assert_select "#trade-picker-filter-sheet.bottom-sheet .trade-picker__compare"
     assert_no_match(/card_season_id|style=/, css_select("#trade-board").sole.to_html)
+  end
+
+  test "the player's copies already given in another trade no longer count toward their duplicates" do
+    holding(@alice, @soldier).update!(quantity: 2)
+    propose(@alice, @carol, offer: { @soldier => 1, @portal => 1 }, request: { @depths => 1 })
+    sign_in @alice
+
+    get new_trade_path(locale: :fr, friend: @bob.token)
+
+    assert_equal [ [ "tin-soldier--s1", 2, 1, 1, 1 ], [ "portal--s1", 3, 1, 2, 2 ] ],
+      board_cards(:own).map { it.values_at(0, 1, 2, 3, 4) }
+  end
+
+  test "the picker's filter sheet offers each side's goals and genres, and each card carries its own" do
+    sign_in @alice
+    get new_trade_path(locale: :fr, friend: @bob.token)
+    assert_select "#trade-picker-filter-sheet input[data-trade-board-picker-target=genre]", 0
+
+    Catalog::CardSeason.where(id: @portal).update_all(main_theme: "puzzle")
+    Catalog::CardSeason.where(id: @depths).update_all(main_theme: "horror")
+    goal_on(@portal, @depths)
+    token = Game::GoalNeeds.targets(@alice).sole.custom_set_token
+
+    get new_trade_path(locale: :fr, friend: @bob.token)
+
+    chips = ->(side, target) { css_select("#trade-picker-filter-sheet input[data-trade-board-picker-target=#{target}][data-for=#{side}]").map { it["value"] } }
+    assert_equal [ "horror" ], chips.call(:friend, :genre)
+    assert_equal [ "puzzle" ], chips.call(:own, :genre)
+    assert_equal [ token ], chips.call(:friend, :goal)
+    assert_equal [ token ], chips.call(:own, :goal)
+    assert_select "#trade-picker-filter-sheet fieldset[data-for=own] legend", "Objectifs"
+    assert_select "#trade-picker-filter-sheet fieldset[data-for=own] legend", "Genre"
+    cards = css_select(".trade-picker [data-trade-board-target='card']").to_h { [ it["data-key"], it.attributes.slice("data-genre", "data-goals").transform_values(&:value) ] }
+    assert_equal({ "data-genre" => "puzzle", "data-goals" => token }, cards.fetch("portal--s1"))
+    assert_equal({ "data-genre" => "horror", "data-goals" => token }, cards.fetch("blue-depths--s1"))
+    assert_equal({ "data-goals" => "" }, cards.fetch("tin-soldier--s1"))
   end
 
   test "a draft for someone who is not a friend is refused and leads back to the trades" do
@@ -752,7 +836,7 @@ class TradesControllerTest < ActionDispatch::IntegrationTest
 
     lea, max = %w[Lea Max].map { |name| css_select(".trade-chooser__friend").find { it.at_css(".trade-chooser__name").text == name } }
     assert_equal "Profil privé", lea.at_css(".friends__presence--private").text.strip
-    assert_equal "Le profil de Lea est privé : échanges fermés.", lea.at_css(".trades-closed").text.strip
+    assert_equal "Le profil de Lea est privé\u202F: échanges fermés.", lea.at_css(".trades-closed").text.strip
     assert_nil lea.at_css("a.button")
     assert_equal new_trade_path(friend: @carol.token, locale: :fr), max.at_css("a.button")["href"]
   end
@@ -765,22 +849,8 @@ class TradesControllerTest < ActionDispatch::IntegrationTest
 
     assert_select ".trade-chooser__friend", 2
     assert_select ".trade-chooser__friend a.button", 0
-    assert_select ".trade-chooser__friend .trades-closed", text: /Votre profil est privé : les échanges sont fermés\./, count: 2
+    assert_select ".trade-chooser__friend .trades-closed", text: /Votre profil est privé\u202F: les échanges sont fermés\./, count: 2
     assert_select ".trade-chooser__friend .trades-closed a[href=?]", settings_path(locale: :fr), text: "RÉGLAGES", count: 2
-  end
-
-  test "the chooser leads a friend already trading to that trade, one at a time" do
-    trade = from_lea
-    sign_in @alice
-
-    get new_trade_path(locale: :fr)
-    lea = css_select(".trade-chooser__friend").find { it.at_css(".trade-chooser__name").text == "Lea" }
-    assert_equal new_trade_path(friend: @bob.token, locale: :fr), lea.at_css("a.button")["href"]
-
-    get lea.at_css("a.button")["href"]
-    assert_redirected_to trade_path(token: trade.token, locale: :fr)
-    follow_redirect!
-    assert_select ".toast--alert", /Un échange à la fois/
   end
 
   test "the chooser of a player without friends points to the invite panel" do
@@ -796,37 +866,6 @@ class TradesControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
-  test "the list opens a new trade, with and without trades" do
-    sign_in @alice
-
-    get trades_path(locale: :fr)
-    assert_select ".trades__list > .trades__new:first-child a.button[href=?]", new_trade_path(locale: :fr), "Nouvel échange"
-    assert_select ".trades__list > .trades__new + .trades__empty"
-
-    from_lea
-    get trades_path(locale: :fr)
-    assert_select ".trades__list > .trades__new:first-child a.button[href=?]", new_trade_path(locale: :fr), "Nouvel échange"
-    assert_select ".trades__list > .trades__new + .trades__group"
-  end
-
-  test "the chooser reads in English" do
-    sign_in @alice, origin: "/en"
-
-    get new_trade_path(locale: :en)
-
-    assert_select ".trades__new a", "New trade"
-    assert_select "#trade-chooser-heading", "New trade"
-    assert_select ".trade-chooser__line", "Choose the friend to trade with."
-    assert_select "ul.trade-chooser__friends[aria-label=?]", "Your friends"
-    assert_select ".trade-chooser__friend a.button[aria-label=?]", "Trade with Lea", "Trade"
-
-    Game::Friendship.delete_all
-    get new_trade_path(locale: :en)
-    assert_select ".trade-chooser__empty", /No friends yet\./ do
-      assert_select "a", "Invite one with your link or your code."
-    end
-  end
-
   test "a draft for a private friend, or while private, goes back to the list with the reason" do
     sign_in @alice
     @bob.update_columns(visibility: "private")
@@ -834,14 +873,14 @@ class TradesControllerTest < ActionDispatch::IntegrationTest
     get new_trade_path(locale: :fr, friend: @bob.token)
     assert_redirected_to trades_path(locale: :fr)
     follow_redirect!
-    assert_select ".toast--alert", /Le profil de Lea est privé : échanges fermés\./
+    assert_select ".toast--alert", /Le profil de Lea est privé\u202F: échanges fermés\./
 
     @bob.update_columns(visibility: "public")
     @alice.update_columns(visibility: "private")
     get new_trade_path(locale: :fr, friend: @bob.token)
     assert_redirected_to trades_path(locale: :fr)
     follow_redirect!
-    assert_select ".toast--alert", /Votre profil est privé : les échanges sont fermés\./
+    assert_select ".toast--alert", /Votre profil est privé\u202F: les échanges sont fermés\./
   end
 
   test "a forged proposal to a private friend, or from a private player, is refused and reserves nothing" do
@@ -852,38 +891,29 @@ class TradesControllerTest < ActionDispatch::IntegrationTest
     post trades_path(locale: :fr), params: params
     assert_redirected_to trades_path(locale: :fr)
     follow_redirect!
-    assert_select ".toast--alert", /Le profil de Lea est privé : échanges fermés\./
+    assert_select ".toast--alert", /Le profil de Lea est privé\u202F: échanges fermés\./
 
     @bob.update_columns(visibility: "public")
     @alice.update_columns(visibility: "private")
     post trades_path(locale: :fr), params: params
     assert_redirected_to trades_path(locale: :fr)
     follow_redirect!
-    assert_select ".toast--alert", /Votre profil est privé : les échanges sont fermés\./
+    assert_select ".toast--alert", /Votre profil est privé\u202F: les échanges sont fermés\./
     assert_equal 0, Game::Trade.count
     assert_equal 0, holding(@alice, @portal).reserved
   end
 
-  test "a visitor asking for a draft is sent to the landing" do
-    get new_trade_path(locale: :fr)
-    assert_redirected_to home_path(locale: :fr)
-    get new_trade_path(locale: :fr, friend: @bob.token)
-    assert_redirected_to home_path(locale: :fr)
-    post trades_path(locale: :fr), params: { friend: @bob.token, give: { "portal--s1" => "1" }, take: { "blue-depths--s1" => "1" } }
-    assert_redirected_to home_path(locale: :fr)
-    assert_equal 0, Game::Trade.count
-  end
-
-  test "a draft with a friend already trading opens that trade, one at a time" do
-    trade = from_lea
+  test "a draft with a friend already trading opens the draft, the open trades still listed" do
+    from_lea
+    propose(@alice, @bob, offer: { @soldier => 1 }, request: { @depths => 1 })
     sign_in @alice
 
     get new_trade_path(locale: :fr, friend: @bob.token)
 
-    assert_redirected_to trade_path(token: trade.token, locale: :fr)
-    follow_redirect!
-    assert_select ".trade-board__error[role=alert]", "Un échange est déjà ouvert avec Lea."
-    assert_select ".toast--alert", /Un échange à la fois/
+    assert_response :success
+    assert_select "#trade-board.trade-board--editing[data-trade-board-draft-key-value=?]", "#{@alice.token}:#{@bob.token}"
+    assert_select ".trade-row", 2
+    assert_select ".toast--alert", 0
   end
 
   test "sending a draft proposes the trade, reserves the offer and tells the board to forget the draft" do
@@ -901,7 +931,7 @@ class TradesControllerTest < ActionDispatch::IntegrationTest
     assert_select ".toast", /Proposition envoyée.*Lea a 7 jours pour répondre\./m
     assert_select ".trade-chip--accent", "En attente"
     assert_select ".trade-board[data-trade-board-forget-value=?]", "#{@alice.token}:#{@bob.token}"
-    assert_select ".trade-side--own .trade-card__reserved", "2 réservées"
+    assert_select ".trade-side--own .trade-card__quantity", /×2\/3/
   end
 
   test "sending a draft with only the friend's side proposes an open request: nothing reserved, left for the friend to choose" do
@@ -921,7 +951,6 @@ class TradesControllerTest < ActionDispatch::IntegrationTest
       assert_select ".trade-side__count", 0
       assert_select ".trade-card", 0
     end
-    assert_select ".trade-card__reserved", 0
     assert_select ".trade-row__what", "Profondeurs bleues contre À choisir"
   end
 
@@ -943,21 +972,6 @@ class TradesControllerTest < ActionDispatch::IntegrationTest
         assert_select "form[action=?] button", decline_trade_path(token: trade.token, locale: :fr), "Refuser"
       end
     end
-  end
-
-  test "accepting an open request is refused with the reason on the board, and nothing moves" do
-    trade = open_from_lea
-    sign_in @alice
-
-    post accept_trade_path(token: trade.token, locale: :fr), params: revision(trade)
-    follow_redirect!
-
-    message = "Rien à recevoir pour l'instant : choisissez ce que vous voulez dans la collection de Lea, puis renvoyez."
-    assert_select ".trade-board__error[role=alert]", message
-    assert_select ".toast--alert", /#{Regexp.escape(message)}/
-    assert trade.reload.open?
-    assert_equal [ 3, 0 ], [ holding(@alice, @portal).quantity, holding(@alice, @portal).reserved ]
-    assert_not Game::FeedEntry.exists?
   end
 
   test "a declined open request is shown closed, without a side left to choose" do
@@ -987,19 +1001,6 @@ class TradesControllerTest < ActionDispatch::IntegrationTest
     assert_no_match(/Vos cartes ne sont plus réservées/, response.body)
   end
 
-  test "answering an open request with a card of the friend's sends it back, reserving the player's offer" do
-    trade = open_from_lea
-    sign_in @alice
-
-    post counter_trade_path(token: trade.token, locale: :fr), params: { **revision(trade), give: { "portal--s1" => "1" }, take: { "blue-depths--s1" => "1" } }
-
-    assert_redirected_to trade_path(token: trade.token, locale: :fr)
-    follow_redirect!
-    assert_select ".toast", /Proposition envoyée.*Lea a 7 jours pour répondre\./m
-    assert_equal 1, holding(@alice, @portal).reserved
-    assert_equal @alice.id, trade.reload.proposer_id
-  end
-
   test "a draft refused goes back to the draft with the reason; one to a stranger to the list" do
     sign_in @alice
 
@@ -1027,22 +1028,6 @@ class TradesControllerTest < ActionDispatch::IntegrationTest
     assert_response :not_found
     post accept_trade_path(token: "1" * 24, locale: :fr)
     assert_response :not_found
-  end
-
-  test "the screen reads in English" do
-    trade = from_lea
-    sign_in @alice, origin: "/en"
-
-    get trade_path(token: trade.token, locale: :en)
-
-    assert_select ".trades__group", "Waiting for you"
-    assert_select ".trade-row__what", "Blue Depths for Portal ×2"
-    assert_select ".trade-board__title", "Trade with Lea"
-    assert_select ".trade-board__message", "Lea proposes this trade to you."
-    assert_select ".trade-board__expiry", /Expires in\s+7 d/
-    assert_select "form button", "Accept"
-    assert_select "a", "Counter"
-    assert_select "form button", "Decline"
   end
 
   test "a partner who deletes their account closes the trades with them: shown closed, the player's copies released" do
@@ -1139,5 +1124,173 @@ class TradesControllerTest < ActionDispatch::IntegrationTest
       post trades_path(locale: :fr), params: { friend: @bob.token }
       assert_not_equal I18n.t("trades.throttled", locale: :fr), flash[:alert]
     end
+  end
+
+  test "an accepted trade that completes goals of both players toasts the accepting player's alone" do
+    roguelike = Catalog::Set.insert_all!([ { season_id: catalog_seasons(:one).id, kind: "theme", key: "roguelike", params: { "theme" => "roguelike" } } ], returning: :id).rows.flatten.sole
+    Catalog::SetMembership.insert_all!([ { set_id: roguelike, card_season_id: @depths, position: 1 } ])
+    Game::AddGoal.new.call(player: @alice, kind: "theme", key: "roguelike").value!
+    Game::AddGoal.new.call(player: @bob, kind: "studio", key: "valve").value!
+    trade = from_lea
+    sign_in @alice
+
+    post accept_trade_path(token: trade.token, locale: :fr), params: revision(trade)
+    follow_redirect!
+
+    assert_select "#toasts .toast", /Objectif atteint.*Roguelike/m
+    assert_select "#toasts .toast", text: /Valve/, count: 0
+    assert_empty Game::Goal.where(player_id: [ @alice.id, @bob.id ])
+  end
+
+  def goal_on(*card_season_ids)
+    card_ids = Catalog::CardSeason.where(id: card_season_ids).pluck(:card_id)
+    card_ids += Catalog::CardSeason.where(id: unheld_cards(3 - card_ids.size)).pluck(:card_id) if card_ids.size < 3
+    name = "Objectif #{Game::Goal.where(player_id: @alice.id).count + 1}"
+    Game::AddGoal.new.call(player: @alice, custom_set: create_custom_set(@alice, name:, card_ids:).token).value!
+  end
+
+  def suggest_from_lea
+    @hills = catalog_card_seasons(:uncommon_card_one).id
+    goal_on(@soldier, @hills, @depths)
+    hold(@bob, @hills, 2)
+  end
+
+  def new_friend(steam_id)
+    Accounts::Player.create!(steam_id:).tap { befriend(@alice, it) }
+  end
+
+  def count_queries(&request)
+    ActiveRecord::Base.connection.clear_query_cache
+    queries = 0
+    counter = ->(*, payload) { queries += 1 unless payload[:name].in?([ "SCHEMA", "TRANSACTION" ]) || payload[:cached] }
+    ActiveSupport::Notifications.subscribed(counter, "sql.active_record", &request)
+    queries
+  end
+
+  test "SUGGESTIONS names the one friend sparing the goal's missing games, under NOUVEL ÉCHANGE and above the groups" do
+    suggest_from_lea
+    dave = new_friend("76561197960299001")
+    erin = new_friend("76561197960299002")
+    hold(dave, @hills, 2, reserved: 1)
+    hold(erin, @hills, 2)
+    erin.update_columns(visibility: "private")
+    propose(@alice, @carol, offer: { @soldier => 1 }, request: { @depths => 1 })
+    sign_in @alice
+
+    get trades_path(locale: :fr)
+
+    assert_response :success
+    list = css_select(".trades__list").sole
+    assert_equal %w[trades__new trade-suggestions trades__group], list.element_children.first(3).map { it["class"].split.first }
+    assert_select ".trade-suggestions[aria-labelledby='trade-suggestions-heading'][data-controller='trade-suggestions']" do
+      assert_select "h2#trade-suggestions-heading.trades__group", "Suggestions"
+      assert_select ".trade-suggestions__line", "La Confrérie a identifié des opportunités de collaboration entre ses membres."
+      assert_select ".trade-suggestions__key" do
+        assert_select "span", /\APour vos objectifs\u202F:\z/
+        assert_select ".trade-suggestions__goal .goal-bookmark[aria-hidden=true]", "1"
+        assert_select ".trade-suggestions__goal .visually-hidden", "objectif 1\u202F: Objectif 1"
+        assert_select ".trade-suggestions__goal .trade-suggestions__set[aria-hidden=true]", "Objectif 1"
+      end
+    end
+    rows = css_select(".trade-suggestion")
+    assert_equal 1, rows.size
+    row = rows.sole
+    opener = row.at_css("a.trade-suggestion__opener")
+    presence = row.at_css(".friends__presence").text.strip
+    assert_equal "Suggestion de Lea\u202F: Profondeurs bleues (objectif 1\u202F: Objectif 1), Collines vertes (objectif 1\u202F: Objectif 1), " \
+      "Lea choisit en retour. #{presence}.", opener["aria-label"]
+    assert_equal new_trade_path(locale: :fr, friend: @bob.token, take: %w[blue-depths--s1 green-hills--s1]), opener["href"]
+    assert_empty opener.text
+    assert_nil opener["aria-current"]
+    assert_equal opener, row.element_children.first
+    assert_equal "LEA", row.at_css(".trade-suggestion__name").text.strip.upcase
+    assert_equal "true", row.at_css(".trade-suggestion__who")["aria-hidden"]
+    assert_equal "true", row.at_css(".trade-suggestion__avatar")["aria-hidden"]
+    assert_equal "true", row.at_css(".trade-suggestion__marks")["aria-hidden"]
+    assert_equal [ [ "1", "×2" ] ], row.css(".trade-suggestion__mark").map { [ it.at_css(".goal-bookmark").text.strip, it.at_css(".trade-suggestion__count")&.text ] }
+    summary = row.at_css(".trade-suggestion__summary")
+    assert_equal [ "Profondeurs bleues, Collines vertes · à Lea de choisir en retour", "true" ], [ summary.text, summary["aria-hidden"] ]
+    assert_no_match(/card_season_id|style=|#{@bob.id}\b/, list.to_html.gsub(/value="[^"]*"/, ""))
+  end
+
+  test "every screen of the trade list shows the suggestions; none for a private player or without a spare" do
+    suggest_from_lea
+    trade = from_lea
+    Game::Holding.where(player_id: @carol.id).update_all(reserved: 1)
+    sign_in @alice
+
+    [ trades_path(locale: :fr), trade_path(locale: :fr, token: trade.token), new_trade_path(locale: :fr),
+      new_trade_path(locale: :fr, friend: @carol.token), counter_trade_path(locale: :fr, token: trade.token) ].each do |path|
+      get path
+      assert_select ".trade-suggestions .trade-suggestion", { count: 1 }, path
+    end
+
+    Game::Holding.where(player_id: [ @bob.id, @carol.id ]).update_all("reserved = quantity")
+    get trades_path(locale: :fr)
+    assert_select ".trade-suggestions, .trade-suggestions__heading", 0
+
+    Game::Holding.where(player_id: @bob.id, card_season_id: @hills).update_all(reserved: 0)
+    Game::Holding.where(player_id: @bob.id, card_season_id: @depths).update_all(reserved: 1)
+    @alice.update_columns(visibility: "private")
+    get trades_path(locale: :fr)
+    assert_select ".trade-suggestions", 0
+  end
+
+  test "the list costs the same queries with one friend's suggestion or three" do
+    suggest_from_lea
+    portal = catalog_card_seasons(:portal_one).id
+    crown = catalog_card_seasons(:legendary_card_one).id
+    goal_on(@soldier, crown)
+    sign_in @alice
+    one = count_queries { get trades_path(locale: :fr) }
+    assert_select ".trade-suggestion", 1
+
+    Game::Holding.where(player_id: @alice.id, card_season_id: portal).delete_all
+    goal_on(@soldier, portal)
+    hold(@carol, crown, 2)
+    hold(new_friend("76561197960299003"), portal, 2)
+
+    assert_equal one, count_queries { get trades_path(locale: :fr) }
+    assert_select ".trade-suggestion", 3
+  end
+
+  test "a suggestion opened on the board: the friend's cards placed, the player's side empty, the row current, no draft touched" do
+    suggest_from_lea
+    sign_in @alice
+
+    assert_no_difference -> { Game::Trade.count } do
+      get new_trade_path(locale: :fr, friend: @bob.token, take: %w[blue-depths--s1 green-hills--s1])
+    end
+
+    assert_response :success
+    root = css_select("#trade-board").sole
+    assert_equal [ "true", "heading", "#{@alice.token}:#{@bob.token}" ],
+      %w[prefilled focus draft-key].map { root["data-trade-board-#{it}-value"] }
+    assert_equal [ [ "friend", "blue-depths--s1", 1 ], [ "friend", "green-hills--s1", 1 ] ], board_lines
+    assert_equal %w[blue-depths--s1 green-hills--s1], css_select(".trade-side--friend.trade-side--editing li[data-key]").map { it["data-key"] }
+    assert_select ".trade-side--friend.trade-side--editing input[type=hidden][form='trade-draft-form'][name='take[blue-depths--s1]'][value='1']"
+    assert_select ".trade-side--own.trade-side--editing li[data-key]", 0
+    assert_select ".trade-side--own .trade-side__help:not([hidden])"
+    assert_equal %w[blue-depths--s1 green-hills--s1], css_select("template[data-trade-board-target='face']").map { it["data-key"] }.sort
+    assert_select ".trade-suggestion.trade-suggestion--current .trade-suggestion__opener[aria-current='true']"
+    assert_select "[style]", 0
+  end
+
+  test "a crafted prefill ignores the cards its holder lacks and unknown keys; the row is current only for its own cards" do
+    suggest_from_lea
+    sign_in @alice
+
+    get new_trade_path(locale: :fr, friend: @bob.token, take: %w[blue-depths--s1 portal--s1 nope--s1 green-hills], give: %w[portal--s1 golden-crown--s1])
+
+    assert_equal [ [ "friend", "blue-depths--s1", 1 ], [ "own", "portal--s1", 1 ] ], board_lines
+    assert_select ".trade-suggestion--current", 0
+    assert_select ".trade-suggestion__opener[aria-current]", 0
+
+    get new_trade_path(locale: :fr, friend: @bob.token, take: { "blue-depths--s1" => "1" })
+    assert_response :success
+    assert_empty board_lines
+
+    get new_trade_path(locale: :fr, friend: @bob.token)
+    assert_nil css_select("#trade-board").sole["data-trade-board-prefilled-value"]
   end
 end

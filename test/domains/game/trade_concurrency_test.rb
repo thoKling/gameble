@@ -21,6 +21,7 @@ class Game::TradeConcurrencyTest < ActiveSupport::TestCase
     Game::FeedEntry.where.not(trade_id: nil).delete_all
     Game::FeedEntry.where(kind: "set", player_id: (@players + (@created || [])).map(&:id)).delete_all
     Game::WeeklyContribution.where(player_id: (@players + (@created || [])).map(&:id)).delete_all
+    Game::Fortune.where(player_id: (@players + (@created || [])).map(&:id)).delete_all
     Game::TradeItem.delete_all
     Game::Trade.delete_all
     Game::Holding.where(player_id: @players.map(&:id)).delete_all
@@ -159,16 +160,28 @@ class Game::TradeConcurrencyTest < ActiveSupport::TestCase
     assert_equal 3, Game::Trade.in_progress.count
   end
 
-  test "opposite proposals of a pair at once: one opens the trade, the other is refused, no deadlock" do
+  test "opposite proposals of a pair at once both open, without deadlock" do
     befriend(@alice, @bob)
     hold(@alice, @card, 1)
     hold(@bob, @other, 1)
 
     results = together(propose(@alice, @bob, { @card => 1 }, { @other => 1 }), propose(@bob, @alice, { @other => 1 }, { @card => 1 }))
 
+    assert results.all?(&:success?), results.inspect
+    assert_equal 2, Game::Trade.in_progress.count
+  end
+
+  test "two identical proposals at once open one trade and refuse the other as already sent" do
+    befriend(@alice, @bob)
+    hold(@alice, @card, 2)
+    hold(@bob, @other, 1)
+
+    results = together(propose(@alice, @bob, { @card => 1 }, { @other => 1 }), propose(@alice, @bob, { @card => 1 }, { @other => 1 }))
+
     assert_equal 1, results.count(&:success?)
-    assert_equal [ :trade_already_open ], results.select(&:failure?).map(&:failure)
+    assert_equal [ :trade_already_sent ], results.select(&:failure?).map(&:failure)
     assert_equal 1, Game::Trade.count
+    assert_equal 1, reserved(@alice, @card)
   end
 
   test "crossing trades around three players, repeated, never deadlock and each reserves its own offer" do

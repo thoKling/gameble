@@ -1,0 +1,433 @@
+/* The notes of a release: the hub's dialog, the app's sheet, the back-office preview and the staff reminder. */
+.release-note-dialog {
+  width: min(var(--modal-width-wide), calc(100vw - 2 * var(--space-gutter-phone)));
+}
+
+.release-note-dialog__panel {
+  padding: 0;
+}
+
+.release-note-dialog__head {
+  margin: 0;
+  padding: var(--space-4) var(--space-6);
+  background: var(--color-panel-sunken);
+  box-shadow: inset 0 calc(-1 * var(--space-unit)) 0 0 var(--color-line-soft);
+}
+
+.release-note-kicker {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.release-note-kicker__light {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  background: var(--color-lime);
+  box-shadow: 0 0 0 var(--space-unit) var(--color-on-lime);
+}
+
+.release-note-kicker__version {
+  color: var(--color-lime);
+}
+
+.release-note-dialog__screen {
+  max-height: 56vh;
+  padding: var(--space-6) var(--space-7) var(--space-3);
+  overflow: auto;
+  background: repeating-linear-gradient(0deg, var(--release-note-scanline) 0 1px, transparent 1px 3px);
+}
+
+.release-note-dialog__foot {
+  display: flex;
+  justify-content: flex-end;
+  margin: 0;
+  padding: var(--space-5) var(--space-6) var(--space-3);
+  box-shadow: inset 0 var(--space-unit) 0 0 var(--color-line-soft);
+}
+
+.release-note-dialog__foot .button,
+.release-note-sheet__foot .button {
+  margin: 0;
+}
+
+.release-note__prompt {
+  margin: 0 0 var(--space-2);
+  color: var(--color-dim);
+  font: var(--font-label);
+  letter-spacing: var(--tracking-kicker);
+}
+
+.release-note__prompt::after {
+  content: "_";
+  color: var(--color-lime);
+  animation: release-note-cursor 1s steps(1) infinite;
+}
+
+.release-note__title {
+  margin: 0 0 var(--space-3);
+  color: var(--color-text-max);
+  font: var(--font-showcase-name);
+  overflow-wrap: anywhere;
+}
+
+.release-note__text {
+  margin: 0 0 var(--space-5);
+  color: var(--color-text);
+  font: var(--font-body);
+  overflow-wrap: anywhere;
+}
+
+.release-note__section {
+  --release-note-section: var(--color-lime);
+
+  margin: 0 0 var(--space-5);
+}
+
+.release-note__section:nth-of-type(even) {
+  --release-note-section: var(--color-gold);
+}
+
+.release-note__section-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin: 0 0 var(--space-3);
+  color: var(--release-note-section);
+  font: var(--font-kicker);
+  letter-spacing: var(--tracking-kicker);
+  text-transform: uppercase;
+}
+
+.release-note__section-title::after {
+  content: "";
+  flex: 1;
+  height: var(--space-unit);
+  background: var(--color-line-soft);
+}
+
+.release-note__items {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.release-note__item {
+  position: relative;
+  padding-left: var(--space-6);
+  color: var(--color-text-bright);
+  font: var(--font-body);
+  overflow-wrap: anywhere;
+}
+
+.release-note__item::before {
+  content: "";
+  position: absolute;
+  top: 7px;
+  left: var(--space-1);
+  width: 6px;
+  height: 6px;
+  background: var(--release-note-section);
+}
+
+.release-note-sheet {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.release-note-sheet__foot {
+  display: grid;
+  margin: 0;
+}
+
+@keyframes release-note-cursor {
+  50% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .release-note__prompt::after {
+    animation: none;
+  }
+}
+
+html[data-motion="reduced"] .release-note__prompt::after {
+  animation: none;
+}
+
+@media (max-width: 719px) {
+  .release-note-dialog {
+    width: 100%;
+  }
+
+  .release-note-dialog__head {
+    padding: 0 var(--space-gutter-phone) var(--space-4);
+    background: none;
+  }
+
+  .release-note-dialog__screen {
+    max-height: 60vh;
+    padding: var(--space-5) var(--space-gutter-phone) var(--space-2);
+  }
+
+  .release-note-dialog__foot {
+    display: grid;
+    justify-content: stretch;
+    padding: var(--space-5) var(--space-gutter-phone) 0;
+  }
+}
+
+/* The reminder administrators see while production runs a release without a note. */
+.release-reminder {
+  flex: none;
+  background: var(--color-gold);
+  color: var(--color-on-gold);
+}
+
+.release-reminder__inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4);
+  max-width: var(--space-content-max);
+  margin: 0 auto;
+  padding: var(--space-3) var(--space-gutter-desktop);
+}
+
+.release-reminder__message {
+  flex: 1;
+  min-width: 12rem;
+  margin: 0;
+  font: var(--font-body);
+  font-weight: var(--font-weight-bold);
+}
+
+.release-reminder .button {
+  margin: 0;
+}
+
+/* The back-office list and editor of the notes. */
+.release-note-list {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.release-note-row {
+  display: grid;
+  grid-template-columns: 6rem minmax(0, 1fr) auto auto auto;
+  align-items: center;
+  gap: var(--space-5);
+  padding: var(--space-4) var(--space-5);
+  background: var(--color-panel);
+  box-shadow: var(--panel-border);
+}
+
+.release-note-row .button {
+  margin: 0;
+}
+
+.release-note-row__version {
+  color: var(--color-text-bright);
+  font: var(--font-number);
+}
+
+.release-note-row__title {
+  overflow-wrap: anywhere;
+}
+
+.release-note-row__state,
+.release-note-row__reads {
+  font: var(--font-label);
+  letter-spacing: var(--tracking-kicker);
+  text-transform: uppercase;
+}
+
+.release-note-row__state {
+  padding: var(--space-1) var(--space-3);
+  background: var(--color-panel-raised);
+  color: var(--color-muted);
+}
+
+.release-note-row__state--ready {
+  color: var(--color-gold);
+}
+
+.release-note-row__state--live {
+  color: var(--color-lime);
+}
+
+.release-note-row__reads {
+  color: var(--color-muted);
+}
+
+.release-note-editor {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.release-note-editor__texts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+  gap: var(--space-6);
+}
+
+.release-note-editor__language {
+  display: grid;
+  gap: var(--space-4);
+  margin: 0;
+  padding: var(--space-panel-padding);
+  border: 0;
+  background: var(--color-panel);
+  box-shadow: var(--panel-border);
+}
+
+.release-note-editor__body {
+  width: 100%;
+  resize: vertical;
+}
+
+.release-note-editor__screen {
+  max-height: none;
+  background-color: var(--color-panel);
+  box-shadow: var(--panel-border);
+}
+
+@media (max-width: 719px) {
+  .release-reminder__inner {
+    padding: var(--space-3) var(--space-gutter-phone);
+  }
+
+  .release-note-row {
+    grid-template-columns: 1fr auto;
+  }
+}
+
+.release-note-editor__screen .release-note-kicker {
+  margin-bottom: var(--space-5);
+}
+
+.release-note__mention {
+  color: var(--color-accent);
+  text-decoration: none;
+}
+
+.release-note__mention:hover {
+  color: var(--color-accent-hi);
+  text-decoration: underline;
+}
+
+.claude-writer-status:empty {
+  display: none;
+}
+
+.claude-writer-status {
+  margin: 0;
+  color: var(--color-gold);
+}
+
+.claude-writer-status__waiting {
+  animation: claude-writer-waiting 1.6s ease-in-out infinite alternate;
+}
+
+@keyframes claude-writer-waiting {
+  to {
+    opacity: 0.45;
+  }
+}
+
+html[data-motion="reduced"] .claude-writer-status__waiting {
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:not([data-motion="full"]) .claude-writer-status__waiting {
+    animation: none;
+  }
+}
+
+.release-note-review {
+  padding: var(--space-panel-padding);
+  background: var(--color-panel-sunken);
+  box-shadow: var(--panel-border);
+}
+
+.release-note-review h3,
+.release-note-review h4 {
+  margin: 0;
+}
+
+.release-note-review__columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+  gap: var(--space-6);
+}
+
+.release-note-review__title {
+  margin: 0;
+  color: var(--color-text-max);
+  font: 400 1.6rem / 1.6rem var(--font-family-vt323);
+}
+
+.release-note-review__lines,
+.release-note-review__sources {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.release-note-review__line,
+.release-note-review__source {
+  display: grid;
+  grid-template-columns: 2.5rem 1fr;
+  gap: var(--space-3);
+  padding-left: var(--space-3);
+  box-shadow: inset 3px 0 0 var(--color-line);
+  color: var(--color-text-bright);
+}
+
+.release-note-review__line--features {
+  box-shadow: inset 3px 0 0 var(--color-lime);
+}
+
+.release-note-review__line--fixes {
+  box-shadow: inset 3px 0 0 var(--color-gold);
+}
+
+.release-note-review__number,
+.release-note-review__id {
+  color: var(--color-dim);
+  font: var(--font-label);
+}
+
+.release-note-review__meta {
+  display: block;
+  color: var(--color-muted);
+  font: var(--font-body-small);
+}
+
+.release-note-review__source--kept {
+  box-shadow: inset 3px 0 0 var(--color-lime);
+}
+
+.release-note-review__source--dropped {
+  box-shadow: inset 3px 0 0 var(--color-line);
+  color: var(--color-muted);
+}
+
+.release-note-review__source--forgotten {
+  box-shadow: inset 3px 0 0 var(--color-danger-text);
+}
+
+.release-note-review__source--forgotten .release-note-review__meta,
+.release-note-review__warning {
+  color: var(--color-danger-text);
+}

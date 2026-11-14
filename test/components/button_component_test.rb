@@ -27,6 +27,18 @@ class ButtonComponentTest < ViewComponent::TestCase
     assert_selector "button.button--primary[type=submit]"
   end
 
+  test "a submit button carries a name and a value" do
+    render_inline(ButtonComponent.new(variant: :secondary, type: :submit, name: "choice", value: "1")) { "Choose" }
+
+    assert_selector "button.button--secondary[type=submit][name=choice][value='1']", text: "Choose"
+  end
+
+  test "a name and a value are refused on a link, a form button and a dialog opener" do
+    [ { href: "/en" }, { href: "/en", method: :post }, { opens: "dialog" } ].each do |options|
+      assert_raises(ArgumentError) { ButtonComponent.new(name: "choice", value: "1", **options) }
+    end
+  end
+
   test "a button with an href and a method renders a one-button form with its params" do
     render_inline(ButtonComponent.new(href: "/auth/steam", method: :post, params: { origin: "/fr" }, turbo: false)) { "Enlist" }
 
@@ -79,12 +91,6 @@ class ButtonComponentTest < ViewComponent::TestCase
     assert_selector "a.button.button--link[href='/en/feed']", text: "See all"
   end
 
-  test "the default stays primary" do
-    render_inline(ButtonComponent.new) { "Open" }
-
-    assert_selector "button.button--primary"
-  end
-
   test "a small button" do
     render_inline(ButtonComponent.new(variant: :secondary, size: :small, href: "/en")) { "Back" }
 
@@ -130,6 +136,14 @@ class ButtonComponentTest < ViewComponent::TestCase
     assert_selector "button[data-controller=dialog-opener][data-action='dialog-opener#open'][data-dialog-opener-dialog-value=report-dialog]"
     assert_no_selector "form"
     assert_no_selector "a"
+  end
+
+  test "a button can name the elements that describe it" do
+    render_inline(ButtonComponent.new(type: :submit, describedby: "note other")) { "Entrust" }
+    assert_selector "button[type=submit][aria-describedby='note other']"
+
+    render_inline(ButtonComponent.new(disabled: true, describedby: "note")) { "Entrust" }
+    assert_selector "button[disabled][aria-describedby=note]"
   end
 
   test "an aria label names every kind of button" do

@@ -43,6 +43,12 @@
   display: none;
 }
 
+/* A screen reached from one place only keeps its way back at every width, until the trail offers the previous screen. */
+.top-bar__start:has(> .top-bar__previous[hidden]) > .top-bar__phone-back--every-width,
+.top-bar__start:not(:has(> .top-bar__previous)) > .top-bar__phone-back--every-width {
+  display: inline-flex;
+}
+
 .top-bar__start > .top-bar__bridge,
 .top-bar__start > .top-bar__phone-brand,
 .top-bar__start > .top-bar__previous[hidden] {
@@ -189,8 +195,7 @@ a.top-bar__home {
 }
 
 /* A count the booster screen just raised brightens a moment. */
-.rarity-counter__count[data-changed],
-.rarity-legend__count[data-changed] {
+.rarity-counter__count[data-changed] {
   color: var(--color-accent-hi);
 }
 
@@ -204,63 +209,6 @@ a.top-bar__home {
 [data-navigation-locked]:hover,
 [data-navigation-locked]:active {
   transform: none;
-}
-
-/* The packs chip: canister, reserve, divider, countdown; a link to the
-   booster screen. The booster screen's static chip (--static) is no link. */
-a.packs-chip {
-  text-decoration: none;
-  cursor: pointer;
-}
-
-a.packs-chip:hover {
-  box-shadow: inset 0 0 0 var(--space-unit) var(--color-accent);
-}
-
-a.packs-chip:focus-visible {
-  box-shadow: var(--focus-ring-gap), var(--control-border);
-}
-
-.packs-chip--static {
-  margin: 0;
-}
-
-.packs-chip__label,
-.packs-chip__next {
-  color: var(--color-muted);
-}
-
-.packs-chip__special-count {
-  color: var(--color-lime);
-}
-
-.packs-chips {
-  display: contents;
-}
-
-.packs-chip--special[data-empty] {
-  opacity: 0.5;
-  pointer-events: none;
-}
-
-.packs-chip--special[data-empty] .packs-chip__special-count {
-  color: var(--color-muted);
-}
-
-.packs-chip__divider {
-  align-self: stretch;
-  width: var(--space-unit);
-  margin: var(--space-1) 0;
-  background: var(--color-line);
-}
-
-.packs-chip__next--full {
-  color: var(--color-alert);
-}
-
-.packs-chip__clock {
-  color: var(--color-text-bright);
-  font-variant-numeric: tabular-nums;
 }
 
 /* The player chip: the avatar outlined, the name, a steady lime dot. */
@@ -290,6 +238,24 @@ a.packs-chip:focus-visible {
   background: var(--color-lime);
 }
 
+.player-chip__button {
+  position: relative;
+}
+
+.player-chip__badge {
+  position: absolute;
+  top: calc(-1 * var(--space-2));
+  right: calc(-1 * var(--space-2));
+  min-width: 18px;
+  padding: 0 var(--space-1);
+  background: var(--color-alert);
+  color: var(--color-on-alert);
+  font: var(--font-button-sm);
+  letter-spacing: 0;
+  line-height: 16px;
+  text-align: center;
+}
+
 /* The legend and the player menu: native popovers under the top bar, at
    the right edge of the content. */
 .shell-popover {
@@ -315,7 +281,6 @@ a.packs-chip:focus-visible {
   text-transform: uppercase;
 }
 
-.rarity-legend__list,
 .player-menu__list {
   display: flex;
   flex-direction: column;
@@ -323,49 +288,6 @@ a.packs-chip:focus-visible {
   margin: 0;
   padding: 0;
   list-style: none;
-}
-
-.rarity-legend__row {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  align-items: center;
-  gap: var(--space-3);
-  min-height: var(--space-chip-height);
-  padding: 0 var(--space-3);
-  background: var(--color-panel-raised);
-}
-
-.rarity-legend__name {
-  font: var(--font-label);
-  letter-spacing: var(--tracking-label);
-  text-transform: uppercase;
-}
-
-.rarity-legend__row--1 .rarity-legend__name {
-  color: var(--color-rarity-commune);
-}
-
-.rarity-legend__row--2 .rarity-legend__name {
-  color: var(--color-rarity-peu-commune);
-}
-
-.rarity-legend__row--3 .rarity-legend__name {
-  color: var(--color-rarity-rare);
-}
-
-.rarity-legend__row--4 .rarity-legend__name {
-  color: var(--color-rarity-epique);
-}
-
-.rarity-legend__row--5 .rarity-legend__name {
-  color: var(--color-rarity-legendaire);
-}
-
-.rarity-legend__count {
-  color: var(--color-text-max);
-  font: var(--font-number);
-  letter-spacing: var(--tracking-number);
-  font-variant-numeric: tabular-nums;
 }
 
 .player-menu__form {
@@ -402,6 +324,34 @@ a.packs-chip:focus-visible {
 
 .player-menu__item:focus-visible {
   box-shadow: var(--focus-ring-gap), var(--control-border);
+}
+
+.player-menu__item {
+  gap: var(--space-3);
+}
+
+.player-menu__label,
+.player-menu .menu-item__label {
+  flex: 1;
+}
+
+.player-menu__meta {
+  flex: none;
+  color: var(--color-muted);
+  font: var(--font-body-small);
+  letter-spacing: var(--tracking-body-small);
+  text-transform: none;
+}
+
+.player-menu__item:hover .player-menu__meta,
+.player-menu__item:active .player-menu__meta {
+  color: inherit;
+}
+
+.player-menu .menu-item__external {
+  flex: none;
+  width: 14px;
+  height: 14px;
 }
 
 /* The official Steam image, untouched, in a 44px hit area. */

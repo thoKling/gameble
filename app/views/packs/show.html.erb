@@ -1,9 +1,11 @@
 <% content_for :back_button, true %>
+<% content_for :phone_back do %><%= phone_back_link t("shell.screens.booster"), booster_path %><% end %>
 <section class="pack-result" aria-labelledby="pack-result-heading">
   <h1 id="pack-result-heading"><%= @pack.bonus? ? t(".heading_bonus") : t(".heading") %></h1>
   <ol class="pack-result__cards" aria-label="<%= t(".cards") %>">
     <% @cards.each do |card| %>
-      <li class="pack-result__card"><%= link_to_card_detail(card, strings: @strings) do %><%= render CardComponent.new(card:, size: :m) %><% end %></li>
+      <% marks = goal_marks.goals_for(card.card_id) %>
+      <li class="pack-result__card"><%= link_to_card_detail(card, strings: @strings, goals: marks) do %><%= render CardComponent.new(card:, size: :m, goals: marks.map(&:position)) %><% end %></li>
     <% end %>
   </ol>
   <% if @next_pack %>

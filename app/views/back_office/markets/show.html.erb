@@ -1,0 +1,35 @@
+<% content_for :back_button, true %>
+
+<div class="stack">
+  <h1><%= t(".heading") %></h1>
+
+  <%= render "back_office/markets/navigation", current: :settings %>
+
+  <%= render PanelComponent.new(tag: :p) do %>
+    <%= t(".intro") %>
+  <% end %>
+
+  <section class="stack" aria-labelledby="market-state-heading">
+    <h2 id="market-state-heading"><%= t(".state_heading") %></h2>
+    <p class="market-state" data-market-state="<%= @state.open? ? "open" : "closed" %>">
+      <% if @state.open? %>
+        <%= t(".state.open") %>
+        <%= render "back_office/import_runs/time", time: @state.first_opened_at %>
+      <% elsif @state.first_opened? %>
+        <%= t(".state.suspended") %>
+      <% else %>
+        <%= t(".state.never_opened") %>
+      <% end %>
+    </p>
+  </section>
+
+  <%= render "back_office/markets/chart_switches", switches: @chart_switches, can_switch: @can_switch_charts, switched: @switched_chart %>
+
+  <%= render "back_office/markets/settings", form: @settings_form %>
+
+  <% if @state.open? %>
+    <%= render "back_office/markets/closing", closing: @closing, token: @settings_form.token %>
+  <% else %>
+    <%= render "back_office/markets/opening", state: @state, opening: @opening %>
+  <% end %>
+</div>

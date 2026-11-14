@@ -5,8 +5,12 @@ module Game
         Game::PackOpened => [ :player_id ],
         Game::SetCompleted => [ :player_id ],
         Game::SeasonAllocationReceived => [ :player_id ],
+        Game::CardDiscovered => [ :player_id ],
         Game::CardReposted => [ :player_id ],
-        Game::TradeAccepted => [ :proposer_id, :recipient_id ]
+        Game::DailyBonusCollected => [ :player_id ],
+        Game::PackRevealed => [ :player_id ],
+        Game::TradeAccepted => [ :proposer_id, :recipient_id ],
+        Game::Market::AuctionSold => [ :seller_id, :winner_id ]
       }.freeze
 
       def self.call(event)

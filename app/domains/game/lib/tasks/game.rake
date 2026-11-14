@@ -27,6 +27,15 @@ namespace :game do
     puts "game:backfill_friend_codes: every player has their friend code"
   end
 
+  desc "Runs Game::BackfillFortunesJob now: every player's luck tallies rebuilt from their opened packs, banned included; idempotent"
+  task backfill_fortunes: :environment do
+    Game::BackfillFortunesJob.perform_now
+    behind = Game::BackfillFortunesJob.players_out_of_tally
+    abort "game:backfill_fortunes: #{behind} player(s) whose tally misses packs (failures reported to the error tracker); rerun" if behind.positive?
+
+    puts "game:backfill_fortunes: every opened pack is in its player's tallies"
+  end
+
   desc "Runs Game::BackfillAchievementsJob now: every achievement a player in good standing already met is granted, without a toast; idempotent"
   task backfill_achievements: :environment do
     Game::BackfillAchievementsJob.perform_now
@@ -34,24 +43,18 @@ namespace :game do
     puts "game:backfill_achievements: done; any failure went to the error tracker, and a rerun grants only what is missing"
   end
 
+  desc "Creates the first, closed market settings version if there is none; idempotent"
+  task create_first_market_settings: :environment do
+    Game::Market::CreateFirstSettings.new.call.value!
+
+    puts "game:create_first_market_settings: the market has its settings"
+  end
+
   desc "Runs Game::BackfillCardBacksJob now: the back of every set whose back tier a player in good standing already reached is unlocked, without a toast; idempotent"
   task backfill_card_backs: :environment do
     Game::BackfillCardBacksJob.perform_now
 
     puts "game:backfill_card_backs: done; any failure went to the error tracker, and a rerun unlocks only what is missing"
-  end
-
-  desc "Grants an event card back (saison-1, millesime-2017 or soldes-hiver) to the players with these Steam ids, separated by spaces; each player in a transaction of their own, a rerun grants only what is missing"
-  task :grant_card_back, %i[back steam_ids] => :environment do |_task, args|
-    back = args[:back].to_s
-    abort "game:grant_card_back: #{back.inspect} is not an event back (#{Game::CardBacks::EVENT_BACK_KEYS.join(", ")})" unless Game::CardBacks.event?(back)
-
-    steam_ids = args[:steam_ids].to_s.split.uniq
-    abort "game:grant_card_back: give the Steam ids of the players, separated by spaces" if steam_ids.empty?
-
-    outcome = Game::GrantCardBackJob.grant(back:, steam_ids:)
-    puts "game:grant_card_back: #{back}: #{outcome.granted} granted, #{outcome.already_held} already held, " \
-         "#{outcome.not_found} not found or banned, #{outcome.failed} failed (see the error tracker)"
   end
 
   desc "Runs Game::DropFriendsAndTradesJob now: deleted or banned players' open trades cancelled, their friendships and invitations dropped; idempotent"

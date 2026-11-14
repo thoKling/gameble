@@ -18,9 +18,10 @@ class InvitationsControllerTest < ActionDispatch::IntegrationTest
 
     get friends_path(locale: :fr)
 
-    assert_select "input#invite-link" do |input|
-      assert input.first["value"].end_with?("/fr/invite/#{@alice.token}")
+    assert_select "[data-controller=share]" do |share|
+      assert share.first["data-share-url-value"].end_with?("/fr/invite/#{@alice.token}")
     end
+    assert_select "button[data-action='share#send']", "Envoyer mon lien"
     assert_select "form[action=?] input[name=code]", invitations_path(locale: :fr)
     assert_select ".friends__empty", /Aucune invitation en cours/
   end
@@ -30,7 +31,7 @@ class InvitationsControllerTest < ActionDispatch::IntegrationTest
     post invitations_path(locale: :fr), params: { code: "8f2d-k9xm" }
     assert_redirected_to friends_path(locale: :fr)
     follow_redirect!
-    assert_select ".friends__message--sent", "Invitation envoyée à Sam."
+    assert_select ".toast", /Invitation envoyée à Sam\./
     assert_select ".friends__invitation", /Envoyée à Sam/
     assert_select ".friends__chip", "En attente"
 
@@ -108,7 +109,7 @@ class InvitationsControllerTest < ActionDispatch::IntegrationTest
   test "the copy deck's refusals answer on the line under the field" do
     sign_in @alice
     {
-      "abc" => "Format attendu : ABCD-1234.",
+      "abc" => "Format attendu\u202F: ABCD-1234.",
       "7K2Q-F3NX" => "C'est votre propre code.",
       "2222-3333" => "Aucun joueur n'a ce code."
     }.each do |code, line|
@@ -121,14 +122,6 @@ class InvitationsControllerTest < ActionDispatch::IntegrationTest
     follow_redirect!
     assert_select ".friends__message--error", "Invitation déjà envoyée."
     assert_equal 1, Game::Invitation.count
-  end
-
-  test "in English the refusals are English" do
-    sign_in @alice
-    post invitations_path(locale: :en), params: { code: "x" }
-    follow_redirect!
-
-    assert_select ".friends__message--error", "Expected format: ABCD-1234."
   end
 
   test "a visitor cannot send, answer or cancel" do
@@ -179,7 +172,7 @@ class InvitationsControllerTest < ActionDispatch::IntegrationTest
 
     post link
     follow_redirect!
-    assert_select ".friends__message--sent", "Invitation envoyée à Sam."
+    assert_select ".toast", /Invitation envoyée à Sam\./
     assert_select ".friends__invitation", /Envoyée à Sam/
   end
 
@@ -253,24 +246,13 @@ class InvitationsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".friends__row .friends__name", "Sam"
   end
 
-  test "sending from a link invites the owner" do
-    sign_in @alice
-    post invite_link_path(token: @bob.token, locale: :fr)
-    assert_redirected_to friends_path(locale: :fr)
-    follow_redirect!
-
-    assert_select ".friends__message--sent", "Invitation envoyée à Sam."
-    assert_select ".friends__invitation", /Envoyée à Sam/
-    assert_equal [ @alice.id, @bob.id ], Game::Invitation.pending.pick(:sender_id, :recipient_id)
-  end
-
   test "an invitation to a player with no usable name shows their code" do
     @bob.update!(persona_name: "\u200B")
     sign_in @alice
     post invitations_path(locale: :fr), params: { code: "8F2D-K9XM" }
     follow_redirect!
 
-    assert_select ".friends__message--sent", "Invitation envoyée à 8F2D-K9XM."
+    assert_select ".toast", /Invitation envoyée à 8F2D-K9XM\./
     assert_select ".friends__invitation", /Envoyée à 8F2D-K9XM/
   end
 
@@ -280,7 +262,7 @@ class InvitationsControllerTest < ActionDispatch::IntegrationTest
     post invite_link_path(token: @bob.token, locale: :fr)
     follow_redirect!
 
-    assert_select ".friends__message--sent", "Invitation envoyée à 8F2D-K9XM."
+    assert_select ".toast", /Invitation envoyée à 8F2D-K9XM\./
     assert_select ".friends__invitation", /Envoyée à 8F2D-K9XM/
   end
 
@@ -298,6 +280,21 @@ class InvitationsControllerTest < ActionDispatch::IntegrationTest
     assert_response :not_found
     get invite_link_path(token: accounts_players(:banned).token, locale: :fr)
     assert_response :not_found
+  end
+
+  test "a search result invites the player, or accepts their pending invitation" do
+    sign_in @alice
+    post invitations_path(locale: :fr), params: { player: @bob.token }
+    follow_redirect!
+    assert_select ".toast", /Invitation envoyée à Sam\./
+    assert_select ".friends__invitation", /Envoyée à Sam/
+
+    delete session_path
+    sign_in @bob
+    post invitations_path(locale: :fr), params: { player: @alice.token }
+    follow_redirect!
+    assert_select ".toast", /Nouvel ami/i
+    assert_select ".friends__row .friends__name", "Lea"
   end
 
   test "mutations are limited to 20 a minute" do

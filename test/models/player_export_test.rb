@@ -1,15 +1,20 @@
 require "test_helper"
 require_relative "../support/game_packs"
 require_relative "../support/game_trades"
+require_relative "../support/custom_sets"
+require_relative "../support/feed_reactions"
 
 class PlayerExportTest < ActiveSupport::TestCase
   include GamePacks
   include GameTrades
+  include CustomSets
+  include FeedReactions
 
   SECTIONS = %i[exportedAt profile identities collection showcase packs dailyBonusDays goalRewardWeeks weeklyContributions setTiers
-    firstDiscoveries feedEntries achievements cardBacks friends pendingInvitations trades reportsFiled reportsReceived
+    firstDiscoveries feedEntries feedReactions achievements cardBacks friends pendingInvitations trades customSets steamLibrary goals wallet picoinEntries listings bids reportsFiled reportsReceived
     moderationDecisions].freeze
-  COUNTING_KEYS = %i[season quantity position openings count received sent].freeze
+  COUNTING_KEYS = %i[season quantity position openings count received sent available committed availableDelta committedDelta startingPrice
+    currentPrice finalPrice durationHours maximum priceAfter].freeze
 
   setup do
     @player = accounts_players(:player)
@@ -84,7 +89,7 @@ class PlayerExportTest < ActiveSupport::TestCase
     assert_equal SECTIONS, hash.keys
     assert_equal [ { slug: "blue-depths", season: 1, position: 0 }, { slug: "portal", season: 1, position: 1 } ], hash[:showcase]
     assert_equal "2026-10-14T09:30:00Z", hash[:exportedAt]
-    assert_equal({ steamId: "76561197960287001", personaName: "Léa", visibility: "public", reducedMotion: nil,
+    assert_equal({ steamId: "76561197960287001", personaName: "Léa", visibility: "public", reducedMotion: nil, steamLibrarySync: true,
       friendCode: "7K2Q-F3NX", createdAt: @player.created_at.utc.iso8601, lastSeenAt: nil, lastExportedAt: nil }, hash[:profile])
     portal = hash[:collection].find { it[:slug] == "portal" }
     assert_equal({ slug: "portal", season: 1, title: "Portal", quantity: 3 }, portal.except(:lastGainedAt))
@@ -108,16 +113,93 @@ class PlayerExportTest < ActiveSupport::TestCase
     assert_names_nobody_else(hash, @friend)
   end
 
+  test "each pack lists how it was revealed, null until its last card is face up and for an unopened pack" do
+    first = create_pack(@player, available_at: 3.minutes.ago)
+    second = create_pack(@player, available_at: 2.minutes.ago)
+    unopened = create_pack(@player, available_at: 1.minute.from_now)
+    Game::OpenPack.new.call(player: @player).value!
+    Game::RecordReveal.new.call(player: @player, token: first.token, mode: "all").value!
+    Game::OpenPack.new.call(player: @player).value!
+
+    packs = export.to_h[:packs].index_by { it[:token] }
+
+    assert_equal "all", packs.fetch(first.token)[:revealMode]
+    assert_nil packs.fetch(second.token)[:revealMode]
+    assert packs.fetch(unopened.token).key?(:revealMode)
+    assert_nil packs.fetch(unopened.token)[:revealMode]
+  end
+
   test "an empty player's export holds every section, empty" do
     hash = export.to_h
 
     assert_equal SECTIONS, hash.keys
     %i[collection showcase packs dailyBonusDays goalRewardWeeks weeklyContributions setTiers firstDiscoveries feedEntries
-       achievements trades reportsFiled reportsReceived moderationDecisions].each { assert_equal [], hash[it], it }
+       feedReactions achievements trades customSets goals picoinEntries listings bids reportsFiled reportsReceived moderationDecisions].each { assert_equal [], hash[it], it }
+    assert_equal({ available: 0, committed: 0 }, hash[:wallet])
     assert_equal({ count: 0 }, hash[:friends])
     assert_equal({ received: 0, sent: 0 }, hash[:pendingInvitations])
     assert_equal({ active: "standard", activeSeason: nil, unlocked: [] }, hash[:cardBacks])
+    assert_nil hash[:steamLibrary]
     assert_no_database_id(hash)
+  end
+
+  test "the player's own sets are listed by token, name, kind and games, by slug in the order picked, never the library or another player's" do
+    portal, rare, common = %i[portal rare_card common_card].map { catalog_cards(it).id }
+    mine = Game::CreateCustomSet.new.call(player: @player, name: "Mes favoris", card_ids: [ rare, portal, common ]).value!
+    library = create_library_set(@player, card_ids: [ portal ])
+    theirs = Game::CreateCustomSet.new.call(player: @friend, name: "Secret garden", card_ids: [ rare, portal, common ]).value!
+
+    hash = export.to_h
+
+    favourites = hash[:customSets].sole
+    assert_equal [ mine.token, "Mes favoris", "custom" ], favourites.values_at(:token, :name, :kind)
+    assert_equal %w[blue-depths portal tin-soldier], favourites[:games].map { it[:slug] }
+    assert_equal "Portal", favourites[:games].second[:title]
+    assert_equal mine.created_at.utc.iso8601, favourites[:createdAt]
+    assert_equal library.token, hash[:steamLibrary][:token]
+    assert_not_includes hash[:customSets].to_json, library.token
+    assert_not_includes hash.to_json, theirs.token
+    assert_not_includes hash.to_json, "Secret garden"
+    assert_no_database_id(hash)
+  end
+
+  test "a synced Steam library gets its own section: token, dates and games by slug and title in the order stored" do
+    library = create_library_set(@player, card_ids: %i[rare_card portal].map { catalog_cards(it).id }, synced_at: Time.utc(2026, 10, 13, 4))
+
+    hash = export.to_h
+
+    assert_equal({ token: library.token, createdAt: library.created_at.utc.iso8601, syncedAt: "2026-10-13T04:00:00Z", notSharedSince: nil,
+      games: [ { slug: "blue-depths", title: "Profondeurs bleues" }, { slug: "portal", title: "Portal" } ] }, hash[:steamLibrary])
+    assert_equal [], hash[:customSets]
+    assert_no_database_id(hash)
+  end
+
+  test "a library Steam stopped sharing keeps its games and says since when" do
+    create_library_set(@player, card_ids: [ catalog_cards(:portal).id ], library_private_since: Time.utc(2026, 10, 12, 4))
+
+    library = export.to_h[:steamLibrary]
+
+    assert_equal "2026-10-12T04:00:00Z", library[:notSharedSince]
+    assert_equal [ "portal" ], library[:games].map { it[:slug] }
+  end
+
+  test "the profile carries the Steam games sync turned off" do
+    @player.update!(steam_library_sync: false)
+
+    assert_equal false, export(@player.reload).to_h[:profile][:steamLibrarySync]
+  end
+
+  test "the player's goals are listed in number order, a game set by kind and key, a custom set by token" do
+    mine = Game::CreateCustomSet.new.call(player: @player, name: "Mes favoris", card_ids: %i[portal rare_card common_card].map { catalog_cards(it).id }).value!
+    Game::AddGoal.new.call(player: @player, kind: "studio", key: "valve").value!
+    Game::AddGoal.new.call(player: @player, custom_set: mine.token).value!
+    Game::AddGoal.new.call(player: @friend, kind: "studio", key: "valve").value!
+
+    goals = export.to_h[:goals]
+
+    assert_equal [ { position: 1, setKind: "studio", setKey: "valve" }, { position: 2, customSet: mine.token } ], goals.map { it.except(:createdAt) }
+    assert goals.all? { it[:createdAt].present? }
+    assert_no_database_id(export.to_h)
   end
 
   test "the export names the card backs unlocked and the active one" do
@@ -161,6 +243,23 @@ class PlayerExportTest < ActiveSupport::TestCase
     assert hash[:moderationDecisions].all? { it[:createdAt] }
     assert_names_nobody_else(hash, @friend, @staff)
     assert_no_database_id(hash)
+  end
+
+  test "the reactions a player made are listed by the entry's token and the reaction, never who else reacted" do
+    mine = feed_entry_of(@friend)
+    other = feed_entry_of(@staff)
+    react(@player, mine, "heart")
+    react(@friend, mine, "wow")
+    react(@staff, other, "gg")
+
+    hash = export.to_h
+
+    reaction = hash[:feedReactions].sole
+    assert_equal({ reaction: "heart", entry: mine.token, entryKind: "repost", reactedAt: reaction[:reactedAt] }, reaction)
+    assert reaction[:reactedAt]
+    assert_no_database_id(hash)
+    assert_names_nobody_else(hash, @friend, @staff)
+    assert_equal [ "wow" ], export(@friend).to_h[:feedReactions].map { it[:reaction] }
   end
 
   test "the file is named by the UTC day of the export" do

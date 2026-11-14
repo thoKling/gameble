@@ -28,15 +28,31 @@ class CardBackSeasonsControllerTest < ActionDispatch::IntegrationTest
     reach(@second, reached_by: "allocation")
     patch personalization_back_path(locale: :en), params: { back: BACK, season: 1 }
 
-    get personalization_path(locale: :en)
+    get me_path(locale: :en)
 
     assert_equal [ BACK, 1 ], stored
-    assert_select ".back-picker__marks .back-picker__mark", 2
-    assert_select ".back-picker__marks .back-picker__mark--active .season-mark", "S1"
-    assert_select ".back-picker__marks button[disabled]", 1
-    assert_select ".back-picker__stamped .season-mark", "S1"
-    assert_select ".back-picker__grid .season-mark", false
+    assert_select ".back-picker__tile--active[data-key='#{BACK}']" do
+      assert_select ".back-picker__seasons[role=group][aria-label='Season mark'] button.back-picker__season", 2
+      assert_select "button.back-picker__season[aria-pressed=true][aria-label='Equip Roguelike with the mark of season 1']", "S1"
+      assert_select "button.back-picker__season[aria-pressed=false]", "S2"
+      assert_select ".back-picker__stamp.season-mark:not([hidden])", "S1"
+      assert_select ".back-picker__stamp.season-mark[hidden]", "S2"
+    end
+    assert_select ".back-picker__strip .back-picker__sentence", "Earned at the Adept tier of the Roguelike set · seasons 1 and 2"
     assert_select "[style]", false
+  end
+
+  test "an active back worn with no season mark stamps none, even once earned in two seasons" do
+    reach(@first)
+    reach(@second, reached_by: "allocation")
+    patch personalization_back_path(locale: :en), params: { back: BACK }
+    Game::PlayerState.where(player_id: @player.id).update_all(active_card_back_season: nil)
+
+    get me_path(locale: :en)
+
+    assert_nil stored.last
+    assert_select ".back-picker__season[aria-pressed=true]", false
+    assert_select ".back-picker__stamp:not([hidden])", false
   end
 
   test "choosing another season of the active back changes the mark" do
@@ -46,7 +62,7 @@ class CardBackSeasonsControllerTest < ActionDispatch::IntegrationTest
 
     patch personalization_back_path(locale: :en), params: { back: BACK, season: 2 }
 
-    assert_redirected_to personalization_path
+    assert_redirected_to me_path
     assert_equal [ BACK, 2 ], stored
   end
 
@@ -54,10 +70,10 @@ class CardBackSeasonsControllerTest < ActionDispatch::IntegrationTest
     reach(@first)
     patch personalization_back_path(locale: :en), params: { back: BACK }
 
-    get personalization_path(locale: :en)
+    get me_path(locale: :en)
 
     assert_equal [ BACK, nil ], stored
-    assert_select ".back-picker__marks", false
+    assert_select ".back-picker__seasons", false
     assert_select ".season-mark", false
   end
 

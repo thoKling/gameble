@@ -12,6 +12,7 @@ import { opensElsewhere, type Intent } from "../lib/screen"
 import { serverTemplate } from "../lib/server_html"
 import { cloneContent } from "../lib/templates"
 import {
+  adopted,
   bySide,
   changed,
   clearFilters,
@@ -29,7 +30,6 @@ import {
   setPickQuantity,
   showMore,
   start,
-  toggleFold,
   togglePick,
   type BoardState,
   type PickerFilters,
@@ -57,6 +57,7 @@ export class TradeBoardController extends Controller<HTMLElement> {
     focus: String,
     forget: String,
     draftKey: String,
+    prefilled: Boolean,
     counterUrl: String,
     boardUrl: String,
     facesUrl: String,
@@ -78,6 +79,7 @@ export class TradeBoardController extends Controller<HTMLElement> {
   declare readonly focusValue: string
   declare readonly forgetValue: string
   declare readonly draftKeyValue: string
+  declare prefilledValue: boolean
   declare readonly counterUrlValue: string
   declare readonly boardUrlValue: string
   declare readonly facesUrlValue: string
@@ -99,6 +101,12 @@ export class TradeBoardController extends Controller<HTMLElement> {
     const template = this.faces.get(key)
     return template ? cloneContent(template) : null
   }
+
+  private readonly priceFor = (key: string): Node | null =>
+    this.cardTargets
+      .find((card) => card.dataset.key === key)
+      ?.querySelector(".average-price")
+      ?.cloneNode(true) ?? null
 
   private readonly beforeCache = (): void => {
     if (this.state) this.apply(closePicker(this.state))
@@ -185,7 +193,13 @@ export class TradeBoardController extends Controller<HTMLElement> {
   }
 
   abandon(): void {
-    if (this.draftKeyValue) forgetDraft(this.draftKeyValue)
+    if (this.storedDraftKey) forgetDraft(this.storedDraftKey)
+  }
+
+  send(): void {
+    if (!this.prefilledValue) return
+    this.adopt()
+    this.persist()
   }
 
   removeLine({ detail: { side, key } }: Intent<SideIntent>): void {
@@ -212,11 +226,7 @@ export class TradeBoardController extends Controller<HTMLElement> {
   }
 
   setFilter({ detail }: Intent<SideFilter>): void {
-    if (this.state) this.apply(setFilter(this.state, detail), () => this.picker()?.scrollToTop())
-  }
-
-  toggleFold(): void {
-    if (this.state) this.apply(toggleFold(this.state))
+    if (this.state) this.apply(setFilter(this.state, detail), () => this.picker()?.scrollToResults())
   }
 
   clearFilters(): void {
@@ -264,7 +274,7 @@ export class TradeBoardController extends Controller<HTMLElement> {
     const received = bySide((side) =>
       this.lineTargets.filter((line) => line.dataset.side === side).map((line) => lineFrom(line.dataset)),
     )
-    return start({ catalogue, received, editing: this.editingValue, draft: readDraft(this.draftKeyValue), filters })
+    return start({ catalogue, received, editing: this.editingValue, draft: readDraft(this.storedDraftKey), filters })
   }
 
   private seedFaces(): void {
@@ -297,13 +307,27 @@ export class TradeBoardController extends Controller<HTMLElement> {
   }
 
   private persist(): void {
+    if (this.prefilledValue && this.state && changed(this.state)) this.adopt()
     const state = this.state
     if (!state) return
-    if (this.draftKeyValue) {
-      if (changed(state)) saveDraft(this.draftKeyValue, draftSides(state))
-      else forgetDraft(this.draftKeyValue)
+    const key = this.storedDraftKey
+    if (key) {
+      if (changed(state)) saveDraft(key, draftSides(state))
+      else forgetDraft(key)
     }
     if (this.hasTradeBoardSendOutlet) this.tradeBoardSendOutlet.render(!sendable(state))
+  }
+
+  private adopt(): void {
+    if (!this.state) return
+    this.prefilledValue = false
+    this.state = adopted(this.state)
+    for (const line of this.lineTargets) line.remove()
+    this.replaceUrl(this.boardUrlValue)
+  }
+
+  private get storedDraftKey(): string {
+    return this.prefilledValue ? "" : this.draftKeyValue
   }
 
   private reflectHold(): void {
@@ -316,7 +340,7 @@ export class TradeBoardController extends Controller<HTMLElement> {
   }
 
   private renderSide(state: BoardState, outlet: TradeBoardSideController): void {
-    outlet.render(sideViewOf(state, outlet.side, this.stringsValue), this.faceFor)
+    outlet.render(sideViewOf(state, outlet.side, this.stringsValue), this.faceFor, this.priceFor)
     this.requestFaces(state.lines[outlet.side].map((line) => line.key))
   }
 
@@ -345,7 +369,7 @@ export class TradeBoardController extends Controller<HTMLElement> {
   private replaceUrl(url: string): void {
     if (!url) return
     const next = new URL(url, window.location.href)
-    if (next.pathname === window.location.pathname) return
+    if (next.pathname + next.search === window.location.pathname + window.location.search) return
     window.history.replaceState(window.history.state, "", next)
     recordEntry(currentIndex(), next.pathname, sessionTrailStorage(), currentScreenLabel(), currentScreenLabels())
   }

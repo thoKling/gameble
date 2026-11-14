@@ -63,7 +63,7 @@ class FriendProfilesControllerTest < ActionDispatch::IntegrationTest
         assert_select "input[type=hidden][name=from][value=friends]"
       end
       assert_select "dialog#friend-profile-remove-#{@friend.token}.modal[aria-labelledby=?]", "friend-profile-remove-#{@friend.token}-title" do
-        assert_select ".modal__title", "Retirer Léa ?"
+        assert_select ".modal__title", "Retirer Léa\u202F?"
         assert_select "form[method=post][action=?][data-turbo=false]", remove_friend_path(locale: :fr, token: @friend.token)
         assert_select ".remove-friend-dialog__trade", 0
       end
@@ -84,23 +84,6 @@ class FriendProfilesControllerTest < ActionDispatch::IntegrationTest
     get friend_profile_path(locale: :en, token: @friend.token)
 
     assert_select ".friend-profile__count", "2 cards collected"
-  end
-
-  test "a friend holding nothing shows no showcase, in English" do
-    publish_sets_draft
-    @friend.update_columns(last_seen_at: 1.minute.ago)
-    sign_in(@player)
-
-    get friend_profile_path(locale: :en, token: @friend.token)
-
-    assert_response :success
-    assert_select ".friend-profile__count", "0 cards collected"
-    assert_select ".friend-profile__presence .friends__presence--online", "Online"
-    assert_select ".friend-profile__showcase, .friend-profile__empty", false
-    assert_select ".friend-profile__actions a.button--primary[href=?]", new_trade_path(locale: :en, friend: @friend.token), "Trade"
-    assert_select ".friends__more-button[aria-label=?]", "More actions for Léa"
-    assert_select ".friends__menu-item[aria-label=?]", "Report Léa", "Report"
-    assert_select ".friends__menu-item[aria-label=?]", "Remove Léa from your friends", "Remove"
   end
 
   test "a friends-only friend is shown; a private one is the not-available frame" do
@@ -132,22 +115,26 @@ class FriendProfilesControllerTest < ActionDispatch::IntegrationTest
     assert_select ".trades-closed", 0
   end
 
-  test "a friend's profile opens the trade in progress with them, whoever proposed it, and a new draft once it is closed" do
+  test "a friend's profile opens a new draft while trades are in progress, and its remove dialog counts them" do
     portal = catalog_card_seasons(:portal_one).id
     soldier = catalog_card_seasons(:common_card_one).id
     hold(@friend, portal, 1)
-    hold(@player, soldier, 1)
+    hold(@player, soldier, 2)
     trade = Game::ProposeTrade.new.call(player: @friend, recipient: @player, offer: { portal => 1 }, request: { soldier => 1 }).value!
     sign_in(@player)
 
     get friend_profile_path(locale: :fr, token: @friend.token)
-    assert_select ".friend-profile__actions a.button--primary[href=?]", trade_path(locale: :fr, token: trade.token), "Échange"
-    assert_select ".friend-profile__actions a[href=?]", new_trade_path(locale: :fr, friend: @friend.token), 0
+    assert_select ".friend-profile__actions a.button--primary[href=?]", new_trade_path(locale: :fr, friend: @friend.token), "Échange"
+    assert_select ".friend-profile__actions a[href=?]", trade_path(locale: :fr, token: trade.token), 0
     assert_select "dialog#friend-profile-remove-#{@friend.token} .remove-friend-dialog__trade", "Votre échange en cours avec Léa est annulé et ses cartes sont libérées."
+
+    Game::ProposeTrade.new.call(player: @player, recipient: @friend, offer: { soldier => 1 }, request: { portal => 1 }).value!
+    get friend_profile_path(locale: :fr, token: @friend.token)
+    assert_select "dialog#friend-profile-remove-#{@friend.token} .remove-friend-dialog__trade", "Vos 2 échanges en cours avec Léa sont annulés et leurs cartes sont libérées."
 
     Game::CancelTrade.new.call(player: @friend, trade_id: trade.id).value!
     get friend_profile_path(locale: :fr, token: @friend.token)
-    assert_select ".friend-profile__actions a.button--primary[href=?]", new_trade_path(locale: :fr, friend: @friend.token), "Échange"
+    assert_select "dialog#friend-profile-remove-#{@friend.token} .remove-friend-dialog__trade", "Votre échange en cours avec Léa est annulé et ses cartes sont libérées."
   end
 
   test "a private player still sees a friend's profile, with the trades-closed line instead of the trade action" do
@@ -159,7 +146,7 @@ class FriendProfilesControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select ".friend-profile__actions a.friends__collection-link", "Voir la collection"
     assert_select ".friend-profile__actions a.button--primary", 0
-    assert_select ".friend-profile__actions .trades-closed", /Votre profil est privé : les échanges sont fermés\./
+    assert_select ".friend-profile__actions .trades-closed", /Votre profil est privé\u202F: les échanges sont fermés\./
     assert_select ".friend-profile__actions .friend-profile__trade .trades-closed a[href=?]", settings_path(locale: :fr), "RÉGLAGES"
     assert_equal %w[Signaler Retirer], css_select(".friend-profile__trade + .friends__more button.friends__menu-item").map { it.text.strip }
   end

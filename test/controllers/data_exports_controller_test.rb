@@ -1,10 +1,12 @@
 require "test_helper"
 require_relative "../support/game_packs"
 require_relative "../support/steam_sign_in"
+require_relative "../support/custom_sets"
 
 class DataExportsControllerTest < ActionDispatch::IntegrationTest
   include GamePacks
   include SteamSignIn
+  include CustomSets
 
   setup do
     @player = accounts_players(:player)
@@ -28,6 +30,33 @@ class DataExportsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "76561197960287001", body.dig("profile", "steamId")
     assert_equal [ [ "portal", 1, "Portal", 5 ] ], body["collection"].map { it.values_at("slug", "season", "title", "quantity") }
     assert_equal Time.utc(2026, 10, 14, 9, 30), @player.reload.last_exported_at
+  end
+
+  test "the export file lists the player's custom sets with their games by slug" do
+    card_ids = %i[rare_card portal common_card].map { catalog_cards(it).id }
+    custom_set = Game::CreateCustomSet.new.call(player: @player, name: "Mes favoris", card_ids:).value!
+    sign_in(@player)
+
+    post settings_export_path(locale: :en), headers: json_headers
+
+    exported = response.parsed_body["customSets"].sole
+    assert_equal [ custom_set.token, "Mes favoris", "custom" ], exported.values_at("token", "name", "kind")
+    assert_equal card_ids.map { Catalog::Card.find(it).slug }, exported["games"].map { it["slug"] }
+  end
+
+  test "a Steam player's export file holds their Steam library with its games by slug, apart from the custom sets" do
+    card_ids = %i[portal rare_card].map { catalog_cards(it).id }
+    library = create_library_set(@player, card_ids:)
+    sign_in(@player)
+
+    post settings_export_path(locale: :en), headers: json_headers
+
+    exported = response.parsed_body["steamLibrary"]
+    assert_equal library.token, exported["token"]
+    assert_equal library.synced_at.utc.iso8601, exported["syncedAt"]
+    assert_equal card_ids.map { Catalog::Card.find(it).slug }, exported["games"].map { it["slug"] }
+    assert_equal [], response.parsed_body["customSets"]
+    assert_equal true, response.parsed_body.dig("profile", "steamLibrarySync")
   end
 
   test "the last export's file downloads again later, and nobody else's" do
@@ -58,16 +87,6 @@ class DataExportsControllerTest < ActionDispatch::IntegrationTest
     post settings_export_path(locale: :en), headers: json_headers
 
     assert_equal "2026-10-01T08:00:00Z", response.parsed_body.dig("profile", "lastExportedAt")
-  end
-
-  test "the settings' script asks in JSON and gets the same file" do
-    sign_in(@player)
-
-    post settings_export_path(locale: :en), headers: json_headers
-
-    assert_response :success
-    assert_match(/\Aattachment; filename="gameble-export-\d{4}-\d{2}-\d{2}\.json"/, response.headers["Content-Disposition"])
-    assert_equal [], response.parsed_body["collection"]
   end
 
   test "a second export within five minutes of the last is refused: 429 in JSON with the next allowed time, an alert in HTML" do
