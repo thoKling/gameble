@@ -1,4 +1,8 @@
 module CardDetailsHelper
+  TRADE_HOLDERS_SHOWN = 3
+
+  EditionLine = Data.define(:text, :price)
+
   def card_preview_title(view)
     t("card_details.preview.title", title: view.title, rarity: CardStrings.new.rarity_name(view.rarity))
   end
@@ -43,15 +47,40 @@ module CardDetailsHelper
     end
   end
 
-  def card_detail_open_label(view, strings, owned: true, goals: [])
-    label = t(owned ? "card_details.open" : "card_details.open_not_owned",
-      title: view.title, year: view.year, rarity: strings.rarity_name(view.rarity), season: view.season_number)
-    goals.any? ? [ label, goal_card_words(goals) ].join(", ") : label
+  def card_detail_edition_entries(editions, strings, prices)
+    return card_detail_edition_lines(editions, strings).map { EditionLine.new(text: it, price: nil) } if prices.blank?
+
+    editions.map do |rarity, season_number, _|
+      text = t("card_details.edition_line", rarity: strings.rarity_name(rarity), season: t("card_details.season_short", number: season_number))
+      EditionLine.new(text:, price: prices[season_number])
+    end
   end
 
-  def link_to_card_detail(view, strings:, context: {}, number: view.season_number, owned: true, goals: [], &)
-    link_to(card_detail_path(view.id, number, context), class: "card-link", aria: { label: card_detail_open_label(view, strings, owned:, goals:) },
+  def card_trade_edition_line(edition, strings)
+    rarity = strings.rarity_name(Catalog::Rarity::TIERS.fetch(edition.rarity))
+    t("card_details.editions_line", rarity:, seasons: t("card_details.season_short", number: edition.season_number))
+  end
+
+  def card_detail_open_label(view, strings, owned: true, goals: [], price: nil, flag_few_sales: true)
+    label = t(owned ? "card_details.open" : "card_details.open_not_owned",
+      title: view.title, year: view.year, rarity: strings.rarity_name(view.rarity), season: view.season_number)
+    label = [ label, goal_card_words(goals) ].join(", ") if goals.any?
+    price ? [ label, average_price_words(price, flag_few_sales:) ].join(", ") : label
+  end
+
+  def link_to_card_detail(view, strings:, context: {}, number: view.season_number, owned: true, goals: [], price: nil, flag_few_sales: true, &)
+    label = card_detail_open_label(view, strings, owned:, goals:, price:, flag_few_sales:)
+    link_to(card_detail_path(view.id, number, context), class: "card-link", aria: { label: },
       data: { turbo_prefetch: false }, &)
+  end
+
+  def card_detail_copies(copies, reserved)
+    held = t("card_details.copies", count: copies)
+    return held if reserved.nil?
+
+    reasons = [ (t("card_details.reserved.on_sale", count: reserved.on_sale) if reserved.on_sale.positive?),
+      (t("card_details.reserved.in_trade", count: reserved.in_trade) if reserved.in_trade.positive?) ].compact
+    t("card_details.copies_reserved", copies: held, reserved: reasons.to_sentence(two_words_connector: t("card_details.reserved.and")))
   end
 
   def card_detail_path(slug, number, context = {})

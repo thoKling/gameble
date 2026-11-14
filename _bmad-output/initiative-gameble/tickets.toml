@@ -236,3 +236,107 @@ slug = "epic-feed-pagination"
 title = "Unlimited feed"
 covers = []
 after = []
+
+[[epic]]
+id = 32
+release = "1.1.0"
+slug = "epic-polish-1-1-0"
+title = "Staging fixes of 1.1.0"
+covers = []
+after = []
+
+[[epic]]
+id = 33
+release = "1.2.0"
+slug = "epic-phone-first-web"
+title = "A phone-first web experience"
+covers = []
+after = [{ epic = 28, needs = "the active goals" }, { epic = 29, needs = "the friends who hold a missing card" }]
+
+[[epic]]
+id = 34
+release = "1.1.0"
+slug = "epic-feed-reactions"
+title = "Reactions on the feed"
+covers = []
+after = []
+
+[[epic]]
+id = 35
+release = "1.2.x"
+slug = "epic-hotwire-native-apps"
+title = "Hotwire Native apps"
+covers = []
+after = [{ epic = 33, needs = "the phone's four tabs, its header and its bottom actions" }]
+
+[[epic]]
+id = 36
+release = "1.3.0"
+slug = "epic-instant-capsule-opening"
+title = "Instant capsule opening"
+covers = []
+after = []
+
+[[epic]]
+id = 38
+release = "1.3.0"
+slug = "epic-picoins-and-entrusting"
+title = "PiCoins and entrusting"
+covers = ["CAP-29", "CAP-35"]
+after = [{ epic = 36, needs = "the opening, allocation and tier path settled" }]
+
+[[epic]]
+id = 39
+release = "1.3.0"
+slug = "epic-an-auction-runs-and-settles"
+title = "An auction runs and settles"
+covers = ["CAP-30", "CAP-31", "CAP-32", "CAP-33"]
+after = [{ epic = 38, needs = "wallets, the ledger, versioned settings, the first opening, the card move and the PiCoin amount component" }]
+
+[[epic]]
+id = 40
+release = "1.3.0"
+slug = "epic-follow-auctions-and-removed-players"
+title = "Following one's auctions, and removed players"
+covers = ["CAP-31", "CAP-33"]
+after = [{ epic = 39, needs = "listings, bids, their events, the Annonce and the market screen" }]
+
+[[epic]]
+id = 41
+release = "1.3.0"
+slug = "epic-prices-economy-health-and-opening"
+title = "Prices, economy health and opening"
+covers = ["CAP-34", "CAP-36", "CAP-37"]
+after = [{ epic = 38, needs = "settings with thresholds and targets, ChangeSettings and the nightly reconciliation job" }, { epic = 39, needs = "settled listings, the edition price table and EditionPrice, the price facts' places and the oldest due listing" }, { epic = 40, needs = "forfeited balances counted as destroyed" }]
+
+[[epic]]
+id = 37
+release = "1.3.x"
+slug = "epic-economy-charts"
+title = "Economy charts"
+covers = ["CAP-34", "CAP-36", "CAP-38"]
+after = [{ epic = 38, needs = "OpenMarket and MarketState, the back-office market page and the picoins helper" }, { epic = 39, needs = "the market screen's chip row, sold listings and average_after_sale" }, { epic = 41, needs = "the first opening, the daily snapshot, EconomySeries' indicators with days of income, the card detail's average price with its sale count and the health page" }]
+
+[[epic]]
+id = 42
+release = "1.4.0"
+slug = "epic-duel-stats-and-decks"
+title = "Duel stats and decks"
+covers = ["CAP-39", "CAP-40"]
+after = []
+
+[[epic]]
+id = 43
+release = "1.4.0"
+slug = "epic-live-friend-duels"
+title = "Live duels between friends"
+covers = ["CAP-41"]
+after = [{ epic = 42, needs = "complete decks and their operations, the duel stats query, the Duels screen" }]
+
+[[epic]]
+id = 44
+release = "1.4.0"
+slug = "epic-duel-capsule-record-and-achievements"
+title = "Duel capsule, record and achievements"
+covers = ["CAP-42", "CAP-17", "CAP-20"]
+after = [{ epic = 43, needs = "a finished duel with DuelFinished, automatic moves marked on rounds, the finishing move with removed players settled, the duel result screen, the desktop Duels screen" }]

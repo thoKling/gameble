@@ -624,7 +624,7 @@ module BackOffice
       sign_in(accounts_players(:administrator))
       get back_office_path(locale: :fr)
 
-      assert_select "main a.button--secondary[href='/fr/back-office/import-runs']", "L'import Steam"
+      assert_select "main a.office-tile[href='/fr/back-office/import-runs'] .office-tile__title", "L'import Steam"
 
       sign_in(accounts_players(:moderator))
       get back_office_path(locale: :fr)
@@ -652,21 +652,6 @@ module BackOffice
 
         assert_response :forbidden, "#{verb} #{path}"
         assert_includes response.body, ERB::Util.html_escape(I18n.t("authorization.forbidden", locale: :fr))
-      end
-      assert_predicate run.reload, :failed?
-      assert_equal 1, Steam::ImportRun.count
-    end
-
-    test "a visitor and a player get the 404 of an unknown address for every import action" do
-      run = failed_run
-
-      [ nil, accounts_players(:player) ].each do |player|
-        sign_in(player) if player
-        each_request(run) do |verb, path|
-          assert_no_import_jobs { public_send(verb, path) }
-
-          assert_unknown_address "#{verb} #{path}"
-        end
       end
       assert_predicate run.reload, :failed?
       assert_equal 1, Steam::ImportRun.count

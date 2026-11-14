@@ -34,23 +34,14 @@ class PacksChipsControllerTest < ActionDispatch::IntegrationTest
 
     assert_select "#{CHIP} div#packs-chip .packs-chip__count", "1"
     assert_select "#{CHIP} .packs-chip__next [data-countdown-target=clock]", "10:00"
+    assert_select "#{CHIP} .packs-chip__next[data-countdown-total-value='600'] .packs-chip__fill [data-countdown-target=segment]"
+    assert_select "#{CHIP} .packs-chip__fill .gauge__segment--lit", false
     assert_select "#{CHIP} .packs-chip__next .visually-hidden", "Next capsule: 2026-10-02 14:32 UTC"
 
     refresh = css_select("#{CHIP} .packs-chip__next[data-controller=countdown]").sole
     assert_equal "600", refresh["data-countdown-seconds-value"]
     assert_equal "false", refresh["data-countdown-refresh-value"]
     assert_equal "/en/packs-chip", refresh["data-countdown-refresh-url-value"]
-  end
-
-  test "a full reserve answers the full chip, with no countdown" do
-    sign_in(@player)
-    10.times { create_pack(@player) }
-
-    get_chip
-
-    assert_select "#{CHIP} .packs-chip__count", "10"
-    assert_select "#{CHIP} .packs-chip__next--full", "Reserve full"
-    assert_select "#{CHIP} [data-controller=countdown]", false
   end
 
   test "the chip reads in the request's locale, and follows it on the next refresh" do

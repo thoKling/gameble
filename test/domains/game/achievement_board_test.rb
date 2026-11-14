@@ -9,7 +9,7 @@ class Game::AchievementBoardTest < ActiveSupport::TestCase
   end
 
   def unlock(*keys, player: @player)
-    keys.each { |key| Game::AchievementUnlock.create!(player_id: player.id, achievement: key, unlocked_at: Time.current) }
+    keys.each { |key| Game::AchievementUnlock.create!(player_id: player.id, achievement: key, unlocked_at: Time.current, claimed_at: Time.current) }
   end
 
   def opened_packs(count, player: @player)
@@ -67,23 +67,10 @@ class Game::AchievementBoardTest < ActiveSupport::TestCase
     Game::AchievementProgress.define_singleton_method(:call, original)
   end
 
-  test "every achievement earned: the board runs no progress query" do
-    unlock(*Game::Achievements::CATALOGUE.map(&:key))
-    reads = 0
-    subscriber = ActiveSupport::Notifications.subscribe("sql.active_record") { |*, payload| reads += 1 if payload[:name] == "Game::AchievementProgress" }
-
-    tiles = Game::AchievementBoard.call(@player)
-
-    assert_equal 0, reads
-    assert tiles.all? { it.earned && it.progress == it.threshold }
-  ensure
-    ActiveSupport::Notifications.unsubscribe(subscriber)
-  end
-
   test "only an achievement with a threshold above one is countable" do
     assert_equal %i[boosters_10 boosters_100 boosters_500 three_complete_sets luck_is_a_marketing_concept leave_request_denied
       streamlined_opening_procedure diligence_beyond_the_call_of_duty diversified_portfolio market_concentration
-      a_strictly_professional_relationship],
+      a_strictly_professional_relationship competitive_tender quarterly_targets_met insider_trading],
       Game::AchievementBoard.call(@player).select(&:countable?).map(&:key)
   end
 

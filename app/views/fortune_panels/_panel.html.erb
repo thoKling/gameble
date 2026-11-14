@@ -1,0 +1,33 @@
+<%# locals: (panel:) %>
+<section class="fortune-panel" aria-labelledby="fortune-panel-title">
+  <%= render PanelComponent.new(class: "fortune-panel__frame hub-linked") do %>
+    <h2 id="fortune-panel-title" class="hub-section-title">
+      <%= link_to fortune_register_path, class: "hub-linked__link" do %><%= t(".title") %><%= pixel_icon("arrow-small-right", class: "hub-linked__arrow") %><% end %>
+    </h2>
+    <% if panel.standing.opened? %>
+      <p class="fortune-panel__headline">
+        <span class="<%= class_names("fortune-index", "fortune-index__value", fortune_index_tone(panel.standing.index)) %>"><%= fortune_index_text(panel.standing.index) %></span>
+        <span class="fortune-panel__label"><%= fortune_label_title(panel.standing.index) %></span>
+      </p>
+    <% else %>
+      <p class="fortune-panel__headline fortune-panel__label"><%= t(".no_standing") %></p>
+    <% end %>
+    <%= render "fortunes/gauge", distribution: panel.distribution, standing: panel.standing, privileged_floor: panel.privileged_floor %>
+    <% if panel.top.any? %>
+      <ol class="fortune-panel__rows">
+        <% panel.top.each do |row| %>
+          <li class="fortune-panel__row">
+            <span class="fortune-panel__rank"><%= row.rank %></span>
+            <span class="fortune-panel__who">
+              <% if row.privileged %>
+                <span class="fortune-panel__privileged" title="<%= t("fortunes.privileged_title") %>"><span class="visually-hidden"><%= t("fortunes.privileged_title") %></span></span>
+              <% end %>
+              <span class="fortune-panel__name"><%= row.shown ? public_profile_title(row.player) : t("fortune_registers.show.hidden_player") %></span>
+            </span>
+            <span class="<%= class_names("fortune-panel__row-index", "fortune-index", fortune_index_tone(row.index)) %>"><%= fortune_index_text(row.index) %></span>
+          </li>
+        <% end %>
+      </ol>
+    <% end %>
+  <% end %>
+</section>

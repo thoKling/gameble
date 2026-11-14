@@ -3,11 +3,28 @@
 @import "../styles/fonts.css";
 @import "../styles/shell.css";
 @import "../styles/shell-top-bar.css";
+@import "../styles/shell-packs-chip.css";
 @import "../styles/shell-rarity-legend.css";
 @import "../styles/shell-status.css";
 @import "../styles/shell-controls.css";
 @import "../styles/shell-screens.css";
+@import "../styles/shell-header-phone.css";
+@import "../styles/shell-back.css";
+@import "../styles/shell-bell.css";
+@import "../styles/announcement.css";
+@import "../styles/back-office-dashboard.css";
+@import "../styles/back-office-market.css";
+@import "../styles/back-office-market-settings.css";
+@import "../styles/back-office-market-health.css";
+@import "../styles/back-office-chart-switches.css";
+@import "../styles/release-note.css";
+@import "../styles/bottom-sheet.css";
+@import "../styles/native.css";
 @import "../styles/hub.css";
+@import "../styles/gauge.css";
+@import "../styles/picoin-amount.css";
+@import "../styles/average-price.css";
+@import "../styles/balance-chip.css";
 @import "../styles/hub-daily-sets.css";
 @import "../styles/hub-responsive.css";
 @import "../styles/hub-goal.css";
@@ -15,21 +32,26 @@
 @import "../styles/collection-set-tiles.css";
 @import "../styles/collection-set-tiles-cards.css";
 @import "../styles/collection-filters.css";
+@import "../styles/collection-filter-row.css";
 @import "../styles/collection-grid.css";
+@import "../styles/collection-slot-reasons.css";
 @import "../styles/collection-custom-sets.css";
 @import "../styles/collection-goals.css";
+@import "../styles/collection-goal-suggestions.css";
 @import "../styles/collection-custom-set-editor.css";
 @import "../styles/profile.css";
 @import "../styles/profile-title.css";
 @import "../styles/profile-responsive.css";
 @import "../styles/settings.css";
 @import "../styles/settings-pages.css";
-@import "../styles/personalization.css";
 @import "../styles/back-picker.css";
+@import "../styles/me.css";
+@import "../styles/avatar-picker.css";
 @import "../styles/season-mark.css";
 @import "../styles/season-allocation.css";
 @import "../styles/settings-summary.css";
 @import "../styles/friends.css";
+@import "../styles/friends-invite.css";
 @import "../styles/trades.css";
 @import "../styles/trades-board.css";
 @import "../styles/trades-picker.css";
@@ -37,7 +59,38 @@
 @import "../styles/trades-responsive.css";
 @import "../styles/trades-result.css";
 @import "../styles/feed.css";
+@import "../styles/feed-post.css";
+@import "../styles/feed-decor.css";
+@import "../styles/feed-reactions.css";
+@import "../styles/feed-jump.css";
 @import "../styles/achievements.css";
+@import "../styles/fortune.css";
+@import "../styles/fortune-profile.css";
+@import "../styles/fortune-panel.css";
+@import "../styles/hub-market.css";
+@import "../styles/fortune-register.css";
+@import "../styles/market-teaser.css";
+@import "../styles/market-copy-grid.css";
+@import "../styles/market-entrust.css";
+@import "../styles/market-entrust-recap.css";
+@import "../styles/market-entrust-phone.css";
+@import "../styles/market-entrust-result.css";
+@import "../styles/market-sale.css";
+@import "../styles/market-sale-phone.css";
+@import "../styles/market-suspended.css";
+@import "../styles/market-screen.css";
+@import "../styles/market-desk.css";
+@import "../styles/market-exchange-preview.css";
+@import "../styles/chart.css";
+@import "../styles/exchange.css";
+@import "../styles/market-filters.css";
+@import "../styles/market-tile.css";
+@import "../styles/market-listing.css";
+@import "../styles/market-history.css";
+@import "../styles/market-bid.css";
+@import "../styles/market-events.css";
+@import "../styles/market-rows.css";
+@import "../styles/player-name.css";
 @import "../styles/landing-base.css";
 @import "../styles/landing-hero.css";
 @import "../styles/landing-concept.css";
@@ -46,21 +99,27 @@
 @import "../styles/landing-responsive.css";
 @import "../styles/landing-gauge.css";
 @import "../styles/roadmap.css";
+@import "../styles/roadmap-editor.css";
 @import "../styles/sign-in.css";
 @import "../styles/card-detail.css";
+@import "../styles/card-detail-actions.css";
 @import "../styles/card-detail-stepping.css";
 @import "../styles/card-detail-public.css";
+@import "../styles/live-strip.css";
+@import "../styles/card-trade.css";
 @import "../styles/card.css";
 @import "../styles/card-tilt-effects.css";
 @import "../styles/card-rarity-effects.css";
 @import "../styles/card-goals.css";
 @import "../styles/booster.css";
 @import "../styles/booster-canister.css";
+@import "../styles/booster-card-marks.css";
 @import "../styles/booster-effects.css";
 @import "../styles/booster-celebration.css";
 @import "../styles/booster-celebration-keyframes.css";
 @import "../styles/booster-layouts.css";
 @import "../styles/booster-layouts-tray.css";
+@import "../styles/booster-daily.css";
 
 /* Read by screen readers, not shown. */
 .visually-hidden {
@@ -97,11 +156,22 @@
   color: var(--color-muted);
 }
 
+/* A wide ledger scrolls sideways inside the page on a phone. */
+.ledger-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.ledger time {
+  white-space: nowrap;
+}
+
 .ledger-entry {
   display: grid;
   grid-template-columns: max-content 1fr;
   gap: var(--space-3) var(--space-5);
-  margin: 0;
+  margin-inline: 0;
+  margin-bottom: 0;
   padding: var(--space-panel-padding);
   background: var(--color-panel);
   box-shadow: var(--panel-border);

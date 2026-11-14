@@ -1,11 +1,11 @@
 require "application_system_test_case"
+require_relative "../support/market"
 require_relative "../support/steam_sign_in"
 
 class TradeBoardTest < ApplicationSystemTestCase
   include ActiveJob::TestHelper
+  include MarketSettings
   include SteamSignIn
-
-  PAGE_PROBE = 40
 
   setup do
     @hugo = accounts_players(:player)
@@ -44,6 +44,71 @@ class TradeBoardTest < ApplicationSystemTestCase
     end
   end
 
+  test "a card placed from the picker arrives with its cell's average price, under its stepper" do
+    open_market!(first_opened_at: 1.day.ago)
+    Game::Market::EditionPrice.create!(card_season_id: @depths, average: 46_200, sales_used: 5)
+    Game::Holding.where(player_id: @lea.id, card_season_id: @depths).update_all(quantity: 2)
+    sign_in_hugo
+    visit new_trade_path(locale: :en, friend: @lea.token)
+
+    find(".trade-side--friend .trade-add").click
+    within(".trade-picker") do
+      assert_selector ".trade-pick:has(.trade-pick__toggle[aria-label$=', average price 46,200 PiCoins']) .trade-pick__price", text: "46,200"
+      find(".trade-pick__toggle[aria-label^='Blue Depths,']").click
+      click_on "Place", exact: true
+    end
+
+    within(".trade-side--friend.trade-side--editing") do
+      assert_selector ".trade-card .card", text: /Blue Depths/i
+      assert_selector ".trade-card .stepper + .trade-card__price", text: "46,200"
+    end
+    gap = evaluate_script(<<~JS)
+      (() => {
+        const card = document.querySelector(".trade-side--friend.trade-side--editing .trade-card[data-key]")
+        return card.querySelector(".trade-card__price").getBoundingClientRect().top - card.querySelector(".stepper").getBoundingClientRect().bottom
+      })()
+    JS
+    assert_operator gap, :>=, 0, "the price sits under the stepper"
+  end
+
+  test "the picker's filter sheet narrows the friend's cards to a genre or to a goal, its pastille counting them" do
+    soldier = catalog_card_seasons(:common_card_one)
+    Game::Holding.create!(player_id: @lea.id, card_season_id: soldier.id, quantity: 1, reserved: 0)
+    Catalog::CardSeason.where(id: @depths).update_all(main_theme: "horror")
+    Catalog::CardSeason.where(id: soldier.id).update_all(main_theme: "puzzle")
+    goal_cards = [ soldier, catalog_card_seasons(:uncommon_card_one), catalog_card_seasons(:legendary_card_one) ].map(&:card_id)
+    custom_set = Game::CreateCustomSet.new.call(player: @hugo, name: "Puzzles", card_ids: goal_cards).value!
+    Game::AddGoal.new.call(player: @hugo, custom_set: custom_set.token).value!
+    sign_in_hugo
+    visit new_trade_path(locale: :en, friend: @lea.token)
+
+    find(".trade-side--friend .trade-add").click
+    within(".trade-picker") do
+      assert_selector ".trade-pick", count: 2
+
+      click_on "Filters"
+      within("#trade-picker-filter-sheet") do
+        check "Horror", allow_label_click: true
+        assert_selector ".filter-sheet__status", text: "1 card shown."
+      end
+      assert_selector ".trade-pick", count: 1
+      assert_selector ".trade-pick__toggle[aria-label^='Blue Depths,']"
+      assert_selector ".filter-row__pastille .filter-row__count", text: "1"
+
+      within("#trade-picker-filter-sheet") do
+        uncheck "Horror", allow_label_click: true
+        find("fieldset[data-for=friend] .filter-chip--goal").click
+        find(".modal__close").click
+      end
+      assert_selector ".trade-pick", count: 1
+      assert_selector ".trade-pick__toggle[aria-label^='Tin Soldier,']"
+
+      click_on "Clear filters"
+      assert_selector ".trade-pick", count: 2
+      assert_no_selector ".filter-row__pastille .filter-row__count", visible: true
+    end
+  end
+
   test "a board a live refresh turns to the player's turn counters the friend's terms in place" do
     %i[common_card_one legendary_card_one].each do |card|
       Game::Holding.create!(player_id: @hugo.id, card_season_id: catalog_card_seasons(card).id, quantity: 1, reserved: 0)
@@ -52,14 +117,6 @@ class TradeBoardTest < ApplicationSystemTestCase
     sign_in_hugo
     visit trade_path(token: trade.token, locale: :en)
     assert_selector ".trade-board .trade-chip", text: /WAITING/i
-    page.execute_script(<<~JS)
-      window.faceRequests = []
-      const send = window.fetch
-      window.fetch = function (url, options) {
-        if (String(url).includes("/trades/faces")) window.faceRequests.push(new URL(url, location.href).searchParams.getAll("keys[]"))
-        return send.call(this, url, options)
-      }
-    JS
     assert_selector "turbo-cable-stream-source[connected]", visible: :all
 
     Game::CounterTrade.new.call(player: @lea, trade_id: trade.id, revision: Game::Trade.find(trade.id).revision,
@@ -76,69 +133,5 @@ class TradeBoardTest < ApplicationSystemTestCase
 
     find(".trade-side--own .trade-add").click
     within(".trade-picker") { assert_selector ".trade-pick .card", count: 3 }
-    assert_equal [ %w[golden-crown--s1 tin-soldier--s1] ], page.evaluate_script("window.faceRequests").map(&:sort), "one batch for the picker's missing faces"
-  end
-
-  def open_friend_picker
-    sign_in_hugo
-    visit new_trade_path(locale: :en, friend: @lea.token)
-    find(".trade-side--friend .trade-add").click
-    assert_selector ".trade-picker .trade-pick"
-  end
-
-  test "the picker shows its cards a page at a time and the next page when its end comes into view" do
-    cards = Array.new(PAGE_PROBE) { |index| "paging-#{index}" }
-    cards.each_with_index do |slug, index|
-      card = Catalog::Card.create!(source_key: "src:#{slug}", slug:, release_date: Date.new(2020, 1, 1), image_url: "https://images.example.test/#{slug}.jpg",
-        store_url: "https://store.example.test/#{slug}")
-      %w[en fr].each { |locale| Catalog::CardText.create!(card:, locale:, title: "Paging #{index}") }
-      season_id = Catalog::CardSeason.insert_all!([ { card_id: card.id, season_id: catalog_seasons(:one).id, prestige_score: 0.5, rating: 80.0,
-        rarity: Catalog::Rarity::TIERS.key(:common), number: 100 + index } ], returning: :id).rows.flatten.sole
-      Game::Holding.create!(player_id: @lea.id, card_season_id: season_id, quantity: 1, reserved: 0)
-    end
-
-    open_friend_picker
-
-    assert_selector ".trade-pick", count: TradesHelper::FACES_PER_REQUEST
-    page.execute_script("const body = document.querySelector('.trade-picker__body'); body.scrollTop = body.scrollHeight")
-    assert_selector ".trade-pick", count: PAGE_PROBE + 1
-  end
-
-  test "on a phone the filters fold under their button" do
-    resize_to(390, 844)
-    open_friend_picker
-
-    assert_selector ".trade-picker__fold[aria-expanded=false]"
-    assert_selector ".trade-picker__groups--folded", visible: :all
-    find(".trade-picker__fold").click
-    assert_selector ".trade-picker__fold[aria-expanded=true]"
-    assert_no_selector ".trade-picker__groups--folded"
-    find(".trade-picker__fold").click
-    assert_selector ".trade-picker__fold[aria-expanded=false]"
-    assert_selector ".trade-picker__groups--folded", visible: :all
-  end
-
-  test "the comparison chips keep the friend's duplicates, what the player misses and what both own" do
-    soldier = catalog_card_seasons(:common_card_one).id
-    Game::Holding.create!(player_id: @lea.id, card_season_id: @portal, quantity: 1, reserved: 0)
-    Game::Holding.create!(player_id: @lea.id, card_season_id: soldier, quantity: 1, reserved: 0)
-    Game::Holding.find_by!(player_id: @lea.id, card_season_id: @depths).update!(quantity: 2)
-
-    open_friend_picker
-    assert_selector ".trade-pick", count: 3
-
-    check "Their duplicates", allow_label_click: true
-    assert_selector ".trade-pick", count: 1
-    assert_selector ".trade-pick__toggle[aria-label^='Blue Depths,']"
-
-    uncheck "Their duplicates", allow_label_click: true
-    check "Missing from mine", allow_label_click: true
-    assert_selector ".trade-pick", count: 2
-    assert_no_selector ".trade-pick__toggle[aria-label^='Portal,']"
-
-    uncheck "Missing from mine", allow_label_click: true
-    check "We both own", allow_label_click: true
-    assert_selector ".trade-pick", count: 1
-    assert_selector ".trade-pick__toggle[aria-label^='Portal,']"
   end
 end

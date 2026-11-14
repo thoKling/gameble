@@ -1,8 +1,14 @@
 require "test_helper"
+require_relative "../support/feed_reactions"
+require_relative "../support/market"
+require_relative "../support/market_listings"
 
 class PlayerStreamTest < ActiveSupport::TestCase
   include ActionCable::TestHelper
   include ActiveJob::TestHelper
+  include FeedReactions
+  include MarketListings
+  include MarketSettings
 
   setup do
     @alice = accounts_players(:player)
@@ -11,6 +17,7 @@ class PlayerStreamTest < ActiveSupport::TestCase
     @three = catalog_card_seasons(:rare_card_one).id
     low, high = [ @alice.id, @bob.id ].minmax
     Game::Friendship.create!(low_player_id: low, high_player_id: high)
+    Game::Market::Settings.delete_all
     Game::Holding.create!(player_id: @alice.id, card_season_id: @one, quantity: 3, reserved: 0)
     Game::Holding.create!(player_id: @bob.id, card_season_id: @three, quantity: 2, reserved: 0)
   end
@@ -37,6 +44,17 @@ class PlayerStreamTest < ActiveSupport::TestCase
     PlayerStream::TRADE_EVENTS.each do |type|
       assert_equal trades_for(@alice, @bob), PlayerStream.notices(type.new(data:)), type.name
     end
+  end
+
+  test "a daily capsule collected tells its collector's open screens" do
+    assert_equal [ { player_id: @alice.id, topic: "bank" } ], PlayerStream.notices(Game::DailyBonusCollected.new(data: { player_id: @alice.id, pack_id: 1 }))
+    assert_includes PlayerStream::EVENTS, Game::DailyBonusCollected
+  end
+
+  test "opening a trade tells only the player who opened it" do
+    data = { player_id: @alice.id, trade_id: 1 }
+
+    assert_equal [ { player_id: @alice.id, topic: "trades" } ], PlayerStream.notices(Game::TradeSeen.new(data:))
   end
 
   test "an invitation and its cancelling tell both players, and its acceptance names the accepting friend to the sender" do
@@ -84,19 +102,54 @@ class PlayerStreamTest < ActiveSupport::TestCase
   end
 
   test "an unlocked card back tells its player alone; a retroactive one tells no one" do
-    data = { player_id: @alice.id, back: "confrere" }
+    data = { player_id: @alice.id, back: "aurore" }
 
-    assert_equal [ { player_id: @alice.id, card_back: "confrere" } ], PlayerStream.notices(Game::CardBackUnlocked.new(data:))
+    assert_equal [ { player_id: @alice.id, card_back: "aurore" } ], PlayerStream.notices(Game::CardBackUnlocked.new(data:))
     assert_empty PlayerStream.notices(Game::CardBackUnlocked.new(data: data.merge(retroactive: true)))
   end
 
   test "a card back unlock enqueues its notice once it commits; a retroactive one, and a second unlock, enqueue nothing" do
-    assert_enqueued_with(job: PlayerStreamJob, args: [ [ { player_id: @alice.id, card_back: "confrere" } ] ]) do
-      Game::UnlockCardBack.new.call(player: @alice, back: "confrere").value!
+    assert_enqueued_with(job: PlayerStreamJob, args: [ [ { player_id: @alice.id, card_back: "aurore" } ] ]) do
+      Game::UnlockCardBack.new.call(player: @alice, back: "aurore").value!
     end
     assert_no_enqueued_jobs(only: PlayerStreamJob) do
-      Game::UnlockCardBack.new.call(player: @alice, back: "confrere")
+      Game::UnlockCardBack.new.call(player: @alice, back: "aurore")
       Game::UnlockCardBack.new.call(player: @alice, back: "centurion", retroactive: true).value!
+    end
+  end
+
+  test "an entrustment enqueues one balance job after its commit, and a refused one none" do
+    settings = open_market!
+    assert_includes PlayerStream::EVENTS, Game::Market::CardsEntrusted
+    assert_equal [ { player_id: @alice.id, balance: true } ],
+      PlayerStream.notices(Game::Market::CardsEntrusted.new(data: { player_id: @alice.id }))
+
+    assert_enqueued_with(job: PlayerStreamJob, args: [ [ { player_id: @alice.id, balance: true } ] ]) do
+      assert Game::Market::EntrustCards.new.call(player: @alice, lines: { @one => 1 }, settings_token: settings.token).success?
+    end
+    assert_equal 1, stream_jobs.size
+    assert_empty batches
+  end
+
+  test "a listing yields the seller's balance notice" do
+    assert_includes PlayerStream::EVENTS, Game::Market::CardListed
+    assert_equal [ { player_id: @alice.id, balance: true } ],
+      PlayerStream.notices(Game::Market::CardListed.new(data: { listing_id: 1, seller_id: @alice.id, card_season_id: @one }))
+  end
+
+  test "a listing refreshes the market of the players it noticed as wanted" do
+    listing = listing!(seller: @alice, card_season: catalog_card_seasons(:portal_one), settings: open_market!)
+    Game::Market::Notice.record(player_id: @bob.id, listing_id: listing.id, kind: "wanted", amount: 1_300)
+
+    assert_equal [ { player_id: @alice.id, balance: true }, { player_id: @bob.id, topic: "market" } ],
+      PlayerStream.notices(Game::Market::CardListed.new(data: { listing_id: listing.id, seller_id: @alice.id, card_season_id: @one }))
+  end
+
+  test "a refused entrustment enqueues nothing" do
+    settings = close_market!
+
+    assert_no_enqueued_jobs(only: PlayerStreamJob) do
+      Game::Market::EntrustCards.new.call(player: @alice, lines: { @one => 1 }, settings_token: settings.token)
     end
   end
 
@@ -243,5 +296,123 @@ class PlayerStreamTest < ActiveSupport::TestCase
       end
     end
     assert_not Game::Friendship.of(@alice.id).exists?
+  end
+
+  test "a new player's first reaction to an entry tells its owner once it commits; reacting again, changing or withdrawing tells no one" do
+    entry = feed_entry_of(@alice)
+
+    assert_enqueued_with(job: PlayerStreamJob, args: [ [ { player_id: @alice.id, topic: "reactions" } ] ]) do
+      react(@bob, entry, "heart").value!
+    end
+    assert_empty batches
+
+    assert_no_enqueued_jobs(only: PlayerStreamJob) do
+      react(@bob, entry, "wow").value!
+      react(@bob, entry, nil).value!
+      react(@bob, entry, "heart").value!
+      react(@alice, entry, "gg").value!
+    end
+  end
+
+  test "the reactions of one transaction tell each owner once" do
+    first = feed_entry_of(@alice)
+    second = feed_entry_of(@alice)
+
+    ApplicationRecord.transaction do
+      react(@bob, first, "heart").value!
+      react(@bob, second, "heart").value!
+    end
+
+    assert_equal 1, stream_jobs.size
+  end
+
+  test "a sale tells the balance of the seller and the winner, once each" do
+    data = { listing_id: 1, seller_id: @alice.id, winner_id: @bob.id, card_season_id: @one, final_price: 10, surplus: 0 }
+
+    notices = PlayerStream.notices(Game::Market::AuctionSold.new(data:)).select { it[:balance] }
+
+    assert_equal [ @alice.id, @bob.id ], notices.map { it[:player_id] }
+  end
+
+  test "a sale tells the bell of the winner and the seller, once each" do
+    data = { listing_id: 1, seller_id: @alice.id, winner_id: @bob.id, card_season_id: @one, final_price: 10, surplus: 0 }
+
+    notices = PlayerStream.notices(Game::Market::AuctionSold.new(data:))
+
+    assert_equal [ @bob.id, @alice.id ], notices.select { it[:topic] }.map { it[:player_id] }
+  end
+
+  test "a bid tells the bidder and the outbid player, once each" do
+    data = { listing_id: 1, bidder_id: @bob.id, branch: "new_leader", outbid_player_id: @alice.id, outbid_released: 5 }
+
+    notices = PlayerStream.notices(Game::Market::BidPlaced.new(data:))
+
+    assert_equal [ @bob.id, @alice.id ], notices.select { it[:balance] }.map { it[:player_id] }
+    assert_equal [ { player_id: @alice.id, topic: "market", outbid_listing_id: 1 }, { player_id: @bob.id, topic: "market" } ], notices.select { it[:topic] }
+  end
+
+  test "a bid that outbids nobody tells the bidder alone" do
+    data = { listing_id: 1, bidder_id: @bob.id, branch: "raise", outbid_player_id: nil, outbid_released: 0 }
+
+    assert_equal [ { player_id: @bob.id, balance: true }, { player_id: @bob.id, topic: "market" } ], PlayerStream.notices(Game::Market::BidPlaced.new(data:))
+  end
+
+  test "a bid over the bidder's own lead names no outbid listing" do
+    data = { listing_id: 1, bidder_id: @bob.id, branch: "new_leader", outbid_player_id: @bob.id, outbid_released: 5 }
+
+    assert_equal [ { player_id: @bob.id, topic: "market" } ], PlayerStream.notices(Game::Market::BidPlaced.new(data:)).select { it[:topic] }
+  end
+
+  test "a bid that outbids the bidder's own earlier lead does not duplicate the notice" do
+    data = { listing_id: 1, bidder_id: @bob.id, branch: "new_leader", outbid_player_id: @bob.id, outbid_released: 5 }
+
+    assert_equal [ { player_id: @bob.id, balance: true } ], PlayerStream.notices(Game::Market::BidPlaced.new(data:)).select { it[:balance] }
+  end
+
+  test "a sale, a withdrawal or an unsold end tells the market topic to every bidder of the listing" do
+    carol = accounts_players(:administrator)
+    open_market!
+    listing = listing!(seller: @alice, card_season: catalog_card_seasons(:portal_one))
+    [ @bob, carol ].each { Game::Market::Bid.create!(listing:, player: it, maximum: 30_000, price_after: 20_000, outcome: "beaten") }
+    sold = Game::Market::AuctionSold.new(data: { listing_id: listing.id, seller_id: @alice.id, winner_id: @bob.id, card_season_id: @one, final_price: 10, surplus: 0 })
+    withdrawn = Game::Market::ListingWithdrawn.new(data: { listing_id: listing.id, seller_id: @alice.id, leader_id: nil, released: 0 })
+
+    assert_includes PlayerStream.notices(sold).select { it[:topic] }.map { it[:player_id] }, carol.id
+    unsold = Game::Market::AuctionUnsold.new(data: { listing_id: listing.id, seller_id: @alice.id })
+
+    assert_equal [ @bob.id, carol.id ].sort, PlayerStream.notices(withdrawn).select { it[:topic] }.map { it[:player_id] }.sort
+    assert_equal [ @alice.id, @bob.id, carol.id ].sort, PlayerStream.notices(unsold).select { it[:topic] }.map { it[:player_id] }.sort
+  end
+
+  test "an unsold auction tells its seller" do
+    notices = PlayerStream.notices(Game::Market::AuctionUnsold.new(data: { listing_id: 1, seller_id: @alice.id }))
+
+    assert_equal [ { player_id: @alice.id, balance: true }, { player_id: @alice.id, topic: "market" } ], notices
+  end
+
+  test "a voided lead refreshes the removed leader's balance and the seller's market topic" do
+    voided = Game::Market::LeadVoided.new(data: { listing_id: 1, seller_id: @alice.id, leader_id: @bob.id, released: 30_000 })
+
+    assert_includes PlayerStream::EVENTS, Game::Market::LeadVoided
+    assert_equal [ { player_id: @bob.id, balance: true }, { player_id: @alice.id, topic: "market" } ], PlayerStream.notices(voided)
+  end
+
+  test "a cancelled listing tells the market topic to every bidder of the listing" do
+    carol = accounts_players(:administrator)
+    open_market!
+    listing = listing!(seller: @alice, card_season: catalog_card_seasons(:portal_one))
+    [ @bob, carol ].each { Game::Market::Bid.create!(listing:, player: it, maximum: 30_000, price_after: 20_000, outcome: "outbid") }
+    cancelled = Game::Market::ListingCancelled.new(data: { listing_id: listing.id, seller_id: @alice.id })
+
+    assert_includes PlayerStream::EVENTS, Game::Market::ListingCancelled
+    assert_equal [ @bob.id, carol.id ].sort, PlayerStream.notices(cancelled).map { it[:player_id] }.sort
+    assert_equal [ "market" ], PlayerStream.notices(cancelled).map { it[:topic] }.uniq
+  end
+
+  test "a withdrawn listing tells its seller and its leader when present" do
+    withdrawn = ->(leader_id) { Game::Market::ListingWithdrawn.new(data: { listing_id: 1, seller_id: @alice.id, leader_id:, released: 0 }) }
+
+    assert_equal [ @alice.id, @bob.id ], PlayerStream.notices(withdrawn.(@bob.id)).map { it[:player_id] }
+    assert_equal [ @alice.id ], PlayerStream.notices(withdrawn.(nil)).map { it[:player_id] }
   end
 end

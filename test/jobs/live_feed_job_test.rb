@@ -27,6 +27,23 @@ class LiveFeedJobTest < ActiveSupport::TestCase
     Nokogiri::HTML5.fragment(fragment.css("turbo-stream[action='#{action}'][target='#{target}']").sole.at_css("template").inner_html)
   end
 
+  test "each prepended entry carries a lazy reaction frame that loads the viewer's own bar, with its counters and no button" do
+    pack = open_pack
+
+    LiveFeedJob.perform_now([ { pack_id: pack.id } ])
+
+    feed = template(received(:en), "prepend", "feed-entries")
+    frames = feed.css("li.feed__entry turbo-frame.feed__reactions")
+    assert_equal 5, frames.size
+    token = Game::FeedEntry.find_by!(pack_id: pack.id, position: 0).token
+    frame = frames.find { it["id"] == "reactions-#{token}" }
+    assert_equal "lazy", frame["loading"]
+    assert_equal "/en/feed/entries/#{token}/reactions", frame["src"]
+    assert_equal 5, frame.css(".feed__reaction--static").size
+    assert_empty frame.css("button, form")
+    assert_equal [ "" ] * 5, frame.css(".feed__reaction-count").map(&:text)
+  end
+
   test "an opening's entries go to the feed, the ticker and the strip, rendered once per locale" do
     pack = open_pack
 
@@ -42,7 +59,7 @@ class LiveFeedJobTest < ActiveSupport::TestCase
     assert_empty ticker.css(".ticker__sentence a")
     assert_equal "Epic", ticker.at_css(".ticker__rarity.ticker__rarity--epic").text
     strip = template(english, "replace", "live-strip")
-    assert_equal 3, strip.css("#live-strip li.public-card__live-entry").size
+    assert_equal 3, strip.css("#live-strip li.live-strip__entry").size
     assert_empty english.css("[style]")
 
     assert_equal "/en/cards/portal", feed.at_css("a.feed__thumb")["href"]
@@ -57,9 +74,9 @@ class LiveFeedJobTest < ActiveSupport::TestCase
   end
 
   test "a first discovery joins the ticker behind its words" do
-    common = fixture_tier_ids[0]
-    Game::FirstDiscovery.where(card_season_id: common).delete_all
-    pack = open_pack(cards: [ common ] * 5)
+    rare = fixture_tier_ids[2]
+    Game::FirstDiscovery.where(card_season_id: rare).delete_all
+    pack = open_pack(cards: [ rare ] * 5)
 
     LiveFeedJob.perform_now([ { pack_id: pack.id } ])
 
@@ -96,8 +113,9 @@ class LiveFeedJobTest < ActiveSupport::TestCase
     feed = template(english, "prepend", "feed-entries")
     entry = feed.css("li.feed__entry").sole
     assert_equal "Hugo reaches silver in the Roguelike set.", entry.at_css(".feed__sentence").text
-    assert_equal "Silver", entry.at_css(".feed__tag.feed__tier.feed__tier--silver").text
+    assert_equal "Silver", entry.at_css(".feed__headline-kicker .feed__tag.feed__tier--silver").text
     assert_equal 2, entry.css(".feed__tier-notches i").size
+    assert_equal 1, entry.css(".feed__tier").size
     assert_empty entry.css(".feed__thumb, .feed__chip")
     assert entry.matches?(".feed__entry--set")
     item = template(english, "prepend", "live-ticker-queue").css("li.ticker__item").sole
@@ -110,7 +128,7 @@ class LiveFeedJobTest < ActiveSupport::TestCase
     assert_equal "Argent", template(french, "prepend", "live-ticker-queue").at_css(".ticker__tier").text
   end
 
-  test "a rank reached carries its rank's mark before its name in the feed and the ticker" do
+  test "a rank reached carries its rank's mark before its name in the feed headline and the ticker" do
     common, uncommon, rare, = fixture_tier_ids
     insert_set([ common, uncommon, rare, *unheld_cards(2) ], { expert: 2, complete: 5 })
     Game::Holding.create!(player_id: @hugo.id, card_season_id: uncommon, quantity: 1)
@@ -119,10 +137,9 @@ class LiveFeedJobTest < ActiveSupport::TestCase
     LiveFeedJob.perform_now(notices)
 
     english = received(:en)
-    tag = template(english, "prepend", "feed-entries").css("li.feed__entry").sole.at_css(".feed__tag.feed__tier.feed__tier--expert")
+    tag = template(english, "prepend", "feed-entries").css("li.feed__entry").sole.at_css(".feed__headline-kicker .feed__tag.feed__tier--expert")
     assert_equal "Expert", tag.text
     assert_equal 1, tag.css(".feed__tier-mark > svg.rank-mark.rank-mark--expert.rank-mark--fine[aria-hidden=true]").size
-    assert_empty tag.css(".feed__tier-notches")
     ticker = template(english, "prepend", "live-ticker-queue").at_css(".ticker__tier.feed__tier--expert")
     assert_equal "Expert", ticker.text
     assert ticker.at_css(".feed__tier-mark > svg.rank-mark--expert")
@@ -146,16 +163,15 @@ class LiveFeedJobTest < ActiveSupport::TestCase
       template(received(:fr), "prepend", "live-ticker-queue").at_css(".ticker__sentence").text
   end
 
-  test "a completion reads as the set completed, behind the COMPLET frame" do
+  test "a completion reads as the set completed, with no tier tag repeating it" do
     open_pack(cards: [ @epic ] * 5)
 
     LiveFeedJob.perform_now(notices.select { it.key?(:set_id) })
 
     french = template(received(:fr), "prepend", "feed-entries").css("li.feed__entry").sole
     assert_equal "Hugo complète le set Valve.", french.at_css(".feed__sentence").text
-    assert_equal "Complet", french.at_css(".feed__tag.feed__tier--complete").text
-    assert french.at_css(".feed__tier--complete .feed__tier-stamp")
-    assert_empty french.css(".feed__tier-notches")
+    assert_equal "Complète le set", french.at_css(".feed__headline-kicker").text
+    assert_empty french.css(".feed__tier")
   end
 
   test "a private player's tiers are not broadcast" do

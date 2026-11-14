@@ -73,9 +73,7 @@ module CardBacksHelper
     def card_back_earned(row)
       case row.unlock.kind
       when :always then t("personalizations.show.card_back.earned.always")
-      when :event then t("personalizations.show.card_back.earned.events.#{row.key}")
       when :achievement then t("personalizations.show.card_back.earned.achievement", **achievement_parts(row))
-      when :goal then earned_by_goal(row)
       when :set_tier then earned_by_set(row)
       end
     end
@@ -83,17 +81,9 @@ module CardBacksHelper
     def card_back_to_earn(row)
       case row.unlock.kind
       when :achievement then t("personalizations.show.card_back.to_earn.achievement", **achievement_parts(row))
-      when :goal then t("personalizations.show.card_back.to_earn.goal")
       when :set_tier
         row.progress ? t("personalizations.show.card_back.to_earn.set", set: set_label(row.back)) : t("personalizations.show.card_back.to_earn.set_absent")
-      else t("personalizations.show.card_back.to_earn.event")
       end
-    end
-
-    def earned_by_goal(row)
-      return t("personalizations.show.card_back.earned.goal_any") unless row.week
-
-      t("personalizations.show.card_back.earned.goal", week: l(row.week, format: row.week.day == 1 ? :day_month_first : :day_month))
     end
 
     def earned_by_set(row)

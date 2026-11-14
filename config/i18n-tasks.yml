@@ -18,7 +18,20 @@ search:
 # Failure keys are built from failure codes at runtime (Steam::SignInIdentity.failure_key,
 # Accounts::SignIn.failure_key, Game::Operation), which the static search cannot see.
 ignore_unused:
+  - "charts.*.words.*"
   - "errors.*"
+  - "shell.bell.market.*"
+  - "back_office.markets.settings.groups.*"
+  - "back_office.markets.settings.labels.*"
+  - "back_office.markets.settings.moments.*"
+  - "back_office.markets.settings.rows.*"
+  - "back_office.markets.settings.violations.*"
+  - "back_office.markets.navigation.*"
+  - "back_office.market_health.indicators.*"
+  - "back_office.market_health.lines.*"
+  - "back_office.market_health.show.snapshot.facts.*"
+  - "back_office.market_signals.sentences.*"
+  - "back_office.market_signals.signals.*"
   # Model validation messages, looked up by Active Record from errors.add symbols.
   - "activerecord.errors.messages.*"
   # Number formats, read by the number helpers (number_with_delimiter, …).
@@ -34,8 +47,16 @@ ignore_unused:
   - "booster.strings.*"
   # The trade board's run-time templates, passed whole to its root controller (TradesHelper#trade_board_root_data).
   - "trade_board.strings.*"
+  # The Confier screen's run-time templates, passed whole to its root controller (MarketEntrustmentsHelper#entrust_root_data).
+  - "market.entrustments.strings.*"
+  # The bidding form's run-time templates, passed whole to its root controller (MarketBidsHelper#annonce_root_data).
+  - "market.bids.strings.*"
   # Achievement names, looked up by the key an unlock carries (the player stream's toast).
   - "achievements.names.*"
+  # The back-office home's groups, tiles and statuses, looked up by key (BackOfficeDashboardHelper).
+  - "back_office.dashboard.show.groups.*"
+  - "back_office.dashboard.show.tiles.*"
+  - "back_office.dashboard.show.status.*"
   # Achievement conditions, read by catalogue key on the achievements screen.
   - "achievements.conditions.*"
   # The throttled request's 429 message, picked by the matched throttle (rack_attack.rb).
@@ -48,11 +69,14 @@ ignore_unused:
   - "friends.throttled"
   - "goal_rewards.create.throttled"
   - "invitations.throttled"
+  - "market.entrustments.create.throttled"
+  - "market.cancellations.create.throttled"
   - "reports.create.throttled"
   - "season_allocations.create.throttled"
   - "trades.throttled"
   - "custom_sets.throttled"
   - "goals.throttled"
+  - "settings.sync_library.throttled"
   - "custom_sets.editor.strings.*"
   # Month and day names, read by I18n.l for %b and %A in the local time formats.
   - "date.abbr_month_names"
@@ -63,4 +87,3 @@ ignore_unused:
   - "landings.show.unlock.tiles.*"
   # The back picker's group headings and event sentences, named after a back's group or key.
   - "personalizations.show.card_back.groups.*"
-  - "personalizations.show.card_back.earned.events.*"

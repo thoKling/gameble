@@ -5,9 +5,10 @@ require_relative "../support/game_sets"
 require_relative "../support/library_requests"
 require_relative "../support/steam_sign_in"
 
-# The collection. Its entry: the search over every set and the way to all
-# the cards, then the sets in progress as tiles, closest first, and the
-# complete sets, the latest completed first, a frame loaded after the page. Its grid of every card of the
+# The collection. Its entry: OBJECTIFS, the ways to all the cards and all the
+# sets, then the six sets closest to their next tier across kinds, a frame
+# loaded after the page, and the player's own sets. The All sets screen: every
+# set behind a search and a filter row, its pages appended as it scrolls. Its grid of every card of the
 # season: the top bar's unique cards, the RAPPORT, the filters (state,
 # rarity, the set group that picks a kind then finds a set by name, genre)
 # and the search, the grid of every card's face sixty to a page, a
@@ -48,6 +49,14 @@ class LibraryControllerTest < ActionDispatch::IntegrationTest
   end
 
   def set_status = css_select("[data-group=sets] p.set-filter__status[role=status]").sole.text
+
+  # The filter row's pastilles with chips on, as { name => count }.
+  def pastille_counts
+    css_select("a.filter-row__pastille").filter_map do |pastille|
+      count = pastille.at_css(".filter-row__count")
+      [ pastille.at_css(".filter-chip__text").children.first.text.strip, count.at_css("[data-pastille-number]").text.to_i ] unless count.key?("hidden")
+    end.to_h
+  end
 
   # The grid's slots: [ :owned, title, "xn", "New" | nil ], [ :not_owned,
   # title, year ] (a player's card not held) or [ :plain, title, year ] (a
@@ -108,6 +117,8 @@ class LibraryControllerTest < ActionDispatch::IntegrationTest
     end
     assert_select ".top-bar__end > .collection-status + #rarity-legend[popover]"
     assert_equal [ "3 / 150", "3 / 155" ], css_select("#rarity-legend tfoot td > [aria-hidden=true]").map { it.text.squish }
+    assert_equal [ "Rarity", "This season", "All seasons", "Copies" ], css_select("#rarity-legend thead th").map { it.text.strip }
+    assert_select "#rarity-legend tfoot td.rarity-legend__copies", "5"
     assert_equal "/en/library/cards?rarity%5B%5D=epic", css_select("#rarity-legend a.rarity-legend__link")[3]["href"]
     assert_select ".top-bar .rarity-counter, .top-bar .packs-chip", false
     assert_select ".top-bar .player-chip"
@@ -215,7 +226,7 @@ class LibraryControllerTest < ActionDispatch::IntegrationTest
 
     # The seventeen of a player's grid, the state asked sparing the count
     # read again from the query cache and adding the watermark.
-    assert_request_queries(18) { get library_cards_path(locale: :en, state: %w[new duplicates]) }
+    assert_request_queries(25) { get library_cards_path(locale: :en, state: %w[new duplicates]) }
     seen = css_select(".collection-grid a.card-link").map { Rack::Utils.parse_nested_query(URI(it["href"]).query).dig("grid", "seen") }
     assert_equal [ "2026-10-08T09:30:15.123456Z" ] * 2, seen
 
@@ -255,19 +266,6 @@ class LibraryControllerTest < ActionDispatch::IntegrationTest
     end
     get library_cards_path(locale: :en, page: "abc")
     assert_equal 60, slots.size
-  end
-
-  test "the first page's grid loads the next ones on scroll, its numbered links kept" do
-    publish_sets_draft
-
-    get library_cards_path(locale: :en)
-
-    assert_equal 60, slots.size
-    assert_select "turbo-frame#collection-results[data-controller=next-page][data-action='focusout->next-page#focusLeft']"
-    assert_select "turbo-frame#collection-results > p#collection-results-status[role=status]", "150 cards shown."
-    assert_select "turbo-frame#collection-results > ol#collection-slots.collection-grid > li.collection-slot", 60
-    assert_select "nav#collection-pages.collection-pages[data-next-page-target=pages] a[rel=next][href='/en/library/cards?page=2']"
-    assert_select "[style]", false
   end
 
   test "a visitor's next page answers as a Turbo Stream: its slots appended in grid order, the status line, that page's links" do
@@ -374,25 +372,6 @@ class LibraryControllerTest < ActionDispatch::IntegrationTest
     assert_select "[style]", false
   end
 
-  test "the page title names all the cards and the game, not the collection, for a visitor and a player in both locales" do
-    publish_sets_draft
-    titles = { fr: "Toutes les cartes · Gameble", en: "All cards · Gameble" }
-
-    titles.each do |locale, page_title|
-      get library_cards_path(locale:)
-      assert_select "title", page_title
-      assert_select ".top-bar .player-chip", false
-    end
-
-    sign_in(accounts_players(:player))
-
-    titles.each do |locale, page_title|
-      get library_cards_path(locale:)
-      assert_select "title", page_title
-      assert_select ".top-bar .player-chip"
-    end
-  end
-
   test "a player banned since signing in sees the collection as a visitor, with no ownership query" do
     season = publish_sets_draft
     player = accounts_players(:player)
@@ -401,8 +380,8 @@ class LibraryControllerTest < ActionDispatch::IntegrationTest
     player.update_columns(banned_at: Time.current)
 
     assert_no_queries_match(/game_holdings|game_player_states/) do
-      # The visitor's eight (seven and the themes' names), after the lookup that finds the ban.
-      assert_request_queries(1 + 8) { get library_cards_path(locale: :en) }
+      # The visitor's nine (seven, the themes' names and the market's state), after the lookup that finds the ban.
+      assert_request_queries(1 + 10) { get library_cards_path(locale: :en) }
     end
 
     assert_response :success
@@ -580,7 +559,7 @@ class LibraryControllerTest < ActionDispatch::IntegrationTest
     assert_equal "3 sets found", set_status
     assert_equal 60, slots.size
     assert_select "turbo-frame#collection-results p[role=status]", "150 cards shown."
-    assert_select ".filters__count[hidden]"
+    assert_empty pastille_counts
     assert_select ".filters__clear[hidden]"
     assert_select ".collection-grid a.card-link[href*=set_]", false
 
@@ -605,8 +584,7 @@ class LibraryControllerTest < ActionDispatch::IntegrationTest
     get library_cards_path(locale: :en, sets: %w[theme:roguelike], set_kind: "franchise", set_q: "dark")
 
     assert_equal [ [ "Roguelike", "theme:roguelike", true ], [ "Dark Souls", "franchise:dark-souls", false ] ], set_chips
-    assert_select ".filters__count:not([hidden])", /1/
-    assert_select "details.filters__zone[open]"
+    assert_equal({ "More" => 1 }, pastille_counts)
     assert_select ".filters__clear:not([hidden])[href=?]", "/en/library/cards"
     hrefs = css_select(".collection-grid a.card-link").map { Rack::Utils.parse_nested_query(URI(it["href"]).query).fetch("grid") }
     assert_equal [ { "sets" => [ "theme:roguelike" ], "q" => "" } ], hrefs.uniq
@@ -647,16 +625,6 @@ class LibraryControllerTest < ActionDispatch::IntegrationTest
     assert_equal [ "Roguelike", "theme:roguelike", true ], set_chips.first
   end
 
-  test "the grid no longer reads the list's kind nor its page" do
-    publish_sets_draft
-
-    get library_cards_path(locale: :en, kind: "ufo", shelf: 3, set_kind: "ufo", set_q: "o")
-
-    assert_response :success
-    assert_select "form.filters input[name=kind], form.filters input[name=shelf]", false
-    assert_equal 60, slots.size
-  end
-
   test "the genre chips filter the grid, OR within the group; an unknown genre is ignored" do
     season = publish_sets_draft
     roguelike = main_theme_cards(season, "roguelike")
@@ -680,7 +648,7 @@ class LibraryControllerTest < ActionDispatch::IntegrationTest
     [ "strategy", [ "strategy" ] ].each do |genre|
       get library_cards_path(locale: :en), params: { genre: }
       assert_response :success
-      assert_select ".filters__count[hidden]"
+      assert_empty pastille_counts
       assert_equal 60, slots.size
     end
   end
@@ -750,8 +718,8 @@ class LibraryControllerTest < ActionDispatch::IntegrationTest
     get library_cards_path(locale: :en)
 
     assert_select ".collection [data-id]", false
-    assert_equal %w[collection-report-title collection-search collection-set-search collection-set-options collection-results collection-results-status
-      collection-slots collection-pages],
+    assert_equal %w[collection-report-title collection-search filters-rarity filters-rarity-title filters-state filters-state-title
+      filters-more filters-more-title collection-set-search collection-set-options collection-results collection-results-status collection-slots collection-pages],
       css_select(".collection [id]").map { it["id"] }
     html = css_select(".collection").sole.to_html
     ids.each do |id|
@@ -759,7 +727,7 @@ class LibraryControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
-  test "a player's request costs fifteen queries, a visitor's eight" do
+  test "a player's request costs seventeen queries, a visitor's eight" do
     season = publish_sets_draft
     player = accounts_players(:player)
     hold(player, season_cards(season).first, 1, gained_at: 1.minute.ago)
@@ -767,21 +735,21 @@ class LibraryControllerTest < ActionDispatch::IntegrationTest
 
     # Player lookup, published season; the grid: genres, count of the
     # player's tiles, page, card views, the player's editions of the games
-    # shown; the figures: the season's cards, games per rarity, copies per
-    # tier; the rarity legend; the set group: the kinds the
+    # shown and their copies set apart; the figures: the season's cards,
+    # games per rarity, copies per tier, free duplicates; the rarity legend; the set group: the kinds the
     # season holds, the sets of the kind shown; the tab bar's trades and
     # invitations waiting; the themes' names; the player's goals. No set per
     # card: the links carry the grid, which the detail reads itself.
-    assert_request_queries(17) { get library_cards_path(locale: :en) }
+    assert_request_queries(24) { get library_cards_path(locale: :en) }
 
     delete session_path(locale: :en)
     # The same without the lookup, the player's editions, the figures, the
     # rarity legend and the trades and invitations waiting; the grid's count is the whole
-    # season's.
-    assert_request_queries(8) { get library_cards_path(locale: :en) }
+    # season's, and the market's state.
+    assert_request_queries(10) { get library_cards_path(locale: :en) }
   end
 
-  test "the collection opens on every slot, the owned cards first, newest gained first, FILTRES folded with no count" do
+  test "the collection opens on every slot, the owned cards first, newest gained first, the filter row with no count" do
     season = publish_sets_draft
     player = accounts_players(:player)
     first, second, third = season_cards(season).first(3)
@@ -795,8 +763,8 @@ class LibraryControllerTest < ActionDispatch::IntegrationTest
     assert_equal [ second, first, third ].map { [ :owned, title(it), nil ] }, slots.first(3).map { [ it[0], it[1], nil ] }
     assert_equal [ :not_owned ] * 57, slots.drop(3).map(&:first)
     assert_select "form.filters[method=get][data-controller=collection-filters][data-turbo-frame=collection-results]"
-    assert_select "details.filters__zone:not([open]) summary", /Filters/
-    assert_select ".filters__count[hidden]"
+    assert_select "form.filters > .filters__search + ul.filter-row[aria-label=Filters]"
+    assert_empty pastille_counts
     assert_select ".filters__clear[hidden]"
     assert_select "turbo-frame#collection-results[target=_top] .collection-grid"
     assert_select "input[type=search][name=q]#collection-search"
@@ -817,7 +785,7 @@ class LibraryControllerTest < ActionDispatch::IntegrationTest
 
     assert_equal [ second, first ].map { title(it) }, slots.map(&:second)
     assert_equal [ "Owned" ], css_select("[data-group=state] .filter-chip__box[checked]").map { it.parent.text.strip }
-    assert_select ".filters__count:not([hidden])", /1/
+    assert_equal({ "State" => 1 }, pastille_counts)
   end
 
   test "the missing state shows the faces not owned; owned plus missing is every slot" do
@@ -829,14 +797,13 @@ class LibraryControllerTest < ActionDispatch::IntegrationTest
 
     get library_cards_path(locale: :en, state: %w[missing])
     assert_equal cards.drop(1).first(60).map { [ :not_owned, title(it), year(it) ] }, slots
-    assert_select ".filters__count:not([hidden])", /1/
-    assert_select "details.filters__zone[open]"
+    assert_equal({ "State" => 1 }, pastille_counts)
     assert_select ".filters__clear:not([hidden])[href=?]", "/en/library/cards"
 
     get library_cards_path(locale: :en, state: %w[owned missing])
     assert_equal :owned, slots.first.first
     assert_equal 60, slots.size
-    assert_select ".filters__count", /2/
+    assert_equal({ "State" => 2 }, pastille_counts)
   end
 
   test "new and duplicates states; an unknown state is ignored" do
@@ -884,7 +851,7 @@ class LibraryControllerTest < ActionDispatch::IntegrationTest
     get library_cards_path(locale: :en, genre: %w[rpg roguelike], rarity: [ rarity ])
     assert_equal both, owned_slots.size
     assert_operator both, :<, sample.size
-    assert_select ".filters__count", /3/
+    assert_equal({ "Rarity" => 1, "More" => 2 }, pastille_counts)
   end
 
   test "the set chips filter the whole season's cards, OR within the group" do
@@ -942,7 +909,7 @@ class LibraryControllerTest < ActionDispatch::IntegrationTest
     get library_cards_path(locale: :en)
     assert_equal 60, slots.size
     assert_select "[data-group=state]", false
-    assert_select ".filters__count[hidden]"
+    assert_empty pastille_counts
     assert_select "form.filters[role=search]"
     assert_select "turbo-frame#collection-results p[role=status]", "150 cards shown."
 
@@ -950,7 +917,7 @@ class LibraryControllerTest < ActionDispatch::IntegrationTest
       get library_cards_path(locale: :en, state: [ state ])
       assert_equal season_cards(season).first(60).map { [ :plain, title(it), year(it) ] }, slots
       assert_select "turbo-frame#collection-results p[role=status]", "150 cards shown."
-      assert_select ".filters__count[hidden]"
+      assert_empty pastille_counts
       assert_select ".filters__clear[hidden]"
       assert css_select(".collection-grid a.card-link").none? { it["href"].include?("state") }
       assert css_select(".collection-pages a").none? { it["href"].include?("state") }
@@ -964,7 +931,7 @@ class LibraryControllerTest < ActionDispatch::IntegrationTest
 
     # Asking "all" explicitly is the default of this viewer: no filter on.
     get library_cards_path(locale: :en, state: %w[all])
-    assert_select ".filters__count[hidden]"
+    assert_empty pastille_counts
     assert_select ".filters__clear[hidden]"
 
     get library_cards_path(locale: :en, state: %w[owned])
@@ -984,7 +951,7 @@ class LibraryControllerTest < ActionDispatch::IntegrationTest
 
     get library_cards_path(locale: :en, rarity: %w[rare])
     assert_equal season_cards(season).select { it.in?(rare) }.first(60).map { title(it) }, slots.map(&:second)
-    assert_select ".filters__count:not([hidden])", /1/
+    assert_equal({ "Rarity" => 1 }, pastille_counts)
 
     get library_cards_path(locale: :en, sets: %w[theme:roguelike], rarity: %w[epic])
     assert_equal epic_roguelike.map { title(it) }.sort, slots.map(&:second).sort
@@ -1001,6 +968,8 @@ class LibraryControllerTest < ActionDispatch::IntegrationTest
   def get_in_progress(locale: :en) = get library_in_progress_path(locale:), headers: { "Turbo-Frame" => "set-entry-in-progress" }
 
   def tiles = css_select("turbo-frame#set-entry-in-progress #set-entry-in-progress-title ~ ul.set-tiles > li > a.set-tile")
+
+  def see_all = css_select("turbo-frame#set-entry-in-progress section > a.button.button--link")
 
   # The tiles as [ name, kind, rank, "owned/total" ].
   def tile_rows
@@ -1039,7 +1008,7 @@ class LibraryControllerTest < ActionDispatch::IntegrationTest
     queries
   end
 
-  test "the entry loads EN COURS after the page, every set in progress a tile, closest to its next tier first, each read as one sentence" do
+  test "the entry leads with the goals and the ways to all the cards and all the sets, then loads EN COURS after the page: one list across kinds, closest to a tier first, each read as one sentence" do
     entry_season
     player = accounts_players(:player)
     halo = named("franchise", "Halo", 3)
@@ -1057,14 +1026,25 @@ class LibraryControllerTest < ActionDispatch::IntegrationTest
     assert_select "h1.visually-hidden", "Collection"
     assert_select ".top-bar__title", "Collection"
     assert_select ".top-bar__end .collection-status .collection-status__value", "74 / 300"
-    assert_equal [ "Find a set", "Goals", "My sets" ], css_select(".set-entry h2").map(&:text)
-    assert_select ".set-search .set-search__row a.button--primary[href='/en/library/cards']", "All cards" do
-      assert_select "svg.pixel-icon[aria-hidden=true]"
+    assert_equal [ "Goals", "My sets" ], css_select(".set-entry h2").map(&:text)
+    assert_select ".set-entry form[role=search]", false
+    assert_select "a.all-cards-tile[href='/en/library/cards']" do
+      assert_select ".all-cards-tile__title", "All my cards"
+      assert_select ".all-cards-tile__figures[aria-hidden=true] .all-cards-tile__count", "74/300"
+      assert_select ".visually-hidden", "74 unique cards out of 300"
+      assert_select "progress.all-cards-tile__bar[value='74'][max='300']"
+      assert_select ".all-cards-tile__side[aria-hidden=true] .all-cards-tile__fan > .all-cards-tile__card > .card.card--s", 3
+      assert_select ".all-cards-tile__open", "Open"
     end
-    assert_select ".set-entry > .set-search + turbo-frame#set-search-results + section#goals + section.custom-sets + " \
-      "turbo-frame#set-entry-in-progress.set-entry__in-progress[src='/en/library/in-progress'][loading=lazy][target=_top]" do
-      assert_select "p.set-entry__loading", "Loading the sets in progress…"
+    assert_select "a.all-cards-tile[href='/en/library/sets']" do
+      assert_select ".all-cards-tile__title", "All sets"
+      assert_select ".all-cards-tile__count", "5"
+      assert_select ".all-cards-tile__unit", "sets"
+      assert_select ".all-cards-tile__open", "Open"
     end
+    assert_select ".set-entry > section#goals:first-child + a.all-cards-tile + a.all-cards-tile + " \
+      "turbo-frame#set-entry-in-progress.set-entry__in-progress[src='/en/library/in-progress'][loading=lazy][target=_top] + section.custom-sets"
+    assert_select "turbo-frame#set-entry-in-progress p.set-entry__loading", "Loading the sets in progress…"
     assert_select ".set-tile, .set-row, .set-entry__empty", false
     assert_select "[style]", false
 
@@ -1090,6 +1070,7 @@ class LibraryControllerTest < ActionDispatch::IntegrationTest
     assert_nil tile("Horror")
     assert_select "a.set-tile a, a.set-tile button", false
     assert_select ".set-entry__empty", false
+    assert_empty see_all
     assert_select "[style]", false
   end
 
@@ -1157,13 +1138,11 @@ class LibraryControllerTest < ActionDispatch::IntegrationTest
 
     get_in_progress
 
-    assert_equal [ "Roguelike", "Halo", "Supergiant" ], tile_rows.map(&:first)
+    assert_equal [ "Halo", "Supergiant", "Roguelike" ], tile_rows.map(&:first)
     assert_equal [ "Halo" ], tiles.select { it.classes.include?("set-tile--closest") }.map { it.at_css(".set-tile__name").text }
   end
 
-  def completed_tiles = css_select("turbo-frame#set-entry-in-progress #set-entry-completed-title ~ ul.set-tiles > li > a.set-tile")
-
-  test "COMPLETED follows EN COURS with every complete set, the latest completed first, each a link to its album, none in the gold frame or in both lists" do
+  test "a complete set leaves EN COURS for the screen's complete state, the latest completed first; one just completed stays on the preview until it leaves" do
     entry_season
     player = accounts_players(:player)
     latest = Time.utc(2026, 10, 17, 9)
@@ -1182,18 +1161,19 @@ class LibraryControllerTest < ActionDispatch::IntegrationTest
 
     get_in_progress
 
-    assert_equal [ "In progress", "Completed" ], css_select("turbo-frame#set-entry-in-progress > section.set-entry__section > h2").map(&:text)
-    assert_select "turbo-frame#set-entry-in-progress > section.set-entry__section[aria-labelledby=set-entry-completed-title] > h2#set-entry-completed-title"
+    assert_equal [ "In progress" ], css_select("turbo-frame#set-entry-in-progress > section.set-entry__section > h2").map(&:text)
+    assert_select "#set-entry-completed-title", false
     assert_equal [ "Fresh", "Halo", "Supergiant", "Roguelike" ], tile_rows.map(&:first)
-    assert_equal 1, css_select("a.set-tile[href='/en/library/franchise/fresh']").size
-    assert_equal [ [ "Horror", "/en/library/theme/horror" ], [ "Portal", "/en/library/franchise/portal" ] ],
-      completed_tiles.map { [ it.at_css(".set-tile__name").text, it["href"] ] }
+    assert_select "a.set-tile[href='/en/library/theme/horror'], a.set-tile[href='/en/library/franchise/portal']", false
     assert_equal [ "Halo" ], tiles.select { it.classes.include?("set-tile--closest") }.map { it.at_css(".set-tile__name").text }
-    assert completed_tiles.none? { it.classes.include?("set-tile--closest") }
-    assert_select ".set-entry__empty", false
-    assert_select "[style]", false
 
-    complete = completed_tiles.first
+    get library_sets_path(locale: :en, state: [ "complete" ])
+
+    assert_equal [ [ "Fresh", "/en/library/franchise/fresh" ], [ "Horror", "/en/library/theme/horror" ], [ "Portal", "/en/library/franchise/portal" ] ],
+      browser_tiles.map { [ it.at_css(".set-tile__name").text, it["href"] ] }
+    assert browser_tiles.none? { it.classes.include?("set-tile--closest") }
+
+    complete = browser_tiles[1]
     assert_select complete, ".set-chip--rank.tier-tone--complete", "Complete"
     assert_select complete, "progress.set-row__bar[value='20'][max='20']"
     assert_select complete, ".set-row__tick", false
@@ -1205,11 +1185,11 @@ class LibraryControllerTest < ActionDispatch::IntegrationTest
     assert_select complete, ".set-tile__last .set-tile__last-card .card.card--s", 1
     assert_select complete, ".set-tile__face--verso > .set-tile__cta", "View the album"
     assert_equal "Horror, theme, 20 cards out of 20, complete", complete.at_css("> .visually-hidden").text
-    small = completed_tiles.last
+    small = browser_tiles.last
     assert_equal [ 2, 0 ], [ small.css(".set-tile__card").size, small.css(".set-tile__missing").size ]
   end
 
-  test "with complete sets alone, EN COURS still says none is in progress, COMPLETED under it; with none complete, no COMPLETED" do
+  test "with complete sets alone, EN COURS says none is in progress and shows no complete set" do
     entry_season
     player = accounts_players(:player)
     portal = named("franchise", "Portal", 2)
@@ -1219,11 +1199,9 @@ class LibraryControllerTest < ActionDispatch::IntegrationTest
 
     get_in_progress(locale: :fr)
 
-    assert_select "turbo-frame#set-entry-in-progress > p.set-entry__empty:first-child + section.set-entry__section > h2#set-entry-completed-title", "Complétés"
+    assert_select "turbo-frame#set-entry-in-progress > p.set-entry__empty", "Aucun set en cours pour l'instant. Parcourez tous les sets pour en choisir un."
     assert_empty tiles
-    assert_equal [ "Portal" ], completed_tiles.map { it.at_css(".set-tile__name").text }
-    assert_select completed_tiles.sole, ".set-chip--rank.tier-tone--complete", "Complet"
-    assert_equal "Toutes les cartes obtenues", completed_tiles.sole.at_css(".set-tile__next").text.squish
+    assert_select "a.set-tile", false
 
     Game::Holding.where(player_id: player.id).delete_all
     hold_all(player, halo.first(2))
@@ -1231,17 +1209,10 @@ class LibraryControllerTest < ActionDispatch::IntegrationTest
     get_in_progress
 
     assert_equal [ "Halo" ], tile_rows.map(&:first)
-    assert_select "#set-entry-completed-title, .set-entry__empty", false
+    assert_select ".set-entry__empty", false
   end
 
-  # A section's next six, the frame its Load more button names.
-  def get_more(section, offset) = get library_in_progress_path(locale: :en, section:, offset:), headers: { "Turbo-Frame" => "set-more-#{section}-#{offset}" }
-
-  def more_tiles(section, offset) = css_select("turbo-frame#set-more-#{section}-#{offset} > ul.set-tiles > li > a.set-tile")
-
-  def load_more(scope) = css_select("#{scope} > turbo-frame.set-more > a.button.button--secondary")
-
-  test "EN COURS and COMPLETED show their first six sets, for the same queries with three sets in progress or forty and five complete" do
+  test "more than six sets in progress show six tiles and a See all link to the screen filtered on them; six or fewer, no link; the same queries with three as with forty" do
     entry_season(540)
     player = accounts_players(:player)
     sets = (1..45).map { theme("theme-#{it}", 12) }
@@ -1250,107 +1221,23 @@ class LibraryControllerTest < ActionDispatch::IntegrationTest
 
     three = count_queries { get_in_progress }
     assert_equal [ "2/12" ] * 3, tile_rows.map(&:last)
-    assert_empty load_more("section")
+    assert_empty see_all
 
-    hold_all(player, sets[3, 37].flat_map { it.first(2) } + sets[40, 5].flatten)
+    hold_all(player, sets[3, 3].flat_map { it.first(2) })
+    get_in_progress
+    assert_equal 6, tiles.size
+    assert_empty see_all
+
+    hold_all(player, sets[6, 34].flat_map { it.first(2) } + sets[40, 5].flatten)
     forty = count_queries { get_in_progress }
-    assert_equal [ 6, 5 ], [ tiles.size, completed_tiles.size ]
+    assert_equal 6, tiles.size
     assert_equal three, forty
     # Player lookup, season; the standings, the sets named, their cards and
     # the faces of those shown; the themes' names; the player's goals.
     assert_equal 8, forty
-    assert_equal [ "Load more" ], load_more("section[aria-labelledby=set-entry-in-progress-title]").map(&:text)
-    assert_empty load_more("section[aria-labelledby=set-entry-completed-title]")
-
-    assert_equal forty, count_queries { get_more("in_progress", 6) }
-  end
-
-  test "Load more adds the next six sets of EN COURS per click until none is left, the gold frame staying on the closest of the whole list" do
-    entry_season(1000)
-    player = accounts_players(:player)
-    latest = Time.utc(2026, 10, 17, 9)
-    far = (1..14).map { theme("far-#{it}", 60) }
-    near = named("franchise", "Halo", 5)
-    hold_all(player, near.first(4), gained_at: latest - 1.day)
-    far.each { hold_all(player, it.first(2), gained_at: latest) }
-    sign_in(player)
-
-    get_in_progress
-
-    assert_equal 6, tiles.size
-    assert_empty tiles.select { it.classes.include?("set-tile--closest") }
-    first = load_more("section[aria-labelledby=set-entry-in-progress-title]").sole
-    assert_equal "/en/library/in-progress?offset=6&section=in_progress", first["href"]
-    assert_equal "set-more-in_progress-6", first.parent["id"]
-    assert_select "[autofocus]", false
-
-    get_more("in_progress", 6)
-
-    assert_response :success
-    assert_equal 6, more_tiles("in_progress", 6).size
-    assert_equal 1, css_select("a.set-tile[autofocus]").size
-    assert_equal more_tiles("in_progress", 6).first.at_css(".set-tile__name").text, css_select("a.set-tile[autofocus]").sole.at_css(".set-tile__name").text
-    assert_equal "/en/library/in-progress?offset=12&section=in_progress", load_more("turbo-frame#set-more-in_progress-6").sole["href"]
-    assert_empty more_tiles("in_progress", 6).select { it.classes.include?("set-tile--closest") }
-
-    get_more("in_progress", 12)
-
-    assert_equal 3, more_tiles("in_progress", 12).size
-    assert_equal [ "Halo" ], more_tiles("in_progress", 12).select { it.classes.include?("set-tile--closest") }.map { it.at_css(".set-tile__name").text }
-    assert_empty load_more("turbo-frame#set-more-in_progress-12")
-    assert_select "a.set-tile[href='/en/library/franchise/halo']", 1
-    assert_select "[style], [data-id]", false
-  end
-
-  test "COMPLETED loads six at a time too, its first six leading with the latest completed" do
-    entry_season(540)
-    player = accounts_players(:player)
-    latest = Time.utc(2026, 10, 17, 9)
-    (1..8).each { |index| named("franchise", "Done #{index}", 2).tap { hold_all(player, it, gained_at: latest - index.days) } }
-    sign_in(player)
-
-    get_in_progress
-
-    assert_equal (1..6).map { "Done #{it}" }, completed_tiles.map { it.at_css(".set-tile__name").text }
-    assert_equal "/en/library/in-progress?offset=6&section=completed", load_more("section[aria-labelledby=set-entry-completed-title]").sole["href"]
-
-    get_more("completed", 6)
-
-    assert_equal [ "Done 7", "Done 8" ], more_tiles("completed", 6).map { it.at_css(".set-tile__name").text }
-    assert_empty load_more("turbo-frame#set-more-completed-6")
-    assert_select "a.set-tile--closest", false
-  end
-
-  test "a section or offset out of range answers the first page or nothing, never an error" do
-    entry_season(540)
-    player = accounts_players(:player)
-    (1..8).each { hold_all(player, theme("range-#{it}", 12).first(2)) }
-    sign_in(player)
-
-    get library_in_progress_path(locale: :en, section: "in_progress", offset: "abc"), headers: { "Turbo-Frame" => "set-more-in_progress-0" }
-    assert_equal 6, more_tiles("in_progress", 0).size
-    get library_in_progress_path(locale: :en, section: "in_progress", offset: "-6"), headers: { "Turbo-Frame" => "set-more-in_progress-0" }
-    assert_equal 6, more_tiles("in_progress", 0).size
-    get library_in_progress_path(locale: :en, section: "in_progress", offset: 99_999), headers: { "Turbo-Frame" => "set-more-in_progress-0" }
-    assert_select "a.set-tile, a.button", false
-
-    get library_in_progress_path(locale: :en, section: "nope", offset: "x"), headers: { "Turbo-Frame" => "set-entry-in-progress" }
-    assert_response :success
-    assert_select "turbo-frame#set-entry-in-progress"
-
-    get library_in_progress_path(locale: :en, section: "in_progress", offset: 99_999_999), headers: { "Turbo-Frame" => "set-more-in_progress-0" }
-    assert_equal 6, more_tiles("in_progress", 0).size
-  end
-
-  test "a results page opened outside a frame starts at the first set whatever its offset" do
-    entry_season(540)
-    (1..8).each { theme("page-#{it}", 12) }
-    sign_in(accounts_players(:player))
-
-    get library_path(locale: :en, q: "page", offset: 6)
-
-    assert_equal 6, result_tiles.size
-    assert_equal "Page-1", result_tiles.first.at_css(".set-tile__name").text
+    link = see_all.sole
+    assert_equal [ "See all", "See all, sets in progress", "/en/library/sets?state%5B%5D=in_progress" ], [ link.text.squish, link["aria-label"], link["href"] ]
+    assert_select "a.button--secondary, .set-more", false
   end
 
   test "EN COURS opened as a page leads to the entry" do
@@ -1399,52 +1286,71 @@ class LibraryControllerTest < ActionDispatch::IntegrationTest
     assert_select "[style]", false
   end
 
-  test "the entry costs the same queries with three sets started or forty, its search included" do
+  test "the entry costs the same queries with three sets started or forty" do
     entry_season(540)
     player = accounts_players(:player)
     sets = (1..45).map { theme("theme-#{it}", 12) }
     hold_all(player, sets.first(3).flat_map { it.first(2) })
     sign_in(player)
 
-    three = count_queries { get library_path(locale: :en, q: "theme") }
-    assert_equal 6, result_tiles.size
-    assert_equal [ "2/12" ] + [ "0/12" ] * 5, result_tiles.map { it.at_css(".set-tile__count").text }
+    three = count_queries { get library_path(locale: :en) }
 
     hold_all(player, (sets[3, 37] - [ sets[13] ]).flat_map { it.first(2) })
-    forty = count_queries { get library_path(locale: :en, q: "theme") }
+    forty = count_queries { get library_path(locale: :en) }
     assert_equal three, forty
-    # Player lookup, season, unique cards and the season's count, the
-    # rarity legend; the search's sets, the standings, the figures of those
-    # not started and the faces of those shown; the tab bar's trades and
-    # invitations waiting; the themes' names; the player's own sets, read once
-    # with their Steam library set, and goals.
-    assert_equal 15, forty
-    assert_equal 9, count_queries { get library_path(locale: :en, q: "theme", offset: 6), headers: { "Turbo-Frame" => "set-more-results-6" } }
-    # No search: neither the sets nor the standings.
-    assert_equal 9, count_queries { get library_path(locale: :en) }
+    # Player lookup, season, unique cards and the season's count, the latest
+    # cards gained and their faces, the rarity legend and its copies, the sets'
+    # total; the tab bar's trades and invitations waiting and the player's
+    # avatar; the player's own sets, read once with their Steam library set,
+    # and goals; with no goal, the sets suggested, their standings and the
+    # themes' names; and the market settings in force.
+    assert_equal 21, forty
   end
 
-  test "a player who holds no card sees the search, the way to all the cards and a line pointing to the search; a visitor is sent to the landing" do
+  test "the way to all the cards fans the three cards gained last, the latest on top" do
+    entry_season(10)
+    player = accounts_players(:player)
+    first, second, third, fourth = @cards.first(4)
+    hold(player, first, gained_at: 4.days.ago)
+    hold(player, second, gained_at: 1.day.ago)
+    hold(player, third, gained_at: 3.days.ago)
+    hold(player, fourth, gained_at: 2.days.ago)
+    sign_in(player)
+
+    get library_path(locale: :en)
+
+    assert_equal [ second, fourth, third ].map { title(it) }, css_select(".all-cards-tile__card .card__title").map { it.text.strip }
+    assert_select ".all-cards-tile__count", "4/10"
+  end
+
+  test "a player who holds no card sees the ways to all the cards and all the sets and a line pointing to them; a visitor is sent to the landing" do
     entry_season
     %w[horror pirates cosy roguelike rpg].each { theme(it, 20) }
     sign_in(accounts_players(:player))
 
     get library_path(locale: :fr)
 
-    assert_equal [ "Chercher un set", "Objectifs", "Mes sets" ], css_select(".set-entry h2").map(&:text)
-    assert_select ".set-search a.button--primary[href='/fr/library/cards']", "Toutes les cartes"
-    assert_select ".set-search + turbo-frame#set-search-results + section#goals + section.custom-sets + turbo-frame#set-entry-in-progress[src='/fr/library/in-progress']"
+    assert_equal [ "Objectifs", "Mes sets" ], css_select(".set-entry h2").map(&:text)
+    assert_select "a.all-cards-tile[href='/fr/library/cards']" do
+      assert_select ".all-cards-tile__title", "Toutes mes cartes"
+      assert_select ".all-cards-tile__count", "0/300"
+      assert_select ".all-cards-tile__fan", false
+      assert_select ".all-cards-tile__open", "Ouvrir"
+    end
+    assert_select "section#goals + a.all-cards-tile + a.all-cards-tile[href='/fr/library/sets'] + turbo-frame#set-entry-in-progress[src='/fr/library/in-progress'] + section.custom-sets"
+    assert_select "#goals p.goals__empty", "Aucun objectif. Ouvrez l'album d'un set et marquez-le comme objectif."
+    assert_select "#goals .goal-suggestions, #goals .goals__list", false
 
     get_in_progress(locale: :fr)
     assert_select "#set-entry-in-progress-title, .set-tile", false
-    assert_select "turbo-frame#set-entry-in-progress > p.set-entry__empty", "Aucun set en cours pour l'instant. Cherchez-en un ci-dessus."
+    assert_select "turbo-frame#set-entry-in-progress > p.set-entry__empty", "Aucun set en cours pour l'instant. Parcourez tous les sets pour en choisir un."
 
     delete session_path(locale: :fr)
     get library_path(locale: :en)
     assert_redirected_to home_path(locale: :en)
     assert_response :see_other
     assert_nil flash[:alert]
-    get library_path(locale: :en, q: "rogue"), headers: { "Turbo-Frame" => "set-search-results" }
+    get library_sets_path(locale: :en)
     assert_redirected_to home_path(locale: :en)
     get_in_progress
     assert_redirected_to home_path(locale: :en)
@@ -1465,7 +1371,7 @@ class LibraryControllerTest < ActionDispatch::IntegrationTest
     assert_select "a[href='/en/library'], a[href^='/en/library/theme/']", false
   end
 
-  test "the latest opening's set leads with its tier; a set touched once is not on the entry" do
+  test "the sets closest to a tier lead, a set touched once stays off the entry" do
     entry_season
     player = accounts_players(:player)
     closest = named("franchise", "Halo", 3)
@@ -1481,7 +1387,7 @@ class LibraryControllerTest < ActionDispatch::IntegrationTest
 
     get_in_progress(locale: :fr)
 
-    assert_equal [ [ "Roguelike", "Thème", "Bronze", "12/62" ], [ "Halo", "Franchise", "Aucun palier", "2/3" ] ], tile_rows
+    assert_equal [ [ "Halo", "Franchise", "Aucun palier", "2/3" ], [ "Roguelike", "Thème", "Bronze", "12/62" ] ], tile_rows
     assert_equal "Roguelike, thème, 12 cartes sur 62, palier bronze, argent à 16", sentence("Roguelike")
     assert_nil tile("Pirates")
   end
@@ -1502,14 +1408,91 @@ class LibraryControllerTest < ActionDispatch::IntegrationTest
     assert_equal [ [ "Puzzle", "Theme", "Bronze", "2/20" ] ], tile_rows
   end
 
-  # The tiles of the search results as [ name, kind, rank, "owned/total" ].
-  def result_tiles = css_select("#set-results-title ~ ul.set-tiles > li > a.set-tile")
+  # ---- All sets ----
 
-  def result_rows
-    result_tiles.map { [ it.at_css(".set-tile__name").text, it.at_css(".set-tile__kind").text, it.at_css(".set-chip--rank").text, it.at_css(".set-tile__count").text ] }
+  def browser_tiles = css_select("ul#set-browser-tiles > li > a.set-tile")
+
+  # The tiles of the screen as [ name, kind, rank, "owned/total" ].
+  def browser_rows
+    browser_tiles.map { [ it.at_css(".set-tile__name").text, it.at_css(".set-tile__kind").text, it.at_css(".set-chip--rank")&.text, it.at_css(".set-tile__count")&.text ] }
   end
 
-  test "the search finds a set by name, started or not, as tiles in place of the sets, accents and case ignored; none says so; blank shows no results" do
+  test "All sets lists every set behind its filter row: in progress closest first, then not started by name, then complete; none framed in gold" do
+    entry_season
+    player = accounts_players(:player)
+    halo = named("franchise", "Halo", 3)
+    roguelike = theme("roguelike", 62)
+    theme("pirates", 20)
+    theme("horror", 20)
+    portal = named("franchise", "Portal", 2)
+    hold_all(player, halo.first(2) + roguelike.first(29) + portal)
+    sign_in(player)
+
+    get library_sets_path(locale: :en)
+
+    assert_response :success
+    assert_select "title", "All sets · Gameble"
+    assert_select "h1.visually-hidden", "All sets"
+    assert_select ".top-bar__title", "Collection"
+    assert_select ".top-bar__end .collection-status .collection-status__value", "33 / 300"
+    assert_select ".set-browser[data-controller=last-album][data-action='turbo:frame-load->last-album#mark']"
+    assert_equal %w[Halo Roguelike Horror Pirates Portal], browser_rows.map(&:first)
+    assert_equal [ [ "Halo", "Franchise", "No tier" ], [ "Portal", "Franchise", "Complete" ] ], browser_rows.values_at(0, 4).map { it.first(3) }
+    assert_select "a.set-tile--closest", false
+    assert_equal "/en/library/franchise/halo", browser_tiles.first["href"]
+
+    assert_select "form.filters[action='/en/library/sets'][method=get][role=search][data-controller=collection-filters][data-turbo-frame=collection-results]" do
+      assert_select "label.visually-hidden[for=collection-search]", "Search by name or kind"
+      assert_select "input[type=search][name=q]#collection-search[maxlength='100'][data-collection-filters-target=search]"
+      assert_select "a.filters__clear[hidden][href='/en/library/sets']", "Clear all"
+    end
+    assert_equal %w[#filters-kind #filters-state #filters-tier], css_select("ul.filter-row a.filter-row__pastille").map { it["href"] }
+    assert_select "ul.filter-row .filter-row__count[hidden]", 3
+    assert_equal %w[theme franchise], css_select("dialog#filters-kind [data-group=kind] input[name='kind[]']").map { it["value"] }
+    assert_equal %w[not_started in_progress complete], css_select("dialog#filters-state [data-group=state] input[name='state[]']").map { it["value"] }
+    assert_equal %w[novice apprentice adept expert master], css_select("dialog#filters-tier [data-group=tier] input[name='tier[]']").map { it["value"] }
+    assert_select "dialog#filters-state .filter-chip__text", "In progress"
+    assert_select "dialog#filters-goals", false
+    assert_select "turbo-frame#collection-results[target=_top][data-controller=next-page][data-turbo-action=replace] > p#collection-results-status[role=status]", "5 sets shown."
+    assert_select "#collection-pages", false
+    assert_select "[style]", false
+  end
+
+  test "a filter narrows All sets from the URL, OR within a group, AND across groups; the row counts it and offers Clear all" do
+    entry_season
+    player = accounts_players(:player)
+    halo = named("franchise", "Halo", 3)
+    roguelike = theme("roguelike", 62)
+    portal = named("franchise", "Portal", 2)
+    theme("horror", 20)
+    hold_all(player, halo.first(2) + roguelike.first(29) + portal)
+    sign_in(player)
+
+    get library_sets_path(locale: :en, kind: [ "franchise" ], state: %w[in_progress complete])
+
+    assert_equal %w[Halo Portal], browser_rows.map(&:first)
+    assert_select "dialog#filters-kind input[name='kind[]'][value=franchise][checked]"
+    assert_select "dialog#filters-kind input[name='kind[]'][value=theme]:not([checked])"
+    assert_equal %w[1 2], css_select("ul.filter-row .filter-row__count:not([hidden]) [data-pastille-number]").map(&:text)
+    assert_select "a.filters__clear:not([hidden])"
+    assert_select "#collection-results-status", "2 sets shown."
+
+    get library_sets_path(locale: :en, kind: [ "theme" ], state: [ "complete" ])
+    assert_empty browser_tiles
+    assert_select "p.collection-grid__empty", "No set matches these filters."
+    assert_select "a.filters__clear:not([hidden])"
+
+    get library_sets_path(locale: :en, state: [ "foo" ], kind: [ "nope" ], tier: "bronze")
+    assert_response :success
+    assert_equal 4, browser_tiles.size
+    assert_select "a.filters__clear[hidden]"
+
+    get library_sets_path(locale: :en, state: { "x" => "y" }, kind: 3, q: { "x" => "y" })
+    assert_response :success
+    assert_equal 4, browser_tiles.size
+  end
+
+  test "the search finds a set by name or kind, started or not, name-prefix first, accents ignored, combined with the filters" do
     entry_season
     player = accounts_players(:player)
     souls = theme("souls_like", 10)
@@ -1519,70 +1502,48 @@ class LibraryControllerTest < ActionDispatch::IntegrationTest
     hold_all(player, complete, gained_at: 1.day.ago)
     sign_in(player)
 
-    get library_path(locale: :fr, q: " souls ")
+    get library_sets_path(locale: :fr, q: " souls ")
+    assert_select "input[type=search][name=q][value=souls]"
+    assert_equal [ [ "Souls-like", "Thème", "Bronze", "1/10" ] ], browser_rows
+    assert_equal "/fr/library/theme/souls_like", browser_tiles.sole["href"]
+    assert_select "#collection-results-status", "1 set affiché."
 
-    assert_select "section.set-search[data-controller=set-search][data-set-search-frame-value=set-search-results]" do
-      assert_select "form.set-search__form[method=get][action='/fr/library'][role=search][aria-labelledby=set-search-title][data-set-search-target=form]" do
-        assert_select "input[type=search][name=q][value=souls][maxlength='100'][aria-labelledby=set-search-title]#set-search-field"
-        assert_select "noscript input[type=submit][value=Chercher]"
-        assert_select "[role=status]", false
-      end
-      assert_select ".set-search__row ~ p.set-search__status[role=status]", "1 set trouvé"
-    end
-    assert_equal [ "Chercher un set", "Résultats", "Objectifs", "Mes sets" ], css_select(".set-entry h2").map(&:text)
-    assert_select ".set-entry > .set-search + turbo-frame#set-search-results + section#goals + section.custom-sets + turbo-frame#set-entry-in-progress"
-    assert_select "#set-search-title", "Chercher un set"
-    assert_select "turbo-frame#set-search-results[target=_top]" do
-      assert_select "[data-set-search-summary][hidden]", "1 set trouvé"
-      assert_select "h2#set-results-title", "Résultats"
-    end
-    assert_equal [ [ "Souls-like", "Thème", "Bronze", "1/10" ] ], result_rows
-    assert_equal "/fr/library/theme/souls_like", result_tiles.sole["href"]
-    assert_select ".set-row", false
+    get library_sets_path(locale: :fr, q: "ZZZ")
+    assert_empty browser_tiles
+    assert_select "p.collection-grid__empty", "Aucun set ne correspond à ces filtres."
+    assert_select "a.filters__clear:not([hidden])", "Tout effacer"
 
-    get library_path(locale: :fr, q: "ZZZ")
-    assert_select ".set-results__none", "Aucun set trouvé pour «\u202FZZZ\u202F»."
-    assert_select ".set-search__status", "Aucun set trouvé"
-    assert_empty result_tiles
+    get library_sets_path(locale: :fr, q: "HÂLO")
+    assert_equal [ [ "Halo", "Franchise", "Complet", "3/3" ] ], browser_rows
+    assert_equal "Halo, franchise, 3 cartes sur 3, complet", browser_tiles.sole.at_css("> .visually-hidden").text
 
-    get library_path(locale: :fr, q: "HÂLO")
-    assert_equal [ [ "Halo", "Franchise", "Complet", "3/3" ] ], result_rows
-    assert_equal "Halo, franchise, 3 cartes sur 3, complet", result_tiles.sole.at_css("> .visually-hidden").text
-    get_in_progress(locale: :fr)
-    assert_equal [ "Souls-like" ], tile_rows.map(&:first)
+    get library_sets_path(locale: :en, q: "r")
+    assert_equal [ "Roguelike", "RPG", "Halo", "Horror" ], browser_rows.map(&:first)
 
-    get library_path(locale: :en, q: "r")
-    # "Halo" is found by its kind, "Franchise".
-    assert_equal [ "Roguelike", "RPG", "Halo", "Horror" ], result_rows.map(&:first)
-    assert_equal [ "No tier", "No tier", "Complete", "No tier" ], result_rows.map { it[2] }
-    assert_select ".set-search__status", "4 sets found"
+    get library_sets_path(locale: :en, q: "r", state: [ "complete" ])
+    assert_equal [ "Halo" ], browser_rows.map(&:first)
 
-    get library_path(locale: :fr, q: "theme")
-    assert_equal 4, result_tiles.size
-
-    get library_path(locale: :en, q: "  ")
-    assert_select "#set-results-title", false
-    assert_select ".set-search__status", ""
-    assert_select "turbo-frame#set-search-results [data-set-search-summary]", ""
+    get library_sets_path(locale: :en, q: "a" * 300)
+    assert_select "input[name=q][value=?]", "a" * 100
   end
 
-  test "a set the player has not started is a tile of the results: silhouettes, no tier, the path from zero, Nothing collected for a large one" do
+  test "a set the player has not started is a tile: silhouettes, no tier, the path from zero, Nothing collected for a large one" do
     entry_season
     player = accounts_players(:player)
     named("franchise", "Portal", 3)
     theme("roguelike", 62)
     sign_in(player)
 
-    get library_path(locale: :en, q: "po")
-    small = result_tiles.sole
+    get library_sets_path(locale: :en, q: "po")
+    small = browser_tiles.sole
     assert_equal "Portal", small.at_css(".set-tile__name").text
     assert_equal [ 3, 0 ], [ small.css(".set-tile__missing").size, small.css(".set-tile__card").size ]
     assert_select small, ".set-chip--rank.set-chip--none", "No tier"
     assert_equal "Only 3 more for Complete", small.at_css(".set-tile__next").text.squish
     assert_equal [ [ "complete", "next", nil, "Complete", "3" ] ], path(small)
 
-    get library_path(locale: :en, q: "rogue")
-    large = result_tiles.sole
+    get library_sets_path(locale: :en, q: "rogue")
+    large = browser_tiles.sole
     assert_equal "Nothing collected yet", large.at_css(".set-tile__nothing").text
     assert_equal "0/62", large.at_css(".set-tile__face--verso .set-tile__count").text
     assert_equal [ nil, "0", "0", "0" ], path(large).map { it[2] }
@@ -1590,34 +1551,73 @@ class LibraryControllerTest < ActionDispatch::IntegrationTest
     assert_select large, ".set-tile__face--verso > span.button.set-tile__cta"
   end
 
-  test "the search pages its tiles six at a time, the results taking the place of the sets, a Load more frame for the rest" do
-    entry_season(540)
+  test "All sets pages its tiles twenty-four at a time: numbered links keep the filters, a stream appends the next page in order" do
+    entry_season(120)
     player = accounts_players(:player)
-    (1..14).each { theme("theme-#{it}", 12) }
+    (1..30).each { theme("page-#{format("%02d", it)}", 4) }
     sign_in(player)
 
-    get library_path(locale: :en, q: "theme")
+    get library_sets_path(locale: :en, q: "page")
 
-    assert_equal 6, result_tiles.size
-    assert_select ".set-search__status", "14 sets found"
-    more = load_more("section.set-results").sole
-    assert_equal "/en/library?offset=6&q=theme", more["href"]
-    assert_equal "set-more-results-6", more.parent["id"]
-    assert_select ".set-entry:has(.set-results) > turbo-frame#set-entry-in-progress"
+    assert_equal 24, browser_tiles.size
+    assert_equal (1..24).map { "Page-#{format("%02d", it)}" }, browser_rows.map(&:first)
+    assert_select "#collection-results-status", "30 sets shown."
+    assert_select "nav#collection-pages[aria-label='Pages of sets'][data-next-page-target=pages] a[rel=next][href*='page=2'][href*='q=page']"
 
-    get library_path(locale: :en, q: "theme", offset: 6), headers: { "Turbo-Frame" => "set-more-results-6" }
+    get library_sets_path(locale: :en, q: "page", page: 2)
+    assert_equal (25..30).map { "Page-#{it}" }, browser_rows.map(&:first)
+
+    get library_sets_path(locale: :en, q: "page", page: 2), headers: STREAM
 
     assert_response :success
-    assert_equal 6, more_tiles("results", 6).size
-    assert_equal more_tiles("results", 6).first.at_css(".set-tile__name").text, css_select("a.set-tile[autofocus]").sole.at_css(".set-tile__name").text
-    assert_equal "/en/library?offset=12&q=theme", load_more("turbo-frame#set-more-results-6").sole["href"]
-    assert_select ".set-search, .collection-status", false
+    assert_equal Mime[:turbo_stream], response.media_type
+    assert_equal %w[append update replace], css_select("turbo-stream").map { it["action"] }
+    appended = css_select("turbo-stream[action=append][target=set-browser-tiles] template > li > a.set-tile")
+    assert_equal (25..30).map { "Page-#{it}" }, appended.map { it.at_css(".set-tile__name").text }
+    assert_equal "Sets 25 to 30 of 30 shown.", css_select("turbo-stream[action=update][target=collection-results-status] template").sole.text
+    assert_select "turbo-stream[action=replace][target=collection-pages] template > nav#collection-pages a[rel=prev][href*='q=page']"
+    assert_select "turbo-stream form", false
 
-    get library_path(locale: :en, q: "theme", offset: 12), headers: { "Turbo-Frame" => "set-more-results-12" }
+    get library_sets_path(locale: :en, q: "page", page: 9)
+    assert_empty browser_tiles
+    assert_select "p.collection-grid__empty", "No more sets here: the list ends on an earlier page. Go back to the last page."
+  end
 
-    assert_equal 2, more_tiles("results", 12).size
-    assert_empty load_more("turbo-frame#set-more-results-12")
-    assert_select "[style]", false
+  test "All sets holds the player's own sets and goals: a My sets kind, a goal chip, the tile's goal mark" do
+    entry_season(30)
+    player = accounts_players(:player)
+    create_custom_set(player, name: "Mes favoris", card_ids: Catalog::CardSeason.where(id: take(3)).pluck(:card_id))
+    theme("roguelike", 5)
+    Game::AddGoal.new.call(player:, kind: "theme", key: "roguelike").value!
+    sign_in(player)
+
+    get library_sets_path(locale: :fr)
+
+    assert_includes css_select("dialog#filters-kind input[name='kind[]']").map { it["value"] }, "mine"
+    assert_select "dialog#filters-kind .filter-chip__text", "Mes sets"
+    assert_equal %w[#filters-kind #filters-state #filters-tier #filters-goals], css_select("ul.filter-row a.filter-row__pastille").map { it["href"] }
+    assert_select "dialog#filters-goals input[type=checkbox][name='goals[]'][value='theme:roguelike']"
+    assert_select "ul#set-browser-tiles a.set-tile.set-tile--goal.goal-tone--1[href='/fr/library/theme/roguelike']"
+
+    get library_sets_path(locale: :fr, kind: [ "mine" ])
+    assert_equal [ "Mes favoris" ], browser_rows.map(&:first)
+    assert_equal "Set perso · 3 jeux", browser_rows.sole.second
+
+    get library_sets_path(locale: :fr, goals: [ "theme:roguelike" ])
+    assert_equal [ "Roguelike" ], browser_rows.map(&:first)
+  end
+
+  test "with no season published All sets says so; a visitor is sent to the landing" do
+    catalog_seasons(:one).update_columns(status: "draft", published_at: nil)
+    get library_sets_path(locale: :en)
+    assert_redirected_to home_path(locale: :en)
+
+    sign_in(accounts_players(:player))
+    get library_sets_path(locale: :en, state: [ "complete" ])
+
+    assert_response :success
+    assert_select ".collection-none p.panel", "No season of cards is published yet."
+    assert_select ".set-browser, form.filters, .collection-status", false
   end
 
   test "no set or card-season id reaches the entry, and its GET writes nothing" do
@@ -1629,7 +1629,7 @@ class LibraryControllerTest < ActionDispatch::IntegrationTest
     ids = Catalog::Set.where(season_id: @season.id).ids + Catalog::CardSeason.where(season_id: @season.id).ids
 
     assert_no_changes -> { [ Game::SetTier.count, Game::PlayerState.find_by!(player_id: player.id).attributes ] } do
-      get library_path(locale: :en, q: "r")
+      get library_sets_path(locale: :en, q: "r")
     end
 
     html = css_select("main").sole.to_html
@@ -1675,7 +1675,7 @@ class LibraryControllerTest < ActionDispatch::IntegrationTest
     epic, = two_editions(season, player)
     sign_in(player)
 
-    assert_request_queries(17) { get library_cards_path(locale: :en, state: %w[owned]) }
+    assert_request_queries(24) { get library_cards_path(locale: :en, state: %w[owned]) }
 
     assert_equal [ [ :owned, title(epic), "x2", nil ] ], slots
     assert_equal [ "/seasons/#{season.number}" ], tile_hrefs
@@ -1790,7 +1790,7 @@ class LibraryControllerTest < ActionDispatch::IntegrationTest
 
   def steam_library_section = css_select("section.steam-library").sole
 
-  test "a synced Steam library set has its section after MES SETS: the sync date, then its tile with its kind line, owned over total and no tier" do
+  test "a synced Steam library set has its section after MES SETS: the sync date in its head, then its tile with its kind line, owned over total and no tier" do
     player = accounts_players(:player)
     library = create_library_set(player, card_ids: fixture_card_ids.first(3), synced_at: Time.zone.local(2026, 10, 29, 5))
     hold_all(player, [ catalog_card_seasons(:common_card_one).id ])
@@ -1799,21 +1799,24 @@ class LibraryControllerTest < ActionDispatch::IntegrationTest
 
     get library_path(locale: :fr)
 
-    assert_select ".set-entry > section.custom-sets + section.steam-library[aria-labelledby=steam-library-title] + turbo-frame#set-entry-in-progress"
-    assert_equal [ "Chercher un set", "Objectifs", "Mes sets", "Ma ludothèque Steam" ], css_select(".set-entry h2").map(&:text)
+    assert_select ".set-entry > turbo-frame#set-entry-in-progress + section.custom-sets + section.steam-library[aria-labelledby=steam-library-title]"
+    assert_equal [ "Objectifs", "Mes sets", "Ma bibliothèque Steam" ], css_select(".set-entry h2").map(&:text)
     assert_equal 1, css_select(".custom-sets a.set-tile").size
     within_section = steam_library_section
-    assert_equal "Synchronisée avec Steam le 29 octobre 2026.", within_section.at_css("p.steam-library__sync").text.squish
-    assert_nil within_section.at_css("p.steam-library__sync b")
-    tile = within_section.at_css("p.steam-library__sync + ul.set-tiles > li > a.set-tile[href='/fr/library/custom-sets/#{library.token}']")
+    head = within_section.at_css("> div.steam-library__head")
+    assert_equal "Ma bibliothèque Steam", head.at_css("> h2#steam-library-title").text
+    assert_equal "Synchronisée avec Steam le 29 octobre 2026", head.at_css("> p.steam-library__note").text.squish
+    assert_equal "29 octobre 2026", head.at_css("p.steam-library__note b").text
+    assert_nil within_section.at_css(".steam-library__not-shared")
+    tile = within_section.at_css("div.steam-library__head + ul.set-tiles > li > a.set-tile[href='/fr/library/custom-sets/#{library.token}']")
     recto = tile.at_css(".set-tile__face--recto")
-    assert_equal "Ma ludothèque Steam", recto.at_css(".set-tile__name").text
+    assert_equal "Ma bibliothèque Steam", recto.at_css(".set-tile__name").text
     assert_equal "Steam · 3 jeux du catalogue", recto.at_css(".set-tile__kind").text
     assert_equal "1/3", recto.at_css(".set-tile__head > .set-tile__count").text.squish
     assert recto.at_css("progress.set-row__bar[value='1'][max='3']")
     assert_equal "Plus que 2 pour Complet", recto.at_css(".set-tile__next").text.squish
     assert_equal %w[complete], tile.css(".set-tile__node").map { it["class"][/tier-tone--(\w+)/, 1] }
-    assert_equal "Ma ludothèque Steam, 1 carte sur 3", tile.at_css("> .visually-hidden").text
+    assert_equal "Ma bibliothèque Steam, 1 carte sur 3", tile.at_css("> .visually-hidden").text
     assert_select ".steam-library .set-chip--rank, .steam-library .set-row__tick, .steam-library .set-tile--closest", false
     assert_select "[style]", false
   end
@@ -1825,17 +1828,21 @@ class LibraryControllerTest < ActionDispatch::IntegrationTest
 
     get library_path(locale: :en)
 
-    sync = steam_library_section.at_css("p.steam-library__sync")
-    lines = sync.at_css(".steam-library__lines").children
-    assert_equal [ "Steam does not share your library. Make the game details of your Steam profile public.", "br", "Last sync: October 1, 2026." ],
-      lines.map { it.name == "br" ? "br" : it.text }
+    assert_equal "Last sync: October 1, 2026", steam_library_section.at_css(".steam-library__head > p.steam-library__note").text.squish
+    assert_equal "October 1, 2026", steam_library_section.at_css("p.steam-library__note b").text
+    assert_equal "Steam does not share your library. Make the game details of your Steam profile public.",
+      steam_library_section.at_css("div.steam-library__head + p.steam-library__not-shared").text.squish
+    assert steam_library_section.at_css("p.steam-library__not-shared + ul.set-tiles")
     assert_equal "My Steam library, 0 cards out of 3", steam_library_section.at_css("a.set-tile > .visually-hidden").text
 
     get library_path(locale: :fr)
-    assert_equal "Dernière synchronisation\u202F: 1er octobre 2026.", steam_library_section.at_css("p.steam-library__sync b").text
+    assert_equal "Dernière synchronisation\u202F: 1er octobre 2026", steam_library_section.at_css("p.steam-library__note").text.strip
+    assert_equal "1er octobre 2026", steam_library_section.at_css("p.steam-library__note b").text
+    assert_equal "Steam ne partage pas votre bibliothèque. Rendez publics les détails de jeux de votre profil Steam.",
+      steam_library_section.at_css("p.steam-library__not-shared").text.squish
   end
 
-  test "a library private at its first sync shows the not-shared line without a last sync" do
+  test "a library private at its first sync shows the not-shared line and no head note" do
     player = accounts_players(:player)
     create_library_set(player, card_ids: [], synced_at: nil, library_private_since: 1.day.ago)
     sign_in(player)
@@ -1843,7 +1850,8 @@ class LibraryControllerTest < ActionDispatch::IntegrationTest
     get library_path(locale: :en)
 
     assert_equal "Steam does not share your library. Make the game details of your Steam profile public.",
-      steam_library_section.at_css("p.steam-library__sync").text.squish
+      steam_library_section.at_css("div.steam-library__head + p.steam-library__not-shared").text.squish
+    assert_nil steam_library_section.at_css(".steam-library__note")
     assert_equal "Steam · 0 catalog games", steam_library_section.at_css(".set-tile__face--recto .set-tile__kind").text
   end
 

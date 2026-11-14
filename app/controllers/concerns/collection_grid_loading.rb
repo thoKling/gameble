@@ -28,8 +28,17 @@ module CollectionGridLoading
       grid_goals.card_ids_of(chosen) if chosen.any?
     end
 
-    def grid_cards(grid, states, seen_up_to: nil)
-      Game::CollectionStates.call(grid_owner, grid.card_seasons, states:, newest_first: true, seen_up_to:)
+    def grid_cards(grid, states, seen_up_to: nil, price: Game::Market::CollectionPrices::NONE)
+      cards = Game::CollectionStates.call(grid_owner, grid.card_seasons, states:, newest_first: true, seen_up_to:)
+      Game::Market::CollectionPrices.apply(cards, price, owner: grid_owner)
+    end
+
+    def market_state
+      @market_state ||= Game::Market::MarketState.call
+    end
+
+    def grid_price(source)
+      Game::Market::CollectionPrices.choice(sort: source[:sort], minimum: source[:min_price], maximum: source[:max_price], state: market_state)
     end
 
     def grid_seen(source)
@@ -62,10 +71,10 @@ module CollectionGridLoading
       Array.wrap(source[key]).grep(String)
     end
 
-    def grid_context(source, seen: nil)
+    def grid_context(source, seen: nil, price: grid_price(source))
       lists = grid_list_filters.to_h { [ it, grid_list(source, it) ] }
       lists[:state] -= [ "new" ] if grid_another? && lists.key?(:state)
-      context = { **lists.compact_blank, q: grid_query(source) }
+      context = { **lists.compact_blank, q: grid_query(source), **price.params }
       context[:brother] = grid_owner.token if grid_another?
       context.merge!(seen: seen.utc.iso8601(6)) if seen
       context
@@ -83,13 +92,21 @@ module CollectionGridLoading
       @states = @states_asked ? asked : [ Game::CollectionStates::DEFAULT ]
       @grid_goals = grid_goals
       @goals_chosen = grid_goals_chosen(params)
-      @grid_context = grid_context(params, seen: (shown_watermark if @states.include?("new")))
-      @grid_pagy, page = pagy(:offset, grid_cards(grid, @states), limit: GRID_SIZE, page: page_param, querify: pages_query)
+      @grid_price = grid_price(params)
+      @price_offered = market_state.first_opened?
+      @grid_context = grid_context(params, seen: (shown_watermark if @states.include?("new")), price: @grid_price)
+      @grid_pagy, page = pagy(:offset, grid_cards(grid, @states, price: @grid_price), limit: GRID_SIZE, page: page_param, querify: pages_query)
       tiles = page.pluck(:id, :card_id)
       views = Catalog::CardViews.call(tiles.map(&:first), locale: I18n.locale)
       held = Game::HeldGames.editions(grid_owner, card_ids: tiles.map(&:last), season: @season)
-      @slots = tiles.filter_map { |id, card_id| [ views[id], held[card_id] ] if views.key?(id) }
+      prices = @grid_price.active? ? Game::Market::CollectionPrices.for_cards(tiles, owner: grid_owner) : {}
+      reserved = grid_reserved(tiles.map(&:last))
+      @slots = tiles.filter_map { |id, card_id| [ views[id], held[card_id], prices[card_id], reserved[card_id] ] if views.key?(id) }
       @seen_up_to = held.values.select(&:new).map(&:gained_at).max unless grid_another?
+    end
+
+    def grid_reserved(card_ids)
+      grid_another? ? {} : Game::ReservedCopies.call(grid_owner, card_ids:)
     end
 
     def pages_query
@@ -117,6 +134,7 @@ module CollectionGridLoading
       @unique = @games_by_rarity.values.sum
       @season_cards = Catalog::CardCount.call(@season)
       @tier_counts = Game::TierCounts.call(grid_owner)
+      @duplicates = Game::ReservedCopies.duplicates(grid_owner)
     end
 
     def page_param

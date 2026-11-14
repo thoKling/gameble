@@ -37,6 +37,7 @@ class TradesController < ApplicationController
     load_list
     @cards = card_views(nil)
     load_holdings(@friend)
+    load_prices
     @prefill = board_prefill(@friend)
   end
 
@@ -79,6 +80,7 @@ class TradesController < ApplicationController
     load_list
     @cards = card_views(@trade)
     load_holdings(@trade.friend)
+    load_prices
   end
 
   def counter
@@ -160,14 +162,19 @@ class TradesController < ApplicationController
     end
 
     def board_prefill(friend)
-      return unless params.key?(:take) || params.key?(:give)
+      return unless %i[take give ask].any? { params.key?(it) }
 
-      keys = { take: prefill_keys(params[:take]), give: prefill_keys(params[:give]) }
+      keys = { take: prefill_keys(params[:take]), give: prefill_keys(params[:give]), ask: prefill_keys([ params[:ask] ]) }
       ids = Catalog::PublishedCardSeasonIds.call(keys.values.flatten.filter_map { helpers.trade_card_key_parts(it) })
       sides = keys.transform_values { |side| side.filter_map { (parts = helpers.trade_card_key_parts(it)) && ids[parts] } }
       TradeSuggestionsHelper::Prefill.new(friend:,
-        take: Game::TradeSuggestions.still_spared(sides[:take], holder: friend, other: current_player),
-        give: Game::TradeSuggestions.still_spared(sides[:give], holder: current_player, other: friend))
+        take: (spared_duplicates(sides[:take], holder: friend, other: current_player) |
+          Game::TradeSuggestions.still_spared(sides[:ask], holder: friend, other: current_player)),
+        give: spared_duplicates(sides[:give], holder: current_player, other: friend))
+    end
+
+    def spared_duplicates(card_season_ids, holder:, other:)
+      Game::TradeSuggestions.still_spared(card_season_ids, holder:, other:, minimum_copies: Game::TradeSuggestions::DUPLICATE_COPIES)
     end
 
     def prefill_keys(keys)
@@ -178,6 +185,9 @@ class TradesController < ApplicationController
       @cards = card_views(trade)
       case trade&.state
       when :yours then load_holdings(trade.friend)
+      when :theirs
+        @own_cards = Game::HeldCopies.call(current_player)
+        @friend_cards = Game::HeldCopies.call(trade.friend)
       when :concluded
         received = trade.friend_side.map(&:card_season_id)
         @new_cards = Game::CollectionSlots.call(current_player, received).select { |_, slot| slot.new }.keys
@@ -187,12 +197,17 @@ class TradesController < ApplicationController
           @trade_again = @trades_closed.nil?
         end
       end
+      load_prices
     end
 
     def load_holdings(friend)
       @own_cards = Game::HeldCopies.call(current_player)
       @friend_cards = Game::HeldCopies.call(friend)
       @picks = Catalog::CardViews.call(@own_cards.keys + @friend_cards.keys, locale: I18n.locale)
+    end
+
+    def load_prices
+      @prices = Game::Market::EditionPrices.call(@cards.keys | (@picks&.keys || []))
     end
 
     def counter_refused_path(trade, code)
@@ -206,10 +221,5 @@ class TradesController < ApplicationController
         refused(result.failure, trade.friend)
       end
       redirect_to trade_path(token: trade.token), status: :see_other
-    end
-
-    def toast_sent(friend, offer)
-      name = helpers.friend_name(friend)
-      toast t("trades.sent.title"), offer.empty? ? t("trades.sent.open_text", name:) : t("trades.sent.text", name:)
     end
 end

@@ -43,6 +43,12 @@
   display: none;
 }
 
+/* A screen reached from one place only keeps its way back at every width, until the trail offers the previous screen. */
+.top-bar__start:has(> .top-bar__previous[hidden]) > .top-bar__phone-back--every-width,
+.top-bar__start:not(:has(> .top-bar__previous)) > .top-bar__phone-back--every-width {
+  display: inline-flex;
+}
+
 .top-bar__start > .top-bar__bridge,
 .top-bar__start > .top-bar__phone-brand,
 .top-bar__start > .top-bar__previous[hidden] {
@@ -205,63 +211,6 @@ a.top-bar__home {
   transform: none;
 }
 
-/* The packs chip: canister, reserve, divider, countdown; a link to the
-   booster screen. The booster screen's static chip (--static) is no link. */
-a.packs-chip {
-  text-decoration: none;
-  cursor: pointer;
-}
-
-a.packs-chip:hover {
-  box-shadow: inset 0 0 0 var(--space-unit) var(--color-accent);
-}
-
-a.packs-chip:focus-visible {
-  box-shadow: var(--focus-ring-gap), var(--control-border);
-}
-
-.packs-chip--static {
-  margin: 0;
-}
-
-.packs-chip__label,
-.packs-chip__next {
-  color: var(--color-muted);
-}
-
-.packs-chip__special-count {
-  color: var(--color-lime);
-}
-
-.packs-chips {
-  display: contents;
-}
-
-.packs-chip--special[data-empty] {
-  opacity: 0.5;
-  pointer-events: none;
-}
-
-.packs-chip--special[data-empty] .packs-chip__special-count {
-  color: var(--color-muted);
-}
-
-.packs-chip__divider {
-  align-self: stretch;
-  width: var(--space-unit);
-  margin: var(--space-1) 0;
-  background: var(--color-line);
-}
-
-.packs-chip__next--full {
-  color: var(--color-alert);
-}
-
-.packs-chip__clock {
-  color: var(--color-text-bright);
-  font-variant-numeric: tabular-nums;
-}
-
 /* The player chip: the avatar outlined, the name, a steady lime dot. */
 .player-chip__avatar {
   width: 30px;
@@ -287,6 +236,24 @@ a.packs-chip:focus-visible {
   width: 8px;
   height: 8px;
   background: var(--color-lime);
+}
+
+.player-chip__button {
+  position: relative;
+}
+
+.player-chip__badge {
+  position: absolute;
+  top: calc(-1 * var(--space-2));
+  right: calc(-1 * var(--space-2));
+  min-width: 18px;
+  padding: 0 var(--space-1);
+  background: var(--color-alert);
+  color: var(--color-on-alert);
+  font: var(--font-button-sm);
+  letter-spacing: 0;
+  line-height: 16px;
+  text-align: center;
 }
 
 /* The legend and the player menu: native popovers under the top bar, at
@@ -357,6 +324,34 @@ a.packs-chip:focus-visible {
 
 .player-menu__item:focus-visible {
   box-shadow: var(--focus-ring-gap), var(--control-border);
+}
+
+.player-menu__item {
+  gap: var(--space-3);
+}
+
+.player-menu__label,
+.player-menu .menu-item__label {
+  flex: 1;
+}
+
+.player-menu__meta {
+  flex: none;
+  color: var(--color-muted);
+  font: var(--font-body-small);
+  letter-spacing: var(--tracking-body-small);
+  text-transform: none;
+}
+
+.player-menu__item:hover .player-menu__meta,
+.player-menu__item:active .player-menu__meta {
+  color: inherit;
+}
+
+.player-menu .menu-item__external {
+  flex: none;
+  width: 14px;
+  height: 14px;
 }
 
 /* The official Steam image, untouched, in a 44px hit area. */

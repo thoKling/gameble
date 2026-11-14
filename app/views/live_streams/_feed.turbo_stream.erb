@@ -1,7 +1,8 @@
 <% if items.any? %>
   <%= turbo_stream.prepend "feed-entries" do %>
+    <% preload_avatars(items.map { it.first.player }) %>
     <% items.each do |item, card, partner_card, set| %>
-      <%= render "feeds/entry", item:, card:, partner_card:, set: %>
+      <%= render "feeds/entry", item:, card:, partner_card:, set:, reactions:, lazy: true, post: true, viewer: nil %>
     <% end %>
   <% end %>
 <% end %>
@@ -12,4 +13,4 @@
     <% end %>
   <% end %>
 <% end %>
-<%= turbo_stream.replace "live-strip", partial: "cards/live_strip", locals: { items: strip } %>
+<%= turbo_stream.replace "live-strip", partial: "shell/live_strip_body", locals: { items: strip } %>

@@ -47,3 +47,22 @@ Condition, key and earned grants unchanged. Five titles come from #66, the other
 | A Strictly Professional Relationship | community | Three completed trades with the same player | yes | completed trades |
 
 The four marked in Back are the hardest to obtain and unlock a card back each (author, 2026-10-30: "the hardest ones"; on 2026-10-31 the back moved from First Claim, All Rights Reserved, too easy early in a season, to A Strictly Professional Relationship): Trèfle fané, Assidu, Siège social and Contrat, designed in `DESIGN.md`. N for the two #68 achievements is set at inception.
+
+## Duel achievements (release 1.4)
+
+Chosen by the author on 2026-11-14 from a proposed list; their French and English titles were approved by the author on 2026-11-14 (French in `EXPERIENCE.md`, Achievement titles and conditions, 24 to 33). They read finished duels (CAP-41); a duel counts once it ends, automatic moves included, except where the condition says otherwise.
+
+| Title | Type | Condition | Back |
+|---|---|---|---|
+| First Dispute Settled Amicably | duel | Finish a first duel | |
+| Competitive Advantage Observed | duel | Win a first duel | |
+| Dominant Position | duel | Win 10 duels | |
+| Abuse of Dominant Position | duel | Win 50 duels | yes |
+| De Facto Monopoly | duel | Win 100 duels | |
+| Valuation Error | duel | Win a round with a Commune card against a Légendaire card | |
+| Merger by Absorption | duel | Win a duel 10 – 0 | |
+| Settled at the Margin | duel | Win a duel whose tied score went to the margin | |
+| Client Base Diversification | duel | Duel 5 different friends | |
+| Certified Versatility | duel | Win at least one round with each of the five stats, over any number of duels | |
+
+The 50-win achievement, Abuse of Dominant Position, unlocks the "Duelliste" card back, designed in `DESIGN.md`. A round won by an automatic move does not count for Valuation Error or Certified Versatility.

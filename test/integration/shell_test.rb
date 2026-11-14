@@ -36,6 +36,14 @@ class ShellTest < ActionDispatch::IntegrationTest
     assert_no_match(/fonts\.googleapis|fonts\.gstatic/, response.body)
   end
 
+  test "a deploy reloads the page on the next visit instead of starting a second copy of the scripts beside the first" do
+    sign_in(accounts_players(:player))
+    get home_path(locale: :fr)
+
+    assert_select "head script[type=module][src*='/application-'][data-turbo-track=reload]"
+    assert_select "head link[rel=stylesheet][href*='/application-'][data-turbo-track=reload]"
+  end
+
   test "no style attribute anywhere in the shell" do
     player = accounts_players(:player)
     create_pack(player, available_at: 5.minutes.from_now)
@@ -55,16 +63,6 @@ class ShellTest < ActionDispatch::IntegrationTest
       assert_select ".top-bar__start a", false
       assert_select ".top-bar__end a.button[href=?]", "/fr/sign-in?origin=%2Ffr", text: "Se connecter"
       assert_select ".rarity-counter, .packs-chip, .player-chip", false
-    end
-  end
-
-  test "no open page carries a sign-in panel or a button opening one" do
-    profile = brother_path(locale: :fr, token: accounts_players(:player).token)
-    [ home_path(locale: :fr), library_cards_path(locale: :fr), how_it_works_path(locale: :fr), legal_path(locale: :fr), profile ].each do |path|
-      get path
-
-      assert_response :success, path
-      assert_select "dialog#sign-in-panel, [data-dialog-opener-dialog-value=sign-in-panel], .sign-in-panel__acceptance", false, path
     end
   end
 
@@ -114,22 +112,6 @@ class ShellTest < ActionDispatch::IntegrationTest
     assert_select "a.tab-bar__tab[aria-current]", false
   end
 
-  test "a signed-in player has no sign-in panel" do
-    sign_in(accounts_players(:player))
-
-    get home_path(locale: :fr)
-
-    assert_response :success
-    assert_select "dialog#sign-in-panel", false
-    assert_select ".sign-in-panel__acceptance", false
-  end
-
-  test "a visitor elsewhere signs in back to that page" do
-    get library_cards_path(locale: :en)
-
-    assert_select ".top-bar__end a[href=?]", "/en/sign-in?origin=%2Fen%2Flibrary%2Fcards"
-  end
-
   test "a player elsewhere: the back button to the bridge, the rarity counter, the packs chip and the player chip" do
     player = accounts_players(:player)
     hold(player, catalog_card_seasons(:common_card_one).id, 3)
@@ -149,6 +131,7 @@ class ShellTest < ActionDispatch::IntegrationTest
     assert_select ".top-bar__home + .top-bar__divider[aria-hidden=true]"
     assert_select ".top-bar__start > a.button.button--secondary.button--small.top-bar__bridge[href='/en']" do
       assert_select "svg.pixel-icon.button__icon[aria-hidden=true]"
+      assert_select "svg.pixel-icon.top-bar__back-g[aria-hidden=true]"
       assert_select ".button__label", "Bridge"
     end
     assert_select ".top-bar__start > a.top-bar__previous[hidden][data-controller=previous-screen]:not([href])" do
@@ -183,7 +166,7 @@ class ShellTest < ActionDispatch::IntegrationTest
       assert_select ".player-chip__dot[aria-hidden=true]"
     end
     assert_select "nav#player-menu[popover][aria-label=?]", "Player menu" do
-      assert_select "a.player-menu__item[href=?]", "/en/brothers/#{player.token}", text: "My public profile"
+      assert_select "a.player-menu__item[href=?]", "/en/me", text: "My profile"
       assert_select "a[href='/en/back-office']", false
       assert_select "form[action=?] input[name=_method][value=delete]", "/session?locale=en"
       assert_select "form button.player-menu__item", "Sign out"
@@ -195,7 +178,7 @@ class ShellTest < ActionDispatch::IntegrationTest
     assert_select "#rarity-legend[popover][aria-labelledby=rarity-legend-title]", 1
     assert_select "#rarity-legend .shell-popover__title#rarity-legend-title", locale == :en ? "Rarities" : "Raretés"
     assert_select "#rarity-legend table.rarity-legend__table" do
-      assert_select "thead th[scope=col]", 3
+      assert_select "thead th[scope=col]", 4
       assert_select "tbody tr.rarity-legend__row", 5
       assert_select "tfoot tr.rarity-legend__row--totals", 1
       assert_equal names, css_select("th[scope=row] .rarity-legend__name").map { it.text.strip }
@@ -203,6 +186,7 @@ class ShellTest < ActionDispatch::IntegrationTest
         css_select("tbody th[scope=row] a.rarity-legend__link").map { it["href"] }
       shown = css_select("tbody tr, tfoot tr").map { |row| css_select(row, "td > [aria-hidden=true]").map { it.text.squish } }
       assert_equal [ [ "1 / 1", "1 / 1" ], [ "0 / 1", "0 / 1" ], [ "0 / 1", "0 / 1" ], [ "1 / 1", "1 / 1" ], [ "0 / 1", "0 / 1" ], [ "2 / 5", "2 / 5" ] ], shown
+      assert_equal %w[3 0 0 1 0 4], css_select("td.rarity-legend__copies").map { it.text.strip }
     end
     assert_select "#rarity-legend [data-rarity-counter-target]", false
   end
@@ -217,7 +201,7 @@ class ShellTest < ActionDispatch::IntegrationTest
 
     assert_select ".rarity-counter button.rarity-counter__button[popovertarget=rarity-legend] + #rarity-legend"
     assert_rarity_legend(names: [ "Common", "Uncommon", "Rare", "Epic", "Legendary", "Total" ], locale: :en)
-    assert_equal [ "Rarity", "This season", "All seasons" ], css_select("#rarity-legend thead th").map { it.text.strip }
+    assert_equal [ "Rarity", "This season", "All seasons", "Copies" ], css_select("#rarity-legend thead th").map { it.text.strip }
     assert_select "#rarity-legend tbody tr:first-child td .visually-hidden", "1 of 1 owned"
 
     get library_cards_path(locale: :fr)
@@ -225,31 +209,11 @@ class ShellTest < ActionDispatch::IntegrationTest
     assert_select ".top-bar .rarity-counter", false
     assert_select ".top-bar__end > button.collection-status[type=button][popovertarget=rarity-legend] + #rarity-legend"
     assert_rarity_legend(names: [ "Commune", "Peu commune", "Rare", "Épique", "Légendaire", "Total" ], locale: :fr)
-    assert_equal [ "Rareté", "Cette saison", "Toutes saisons" ], css_select("#rarity-legend thead th").map { it.text.strip }
+    assert_equal [ "Rareté", "Cette saison", "Toutes saisons", "Exemplaires" ], css_select("#rarity-legend thead th").map { it.text.strip }
     assert_select "#rarity-legend tbody tr:first-child td .visually-hidden", "1 sur 1 possédée"
     assert_select "#rarity-legend tbody tr:nth-child(2) td .visually-hidden", "0 sur 1 possédée"
     assert_select "#rarity-legend tfoot td .visually-hidden", "2 sur 5 possédées"
-    assert_select "#rarity-legend tfoot td:last-child .rarity-legend__owned", css_select(".collection-status__value").text.split("/").first.strip
-  end
-
-  test "a screen without a back button: the wordmark links to the hub on a desktop, the plain brand on a phone, each sweeping on hover" do
-    sign_in(accounts_players(:player))
-
-    get more_path(locale: :en)
-
-    assert_select ".top-bar__start > a.top-bar__brand.top-bar__home[href='/en'][aria-label=?]", "Gameble, command bridge" do
-      assert_select "svg.pixel-icon.top-bar__wordmark"
-      assert_select ".top-bar__name", "Gameble"
-    end
-    assert_select ".top-bar__start > p.top-bar__brand.top-bar__phone-brand .top-bar__name", "Gameble"
-    assert_wordmark_sweeps_on_hover
-    assert_wordmark_sweeps_on_hover ".top-bar__start > p.top-bar__phone-brand"
-
-    get home_path(locale: :en)
-
-    assert_select ".top-bar__start a", false
-    assert_select ".top-bar__start > p.top-bar__brand:not(.top-bar__phone-brand)"
-    assert_wordmark_sweeps_on_hover ".top-bar__start > p.top-bar__brand"
+    assert_select "#rarity-legend tfoot td.rarity-legend__overall .rarity-legend__owned", css_select(".collection-status__value").text.split("/").first.strip
   end
 
   test "a full reserve shows instead of the countdown" do
@@ -271,7 +235,7 @@ class ShellTest < ActionDispatch::IntegrationTest
     newer.update!(status: :published, published_at: Time.current)
     sign_in(player)
 
-    get more_path(locale: :en)
+    get me_path(locale: :en)
 
     assert_equal %w[3 0 0 0 0], css_select(".rarity-counter__count").map { it.text.strip }
   end
@@ -284,38 +248,25 @@ class ShellTest < ActionDispatch::IntegrationTest
     assert_select "#player-menu a.player-menu__item[href='/fr/back-office']", "Back-office"
   end
 
-  test "the phone tab bar: five tabs, the screens as links, locked during an opening" do
+  test "the phone tab bar: five tabs from the bridge, the screens as links, locked during an opening" do
     sign_in(accounts_players(:player))
     get library_path(locale: :fr)
 
     assert_select "nav.tab-bar[aria-label=?] ul.tab-bar__list > li.tab-bar__item", "Navigation principale", 5
-    assert_equal [ "Pont", "Capsule", "Collection", "Échanges", "Plus" ], css_select(".tab-bar__label").map(&:text)
+    assert_equal [ "Pont", "Capsule", "Sets", "Échanges", "Marché" ], css_select(".tab-bar__label").map(&:text)
     assert_select "a.tab-bar__tab[href='/fr']:not([aria-current])", /Pont/
     assert_select "a.tab-bar__tab[href='/fr/booster']:not([aria-current])", /Capsule/
-    assert_select "a.tab-bar__tab[href='/fr/library'][aria-current=page]", /Collection/
-    assert_select "a.tab-bar__tab[href='/fr/more']:not([aria-current])", /Plus/
+    assert_select "a.tab-bar__tab[href='/fr/library'][aria-current=page]", /Sets/
     assert_select "a.tab-bar__tab[href='/fr/trades']:not([aria-current])", /Échanges/
+    assert_select "a.tab-bar__tab[href='/fr/market']:not([aria-current])", /Marché/
     assert_select "span.tab-bar__tab[aria-disabled=true], button.tab-bar__tab, .tab-bar__list--visitor", 0
     assert_select "nav.tab-bar[data-controller=navigation-lock]"
     assert_select ".top-bar__start[data-controller=navigation-lock]"
     assert_select ".tab-bar__tab svg.pixel-icon.tab-bar__icon", 5
 
     get home_path(locale: :fr)
-    assert_select "a.tab-bar__tab[href='/fr'][aria-current=page]"
-  end
-
-  test "the atmosphere: permanent, hidden, under the page" do
-    sign_in(accounts_players(:player))
-    get home_path(locale: :en)
-
-    assert_select "body > #atmosphere.atmosphere[data-turbo-permanent][aria-hidden=true]:first-child" do
-      assert_select ".atmosphere__stars[data-controller=starfield]"
-      assert_select ".atmosphere__twinkle > i", 12
-      assert_select ".atmosphere__scanlines"
-      assert_select ".atmosphere__vignette"
-    end
-    assert_select "body > header.top-bar + main#main.main + #live-ticker.ticker"
-    assert_select "body:not(.is-back-office)"
+    assert_select "a.tab-bar__tab[aria-current]", 1
+    assert_select "a.tab-bar__tab[href='/fr'][aria-current=page]", /Pont/
   end
 
   test "the LIVE ticker runs along the bottom of the hub and of no other screen" do
@@ -325,8 +276,10 @@ class ShellTest < ActionDispatch::IntegrationTest
     sign_in(accounts_players(:player))
     get home_path(locale: :en)
     assert_select "body > main#main + #live-ticker.ticker", 1
+    assert_select "#live-ticker > a.ticker__open[href='/en/feed']", 1
+    assert_select "#live-ticker > .ticker__inner[aria-hidden=true]", 1
     [ library_path(locale: :en), feed_path(locale: :en), trades_path(locale: :en), friends_path(locale: :en),
-      settings_path(locale: :en), more_path(locale: :en) ].each do |path|
+      settings_path(locale: :en), me_path(locale: :en) ].each do |path|
       get path
       assert_response :success
       assert_select ".ticker", 0, "#{path} should carry no ticker"

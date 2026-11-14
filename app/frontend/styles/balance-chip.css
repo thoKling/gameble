@@ -1,0 +1,69 @@
+.balance-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: var(--space-chip-height);
+  padding: var(--space-1) var(--space-4);
+  background: var(--color-panel-sunken);
+  box-shadow: var(--control-border);
+  white-space: nowrap;
+}
+
+.balance-chip__available {
+  color: var(--color-text-max);
+  font: var(--font-number);
+  letter-spacing: var(--tracking-number);
+  font-variant-numeric: tabular-nums;
+}
+
+.balance-chip__divider {
+  align-self: stretch;
+  width: calc(var(--space-unit) * 2);
+  background: var(--color-line);
+}
+
+.balance-chip__committed {
+  color: var(--color-muted);
+  font: var(--font-label);
+  letter-spacing: var(--tracking-number);
+  font-variant-numeric: tabular-nums;
+}
+
+.balance-chip--header {
+  display: none;
+}
+
+/* The bar's chip is the way to the market and shows only what the player can spend; the market screens' header shows what is committed. */
+.balance-link {
+  display: inline-flex;
+  color: inherit;
+  text-decoration: none;
+}
+
+.balance-link:hover .balance-chip {
+  box-shadow: inset 0 0 0 var(--space-unit) var(--color-accent);
+}
+
+.balance-link:focus-visible {
+  outline: none;
+}
+
+.balance-link:focus-visible .balance-chip {
+  box-shadow: var(--focus-ring-gap), var(--control-border);
+}
+
+.balance-chip--bar .balance-chip__divider,
+.balance-chip--bar .balance-chip__committed {
+  display: none;
+}
+
+@media (max-width: 719px) {
+  .balance-link {
+    display: none;
+  }
+
+  .balance-chip--header {
+    display: inline-flex;
+    align-self: flex-end;
+  }
+}

@@ -34,6 +34,42 @@ module LockRaces
     results
   end
 
+  # Removes what a test that committed for real left for these players.
+  def purge_player_rows(players)
+    connection = ActiveRecord::Base.connection
+    tables = connection.tables.select { connection.column_exists?(it, :player_id) && it != "accounts_identities" }
+    3.times do
+      tables = tables.reject do |table|
+        connection.exec_delete(ActiveRecord::Base.sanitize_sql_array([ "DELETE FROM #{connection.quote_table_name(table)} WHERE player_id IN (?)", players ]))
+        true
+      rescue ActiveRecord::InvalidForeignKey
+        false
+      end
+    end
+  end
+
+  # Removes a committed market race's listing, its settings and every row of its players.
+  def purge_market_race(players, listing:, settings:, card: nil)
+    Game::Market::Bid.where(listing_id: listing.id).delete_all
+    Game::Market::LedgerEntry.where(player_id: players).delete_all
+    Game::Market::Wallet.where(player_id: players).delete_all
+    Game::Market::Notice.where(listing_id: listing.id).delete_all
+    Game::Market::Listing.where(id: listing.id).delete_all
+    Game::Market::EditionPrice.where(card_season_id: card.id).delete_all if card
+    purge_player_rows(players)
+    purge_events(players)
+    Game::Market::Settings.where(id: settings.id).delete_all
+    Accounts::Player.where(id: players).delete_all
+  end
+
+  def purge_events(players)
+    connection = ActiveRecord::Base.connection
+    streams = players.flat_map { [ Game::Operation.stream_name(it), "Accounts::Player$#{it}" ] }
+    event_ids = connection.select_values(ActiveRecord::Base.sanitize_sql_array([ "SELECT event_id FROM event_store_events_in_streams WHERE stream IN (?)", streams ]))
+    connection.exec_delete(ActiveRecord::Base.sanitize_sql_array([ "DELETE FROM event_store_events_in_streams WHERE stream IN (?)", streams ]))
+    connection.exec_delete(ActiveRecord::Base.sanitize_sql_array([ "DELETE FROM event_store_events WHERE event_id IN (?)", event_ids ])) if event_ids.any?
+  end
+
   # Until a session of this database waits on a lock.
   def wait_for_a_lock_wait
     deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + 10

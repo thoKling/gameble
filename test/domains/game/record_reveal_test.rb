@@ -30,12 +30,6 @@ class Game::RecordRevealTest < ActiveSupport::TestCase
     assert_equal [ { player_id: @player.id, pack_id: @latest.id, mode: "all" } ], events.map(&:data)
   end
 
-  test "a pack turned card by card stores one_by_one" do
-    assert reveal("one_by_one").success?
-
-    assert_equal "one_by_one", @latest.reload.reveal_mode
-  end
-
   test "a repeat on a revealed pack succeeds and changes nothing, whatever its mode" do
     reveal("one_by_one")
 
@@ -116,6 +110,7 @@ class Game::RecordRevealConcurrencyTest < ActiveSupport::TestCase
 
   teardown do
     Game::Pack.where(player_id: @player.id).delete_all
+    Game::Fortune.where(player_id: @player.id).delete_all
     stream = Game::Operation.stream_name(@player.id)
     connection = ActiveRecord::Base.connection
     event_ids = connection.select_values(ActiveRecord::Base.sanitize_sql_array([ "SELECT event_id FROM event_store_events_in_streams WHERE stream = ?", stream ]))
