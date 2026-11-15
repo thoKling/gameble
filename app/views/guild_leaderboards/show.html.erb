@@ -1,0 +1,24 @@
+<% content_for :back_button, true %>
+<% content_for :phone_back do %><%= phone_back_link t("guilds.show.title"), guild_path %><% end %>
+<% content_for :title, t(".title") %>
+<% content_for :screen_title, t(".title") %>
+<section class="guild" aria-labelledby="guild-leaderboard-heading">
+  <h1 id="guild-leaderboard-heading" class="visually-hidden"><%= t(".title") %></h1>
+  <%= render PanelComponent.new(class: "guild__panel guild-leaderboard") do %>
+    <p class="guild__text"><%= t(".intro") %></p>
+    <% if @rows.empty? %>
+      <p class="guild__text"><%= t(".empty") %></p>
+    <% else %>
+      <ol class="guild-leaderboard__rows">
+        <% @rows.each do |row| %>
+          <li class="<%= class_names("guild-leaderboard__row", "guild-leaderboard__row--own": row.guild.id == @own_guild_id) %>" data-guild="<%= row.guild.token %>">
+            <span class="guild-leaderboard__rank" aria-label="<%= t(".rank_label", rank: row.rank) %>"><%= row.rank %></span>
+            <span class="guild-leaderboard__name"><%= guild_name(row.guild) %></span>
+            <span class="guild-leaderboard__record"><%= t(".record", won: row.won, drawn: row.drawn, lost: row.lost) %></span>
+            <span class="guild-leaderboard__meta"><%= t(".meta", money: number_with_delimiter(row.guild.money), count: row.members) %></span>
+          </li>
+        <% end %>
+      </ol>
+    <% end %>
+  <% end %>
+</section>

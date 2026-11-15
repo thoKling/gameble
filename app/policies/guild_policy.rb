@@ -6,4 +6,5 @@ class GuildPolicy < ApplicationPolicy
   def remove? = player?
   def post_message? = player?
   def report? = player?
+  def leaderboard? = player?
 end

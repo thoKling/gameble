@@ -128,4 +128,20 @@ class GuildsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :not_found
   end
+
+  test "the leaderboard lists the guilds and marks the player's own" do
+    fund!(@player, 12_000)
+    guild = Game::FoundGuild.new.call(player: @player).value!
+    sign_in(@player)
+
+    get guild_leaderboard_path(locale: :fr)
+
+    assert_response :success
+    assert_select "main h1", "Classement des guildes"
+    assert_select "li.guild-leaderboard__row--own[data-guild=?]", guild.token do
+      assert_select ".guild-leaderboard__rank", "1"
+      assert_select ".guild-leaderboard__record", "Victoires 0 · Égalités 0 · Défaites 0"
+      assert_select ".guild-leaderboard__meta", "Argent de guilde 0 · un membre"
+    end
+  end
 end

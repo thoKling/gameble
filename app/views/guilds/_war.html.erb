@@ -40,4 +40,5 @@
   <% if last %>
     <p class="guild__text guild-war__last"><%= guild_war_outcome(last) %></p>
   <% end %>
+  <%= render ButtonComponent.new(variant: :link, href: guild_leaderboard_path) do %><%= t(".leaderboard") %><% end %>
 <% end %>

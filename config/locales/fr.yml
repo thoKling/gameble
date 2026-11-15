@@ -2825,6 +2825,17 @@ fr:
       invites_you: "Vous invite"
       invite_named: "Inviter %{name}"
       accept_from: "Accepter l'invitation de %{name}"
+  guild_leaderboards:
+    show:
+      empty: "Aucune guilde pour l'instant."
+      intro: "Les guildes classées par guerres gagnées, puis par argent de guilde."
+      meta:
+        one: "Argent de guilde %{money} · un membre"
+        other: "Argent de guilde %{money} · %{count} membres"
+        zero: "Argent de guilde %{money} · aucun membre"
+      rank_label: "Rang %{rank}"
+      record: "Victoires %{won} · Égalités %{drawn} · Défaites %{lost}"
+      title: "Classement des guildes"
   guilds:
     chat:
       empty: "Aucun message pour l'instant. Ouvrez la discussion."
@@ -2847,6 +2858,7 @@ fr:
         lost: "La semaine dernière : défaite contre %{rival}, %{points} à %{rival_points}."
         unopposed: "La semaine dernière : aucun adversaire."
         won: "La semaine dernière : victoire contre %{rival}, %{points} à %{rival_points}."
+      leaderboard: "Classement des guildes"
       none: "Votre guilde entre en guerre lundi prochain."
       openings: "Capsules ouvertes"
       score: "Nous %{points}, eux %{rival_points}"

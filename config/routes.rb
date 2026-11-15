@@ -166,6 +166,8 @@ Rails.application.routes.draw do
     resource :data_export, only: %i[show create], path: "settings/export", as: :settings_export
     # The player's guild: founding one, joining by its code, leaving, and the leader removing a member by token.
     resource :guild, only: %i[show create]
+    # Every active guild ranked by its wars.
+    get "guild/leaderboard" => "guild_leaderboards#show", as: :guild_leaderboard
     post "guild/join" => "guilds#join", as: :join_guild
     post "guild/leave" => "guilds#leave", as: :leave_guild
     post "guild/members/:token/remove" => "guilds#remove", as: :remove_guild_member,

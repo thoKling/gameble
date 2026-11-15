@@ -2040,6 +2040,17 @@ en:
         zero: No player found
       none: No player named “%{query}”.
       title: Search for a player
+  guild_leaderboards:
+    show:
+      empty: No guild yet.
+      intro: Guilds ranked by wars won, then by guild money.
+      meta:
+        one: "Guild money %{money} · one member"
+        other: "Guild money %{money} · %{count} members"
+        zero: "Guild money %{money} · no member"
+      rank_label: "Rank %{rank}"
+      record: "Wins %{won} · Draws %{drawn} · Defeats %{lost}"
+      title: Guild leaderboard
   guilds:
     chat:
       empty: No message yet. Open the discussion.
@@ -2062,6 +2073,7 @@ en:
         lost: "Last week: defeat against %{rival}, %{points} to %{rival_points}."
         unopposed: "Last week: no opponent."
         won: "Last week: victory against %{rival}, %{points} to %{rival_points}."
+      leaderboard: Guild leaderboard
       none: Your guild enters the war next Monday.
       openings: Capsules opened
       score: "Us %{points}, them %{rival_points}"

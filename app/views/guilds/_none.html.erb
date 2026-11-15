@@ -17,4 +17,5 @@
       <%= form.button t(".join"), type: :submit, class: "button button--primary button--small" %>
     <% end %>
   <% end %>
+  <p class="guild__text"><%= render ButtonComponent.new(variant: :link, href: guild_leaderboard_path) do %><%= t("guilds.war.leaderboard") %><% end %></p>
 </div>
