@@ -1,0 +1,20 @@
+<%# locals: (balance:) %>
+<div class="guild__layout">
+  <%= render PanelComponent.new(brackets: true, class: "guild__panel guild__found") do %>
+    <h2 class="guild__heading"><%= t(".found_title") %></h2>
+    <p class="guild__text"><%= t(".found_text", seats: Game::Guild::STARTING_SEATS) %></p>
+    <p class="guild__fee"><%= t(".fee", fee: picoins(Game::Guild::FOUNDING_FEE), balance: picoins(balance)) %></p>
+    <%= render ButtonComponent.new(href: guild_path, method: :post, disabled: balance < Game::Guild::FOUNDING_FEE,
+          confirm: t(".found_confirm", fee: picoins(Game::Guild::FOUNDING_FEE))) do %><%= t(".found") %><% end %>
+  <% end %>
+
+  <%= render PanelComponent.new(class: "guild__panel guild__join") do %>
+    <h2 class="guild__heading"><%= t(".join_title") %></h2>
+    <%= form_with url: join_guild_path, class: "guild__form", data: { turbo: false } do |form| %>
+      <%= form.label :code, t(".code_field"), class: "visually-hidden" %>
+      <%= form.text_field :code, class: "friends__input guild__input", maxlength: 9, autocomplete: "off", autocapitalize: "characters",
+            spellcheck: false, placeholder: "ABCD-1234", data: { controller: "friend-code-field", action: "input->friend-code-field#format" } %>
+      <%= form.button t(".join"), type: :submit, class: "button button--primary button--small" %>
+    <% end %>
+  <% end %>
+</div>

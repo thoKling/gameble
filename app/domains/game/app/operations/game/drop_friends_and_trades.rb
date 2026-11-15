@@ -7,6 +7,7 @@ module Game
         step CancelOpenTrades.new.call(player:)
         Invitation.where(sender_id: player.id).or(Invitation.where(recipient_id: player.id)).delete_all
         Friendship.of(player.id).delete_all
+        GuildDeparture.call(player.id)
         player
       end
     end

@@ -164,6 +164,12 @@ Rails.application.routes.draw do
     # Deleting the player's own account, from the settings' delete dialog.
     resource :account, only: :destroy
     resource :data_export, only: %i[show create], path: "settings/export", as: :settings_export
+    # The player's guild: founding one, joining by its code, leaving, and the leader removing a member by token.
+    resource :guild, only: %i[show create]
+    post "guild/join" => "guilds#join", as: :join_guild
+    post "guild/leave" => "guilds#leave", as: :leave_guild
+    post "guild/members/:token/remove" => "guilds#remove", as: :remove_guild_member,
+      constraints: { token: /[1-9A-HJ-NP-Za-km-z]{24}/ }
     resource :friends, only: :show
     get "friends/search" => "friend_searches#show", as: :friend_search
     resource :achievements, only: :show

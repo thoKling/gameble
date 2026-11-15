@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_15_090000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_15_180001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -560,6 +560,32 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_090000) do
     t.check_constraint "set_kind IS NULL OR set_kind::text = 'theme'::text OR set_kind::text = 'franchise'::text OR set_kind::text = 'studio'::text OR set_kind::text = 'hall_of_fame'::text OR set_kind::text = 'ufo'::text", name: "game_goals_set_kind_check"
   end
 
+  create_table "game_guild_memberships", force: :cascade do |t|
+    t.bigint "guild_id", null: false
+    t.bigint "player_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["guild_id"], name: "index_game_guild_memberships_on_guild_id"
+    t.index ["player_id"], name: "index_game_guild_memberships_on_player_id", unique: true
+  end
+
+  create_table "game_guilds", force: :cascade do |t|
+    t.string "token", null: false
+    t.string "name_region", null: false
+    t.string "name_division", null: false
+    t.string "invite_code", null: false
+    t.bigint "leader_id", null: false
+    t.integer "seats", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["invite_code"], name: "index_game_guilds_on_invite_code", unique: true
+    t.index ["leader_id"], name: "index_game_guilds_on_leader_id"
+    t.index ["name_region", "name_division"], name: "index_game_guilds_on_name_region_and_name_division", unique: true
+    t.index ["token"], name: "index_game_guilds_on_token", unique: true
+    t.check_constraint "invite_code::text ~ '^[2-9A-HJKMNP-Z]{4}-[2-9A-HJKMNP-Z]{4}$'::text", name: "game_guilds_invite_code_check"
+    t.check_constraint "seats > 0", name: "game_guilds_seats_check"
+  end
+
   create_table "game_holdings", force: :cascade do |t|
     t.bigint "player_id", null: false
     t.bigint "card_season_id", null: false
@@ -692,7 +718,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_090000) do
     t.index ["listing_id", "player_id", "kind"], name: "index_game_market_ledger_entries_one_settlement", unique: true, where: "(((kind)::text = 'stamp'::text) OR ((kind)::text = 'purchase'::text) OR ((kind)::text = 'sale'::text) OR ((kind)::text = 'commission'::text))"
     t.index ["player_id"], name: "index_game_market_ledger_entries_on_player_id"
     t.index ["settings_id"], name: "index_game_market_ledger_entries_on_settings_id"
-    t.check_constraint "kind::text ~ '^(mint|stamp|hold|release|purchase|sale|commission|forfeit)$'::text", name: "game_market_ledger_entries_kind_check"
+    t.check_constraint "kind::text ~ '^(mint|stamp|hold|release|purchase|sale|commission|forfeit|guild_fee)$'::text", name: "game_market_ledger_entries_kind_with_guild_fee_check"
   end
 
   create_table "game_market_listings", force: :cascade do |t|
@@ -1055,6 +1081,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_090000) do
   add_foreign_key "game_goal_rewards", "game_packs", column: "pack_id"
   add_foreign_key "game_goals", "accounts_players", column: "player_id"
   add_foreign_key "game_goals", "game_custom_sets", column: "custom_set_id", on_delete: :cascade
+  add_foreign_key "game_guild_memberships", "accounts_players", column: "player_id"
+  add_foreign_key "game_guild_memberships", "game_guilds", column: "guild_id", on_delete: :cascade
+  add_foreign_key "game_guilds", "accounts_players", column: "leader_id"
   add_foreign_key "game_holdings", "accounts_players", column: "player_id"
   add_foreign_key "game_holdings", "catalog_card_seasons", column: "card_season_id"
   add_foreign_key "game_invitations", "accounts_players", column: "recipient_id"

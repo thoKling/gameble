@@ -43,7 +43,7 @@ en:
         the time of your last visit, your last data export, the announcements you closed, the release notes you saw and your latest activity,
         your collection, your showcase, your set tiers, your custom sets, your goals, your achievements, your
         card back unlocks and your active card back, your capsules, opened or not, your luck scores, your daily bonuses and your weekly mission rewards,
-        your friends, your invitations, your friend code, when you last opened each of your trades, your reactions to feed entries and your activity feed
+        your friends, your invitations, your friend code, your guild seat (a guild you lead passes to its longest-standing member), when you last opened each of your trades, your reactions to feed entries and your activity feed
         entries: pulls, discoveries, reposts, purchases announced in the feed and every trade that names you. Your
         open trades will be cancelled.'
       submit: Delete for good
@@ -1619,6 +1619,16 @@ en:
         Published, they would land in the UFOs and leave the franchise, studio and
         hall of fame sets short, unseen. Run steam:fill_card_sources, then publish.'
     game:
+      already_in_guild: You already belong to a guild.
+      cannot_remove_yourself: To part with your guild, leave it.
+      guild_fee_unaffordable: You do not have enough PiCoins to found a guild.
+      guild_full: This guild has no free seat.
+      market_pending: The market is not open yet.
+      no_guild_name_left: The Brotherhood has no subsidiary name left to assign. Try again later.
+      not_a_guild_member: This player is not in your guild.
+      not_guild_leader: Only the guild's leader can do that.
+      not_in_guild: You do not belong to a guild.
+      unknown_guild_code: No guild has this code.
       unknown_chart: This chart does not exist.
       achievement_already_claimed: You have already claimed this reward.
       achievement_not_earned: You have not earned this achievement.
@@ -2002,6 +2012,61 @@ en:
         zero: No player found
       none: No player named “%{query}”.
       title: Search for a player
+  guilds:
+    divisions:
+      archive_recovery: Archive Recovery
+      capsule_logistics: Capsule Logistics
+      collector_relations: Collector Relations
+      growth: Growth Acceleration
+      leisure_assets: Leisure Assets
+      perseverance: Perseverance Metrics
+      prestige: Prestige Development
+      strategic_luck: Strategic Luck
+      synergies: Synergy Optimisation
+      wellbeing: Wellbeing Compliance
+    founded: "%{name} is open. The Brotherhood thanks you for your investment."
+    joined: You have joined %{name}.
+    left: You have left your guild.
+    name: "%{region} Subsidiary · %{division}"
+    none:
+      code_field: Guild code
+      fee: "Founding fee: %{fee}. Your balance: %{balance}."
+      found: Found a guild
+      found_confirm: Found a guild for %{fee}? The fee is not refunded.
+      found_text: The Brotherhood entrusts each new subsidiary with %{seats} seats and a name of its choosing.
+      found_title: Found a guild
+      join: Join
+      join_title: Join with a code
+    own:
+      code_hint: Share this code with the players you want in your guild.
+      code_label: Guild code
+      dissolve_confirm: You are the last member. Leaving dissolves the guild. Continue?
+      kicker: Your guild
+      leader: Leader
+      leave: Leave the guild
+      leave_confirm: Leave the guild?
+      members: Members
+      remove: Remove
+      remove_confirm: Remove %{name} from the guild?
+      remove_label: Remove %{name} from the guild
+      seats: "%{taken} of %{seats} seats taken"
+    regions:
+      alpine: Alpine
+      central: Central
+      coastal: Coastal
+      continental: Continental
+      east: Eastern
+      lower: Lower
+      metropolitan: Metropolitan
+      north: Northern
+      overseas: Overseas
+      south: Southern
+      upper: Upper
+      west: Western
+    removed: "%{name} has left the guild."
+    show:
+      title: Guild
+    throttled: Too many guild actions. Try again in a moment.
   friends:
     collection_link:
       label: See the collection
@@ -3443,7 +3508,7 @@ en:
           the time of your last visit, your last data export, the announcements you closed, the release notes you saw, your latest activity,
           your collection, your showcase, your set tiers, your custom sets, your Steam library list, your goals, your achievements, your
           card back unlocks and your choice of active card back, your capsules, your luck scores, your daily bonuses, your weekly mission rewards, your friendships,
-          your invitations, your friend code, when you last opened each trade, your activity feed entries and your reactions are erased,
+          your invitations, your friend code, your guild seat, when you last opened each trade, your activity feed entries and your reactions are erased,
           your open trades are cancelled and your profile disappears. What also concerns
           other players, the community or moderation (past trades, first discoveries,
           contributions to the weekly mission, reports, moderation history, the log
@@ -4129,6 +4194,7 @@ en:
         other: special
       special_none: No special capsule
     player:
+      guild: Guild
       back_office: Back-office
       fallback_name: Player
       friends: Friends

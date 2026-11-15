@@ -1,0 +1,31 @@
+<%# locals: (result:) %>
+<% guild = result.guild %>
+<% leading = result.led_by?(current_player) %>
+<div class="guild__layout">
+  <%= render PanelComponent.new(brackets: true, class: "guild__panel guild__identity") do %>
+    <p class="guild__kicker"><%= t(".kicker") %></p>
+    <h2 class="guild__name"><%= guild_name(guild) %></h2>
+    <p class="guild__seats"><%= t(".seats", taken: result.seats_taken, seats: guild.seats) %></p>
+    <p class="guild__label" id="guild-code-label"><%= t(".code_label") %></p>
+    <p class="guild__code" aria-labelledby="guild-code-label"><%= guild.invite_code %></p>
+    <p class="guild__text"><%= t(".code_hint") %></p>
+  <% end %>
+
+  <div class="guild__main">
+    <h2 class="guild__heading"><%= t(".members") %></h2>
+    <ul class="guild__members">
+      <% result.members.each do |member| %>
+        <li class="guild__member">
+          <span class="guild__member-name"><%= friend_name(member.player) %></span>
+          <% if member.leader %><span class="guild__chip"><%= t(".leader") %></span><% end %>
+          <% if leading && !member.leader %>
+            <%= render ButtonComponent.new(variant: :secondary, size: :small, href: remove_guild_member_path(token: member.player.token), method: :post,
+                  confirm: t(".remove_confirm", name: friend_name(member.player)), aria_label: t(".remove_label", name: friend_name(member.player))) do %><%= t(".remove") %><% end %>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+    <%= render ButtonComponent.new(variant: :danger, size: :small, href: leave_guild_path, method: :post,
+          confirm: result.seats_taken == 1 ? t(".dissolve_confirm") : t(".leave_confirm")) do %><%= t(".leave") %><% end %>
+  </div>
+</div>

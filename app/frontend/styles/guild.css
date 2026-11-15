@@ -1,0 +1,98 @@
+.guild {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.guild__layout {
+  display: grid;
+  grid-template-columns: 380px minmax(0, 1fr);
+  gap: var(--space-column-gap-wide);
+  align-items: start;
+}
+
+@media (max-width: 899px) {
+  .guild__layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.guild__panel,
+.guild__main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.guild__heading,
+.guild__kicker {
+  margin: 0;
+  color: var(--color-accent);
+  font: var(--font-kicker);
+  letter-spacing: var(--tracking-kicker);
+  text-transform: uppercase;
+}
+
+.guild__name {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.guild__label {
+  margin: 0;
+  color: var(--color-muted);
+  font: var(--font-label);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+
+.guild__text,
+.guild__fee,
+.guild__seats,
+.guild__code {
+  margin: 0;
+}
+
+.guild__code {
+  font: var(--font-label);
+  letter-spacing: var(--tracking-label);
+}
+
+.guild__form {
+  display: flex;
+  gap: var(--space-3);
+}
+
+.guild__input {
+  flex: 1;
+  min-width: 0;
+}
+
+.guild__members {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.guild__member {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.guild__member-name {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.guild__chip {
+  color: var(--color-muted);
+  font: var(--font-label);
+  text-transform: uppercase;
+}

@@ -20,6 +20,7 @@
           <span id="player-menu-invitations-badge" class="stream-slot"><%= render "pages/menu_invitations_badge", invitations: shell_invitations_waiting %></span>
         <% end %>
       </li>
+      <li><%= link_to t("shell.player.guild"), guild_path, class: "player-menu__item", data: { turbo_prefetch: false } %></li>
       <li><%= link_to t("shell.player.settings"), settings_path, class: "player-menu__item", data: { turbo_prefetch: false } %></li>
       <li><%= donation_menu_item_to t("shell.player.support"), class: "player-menu__item" %></li>
       <% if policy([ :back_office, :dashboard ]).show? && !current_page?(back_office_path) %>

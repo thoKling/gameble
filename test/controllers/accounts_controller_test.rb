@@ -44,6 +44,8 @@ class AccountsControllerTest < ActionDispatch::IntegrationTest
     "game_friendships" => { fr: [ "vos amis" ], en: [ "your friends" ] },
     "game_invitations" => { fr: [ "vos invitations" ], en: [ "your invitations" ] },
     "game_friend_codes" => { fr: [ "votre code ami" ], en: [ "your friend code" ] },
+    "game_guilds" => { fr: [ "une guilde que vous dirigez passe à son plus ancien membre" ], en: [ "a guild you lead passes to its longest-standing member" ] },
+    "game_guild_memberships" => { fr: [ "votre siège de guilde" ], en: [ "your guild seat" ] },
     "game_feed_entries" => { fr: [ "vos entrées du fil d'activité\u202F: tirages, découvertes, reposts, achats annoncés dans le fil et tous les échanges qui vous nomment" ],
                              en: [ "your activity feed entries: pulls, discoveries, reposts, purchases announced in the feed and every trade that names you" ] },
     "game_feed_reactions" => { fr: [ "vos réactions aux entrées du fil" ], en: [ "your reactions to feed entries" ] },
