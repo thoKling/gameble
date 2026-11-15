@@ -2,7 +2,7 @@ module Game
   module Market
     module DailyFigures
       ACTIVE_DAYS = 90
-      DESTROYING_KINDS = %w[stamp commission forfeit].freeze
+      DESTROYING_KINDS = %w[stamp commission forfeit guild_fee].freeze
       EARNING_KINDS = %w[mint sale commission].freeze
 
       Figures = Data.define(:created, :destroyed, :forfeited, :active_players, :median_daily_earnings, :top_share_basis_points)

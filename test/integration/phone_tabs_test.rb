@@ -87,12 +87,12 @@ class PhoneTabsTest < ActionDispatch::IntegrationTest
     assert_select "main a.me-achievements__all[href='/en/achievements']"
   end
 
-  test "one menu under the avatar: me, friends, settings, support, and the sign-out at its foot; how it works and the code live in the settings" do
+  test "one menu under the avatar: me, friends, guild, settings, support, and the sign-out at its foot; how it works and the code live in the settings" do
     get home_path(locale: :fr)
 
     assert_select ".phone-menu", 0
     links = css_select("nav#player-menu.shell-popover[popover] a.player-menu__item")
-    assert_equal [ "/fr/me", "/fr/friends", "/fr/settings", "https://buymeacoffee.com/theiereman" ], links.pluck("href")
+    assert_equal [ "/fr/me", "/fr/friends", "/fr/guild", "/fr/settings", "https://buymeacoffee.com/theiereman" ], links.pluck("href")
     assert_equal "Mon profil", links.first.text.squish
     assert_equal "Amis 0 en ligne", links[1].text.squish
     assert_equal "Soutenir (nouvel onglet)", links.last.text.squish

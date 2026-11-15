@@ -164,6 +164,18 @@ Rails.application.routes.draw do
     # Deleting the player's own account, from the settings' delete dialog.
     resource :account, only: :destroy
     resource :data_export, only: %i[show create], path: "settings/export", as: :settings_export
+    # The player's guild: founding one, joining by its code, leaving, and the leader removing a member by token.
+    resource :guild, only: %i[show create]
+    # Every active guild ranked by its wars.
+    get "guild/leaderboard" => "guild_leaderboards#show", as: :guild_leaderboard
+    post "guild/join" => "guilds#join", as: :join_guild
+    post "guild/leave" => "guilds#leave", as: :leave_guild
+    post "guild/members/:token/remove" => "guilds#remove", as: :remove_guild_member,
+      constraints: { token: /[1-9A-HJ-NP-Za-km-z]{24}/ }
+    # The guild's message thread: a member writes, and reports another member's message by its token.
+    post "guild/messages" => "guilds#post_message", as: :guild_messages
+    post "guild/messages/:token/report" => "guilds#report_message", as: :report_guild_message,
+      constraints: { token: /[1-9A-HJ-NP-Za-km-z]{24}/ }
     resource :friends, only: :show
     get "friends/search" => "friend_searches#show", as: :friend_search
     resource :achievements, only: :show
@@ -232,6 +244,12 @@ Rails.application.routes.draw do
 
     # The back-office pages, staff only; each policy says which staff role.
     scope "back-office", module: :back_office, as: :back_office do
+      # Reported guild messages, moderators only: hidden for the guild, or the report dismissed.
+      get "guild-messages" => "guild_messages#index", as: :guild_messages
+      post "guild-messages/:token/hide" => "guild_messages#hide", as: :hide_guild_message,
+        constraints: { token: /[1-9A-HJ-NP-Za-km-z]{24}/ }
+      post "guild-messages/:token/dismiss" => "guild_messages#dismiss", as: :dismiss_guild_message,
+        constraints: { token: /[1-9A-HJ-NP-Za-km-z]{24}/ }
       # The Steam import runs, administrators only.
       resources :import_runs, path: "import-runs", only: %i[index show create] do
         post :resume, on: :member

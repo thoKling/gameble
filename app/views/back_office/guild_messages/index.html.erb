@@ -1,0 +1,54 @@
+<% content_for :back_button, true %>
+
+<div class="stack">
+  <h1><%= t(".heading") %></h1>
+
+  <%= render PanelComponent.new(tag: :p) do %>
+    <%= t(".intro") %>
+  <% end %>
+
+  <% if @rows.empty? %>
+    <%= render PanelComponent.new(tag: :p) do %>
+      <%= t(".empty") %>
+    <% end %>
+  <% else %>
+    <table class="ledger">
+      <caption class="visually-hidden"><%= t(".caption") %></caption>
+      <thead>
+        <tr>
+          <th scope="col"><%= t(".message") %></th>
+          <th scope="col"><%= t(".author") %></th>
+          <th scope="col"><%= t(".guild") %></th>
+          <th scope="col"><%= t(".reporter") %></th>
+          <th scope="col"><%= t(".reported_at") %></th>
+          <th scope="col"><span class="visually-hidden"><%= t(".hide") %></span></th>
+          <th scope="col"><span class="visually-hidden"><%= t(".dismiss") %></span></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @rows.each do |row| %>
+          <% author = public_profile_title(row.author) %>
+          <tr data-guild-message="<%= row.message.token %>">
+            <td class="guild-message-body"><%= row.message.body %></td>
+            <td><%= link_to author, brother_path(token: row.author.token) %></td>
+            <td><%= row.guild && guild_name(row.guild) %></td>
+            <td><%= row.reporter ? public_profile_title(row.reporter) : t(".reporter_gone") %></td>
+            <td><%= render "back_office/import_runs/time", time: row.message.reported_at %></td>
+            <td>
+              <%= render ButtonComponent.new(variant: :danger, size: :small, href: back_office_hide_guild_message_path(token: row.message.token),
+                    method: :post, confirm: t(".hide_confirm", name: author)) do %><%= t(".hide") %><% end %>
+            </td>
+            <td>
+              <%= render ButtonComponent.new(variant: :secondary, size: :small, href: back_office_dismiss_guild_message_path(token: row.message.token),
+                    method: :post) do %><%= t(".dismiss") %><% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% end %>
+
+  <p>
+    <%= render ButtonComponent.new(variant: :secondary, href: back_office_reports_path) do %><%= t(".reports") %><% end %>
+  </p>
+</div>

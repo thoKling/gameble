@@ -57,6 +57,9 @@
   <% end %>
 
   <p>
+    <%= render ButtonComponent.new(variant: :secondary, href: back_office_guild_messages_path) do %><%= t(".guild_messages") %><% end %>
+  </p>
+  <p>
     <%= render ButtonComponent.new(variant: :secondary, href: back_office_bans_path) do %><%= t(".banned_players") %><% end %>
   </p>
   <p>

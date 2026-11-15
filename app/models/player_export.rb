@@ -37,6 +37,8 @@ class PlayerExport
       achievements: game.unlocks.map { { achievement: it.achievement, unlockedAt: time(it.unlocked_at) } },
       cardBacks: card_backs,
       friends: { count: game.friend_count },
+      guild:,
+      guildMessages: guild_seat.messages.map { { body: it.body, sentAt: time(it.sent_at), hiddenAt: time(it.hidden_at) } },
       pendingInvitations: { received: game.invitations.received, sent: game.invitations.sent },
       trades:,
       customSets: custom_sets,
@@ -59,6 +61,19 @@ class PlayerExport
   private
     def accounts
       @accounts ||= Accounts::ExportOf.call(@player)
+    end
+
+    def guild_seat
+      @guild_seat ||= Game::GuildExportOf.call(@player)
+    end
+
+    def guild
+      seat = guild_seat.seat
+      return unless seat
+
+      name = I18n.t("guilds.name", locale: @locale, region: I18n.t("guilds.regions.#{seat.guild.name_region}", locale: @locale),
+        division: I18n.t("guilds.divisions.#{seat.guild.name_division}", locale: @locale))
+      { name:, leader: seat.leader, joinedAt: time(seat.joined_at) }
     end
 
     def game

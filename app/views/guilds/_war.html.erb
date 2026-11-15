@@ -1,0 +1,44 @@
+<%# locals: (standing:, last:, guild:) %>
+<%= render PanelComponent.new(tag: :section, class: "guild__panel guild-war", aria: { labelledby: "guild-war-heading" }) do %>
+  <h2 class="guild__heading" id="guild-war-heading"><%= t(".title") %></h2>
+  <% if standing.nil? %>
+    <p class="guild__text"><%= t(".none") %></p>
+  <% elsif standing.unopposed? %>
+    <p class="guild__text"><%= t(".unopposed", amount: Game::GuildWar::MONEY[:unopposed]) %></p>
+    <p class="guild__text"><%= t(".today_alone", count: standing.own.today) %></p>
+  <% else %>
+    <p class="guild-war__rival"><%= t(".against", rival: guild_name(standing.rival.guild)) %></p>
+    <p class="guild-war__score" aria-label="<%= t(".score", points: standing.own.points, rival_points: standing.rival.points) %>">
+      <strong data-war-points="own"><%= standing.own.points %></strong>
+      <span aria-hidden="true">–</span>
+      <strong data-war-points="rival"><%= standing.rival.points %></strong>
+    </p>
+    <p class="guild__text"><%= t(".days", settled: standing.days_settled, days: Game::GuildWar::DAYS, points: Game::GuildWar::POINTS_PER_DAY) %></p>
+    <table class="ledger guild-war__today">
+      <caption><%= t(".today") %></caption>
+      <thead>
+        <tr>
+          <th scope="col"><span class="visually-hidden"><%= t(".success") %></span></th>
+          <th scope="col"><%= t(".us") %></th>
+          <th scope="col"><%= t(".them") %></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th scope="row"><%= t(".openings") %></th>
+          <td><%= standing.own.today %></td>
+          <td><%= standing.rival.today %></td>
+        </tr>
+        <tr>
+          <th scope="row"><%= t(".average") %></th>
+          <td><%= guild_war_average(standing.own) %></td>
+          <td><%= guild_war_average(standing.rival) %></td>
+        </tr>
+      </tbody>
+    </table>
+  <% end %>
+  <% if last %>
+    <p class="guild__text guild-war__last"><%= guild_war_outcome(last) %></p>
+  <% end %>
+  <%= render ButtonComponent.new(variant: :link, href: guild_leaderboard_path) do %><%= t(".leaderboard") %><% end %>
+<% end %>

@@ -25,6 +25,9 @@ module Game
         AchievementUnlock.where(player_id: player.id).delete_all
         CardBackUnlock.where(player_id: player.id).delete_all
         FriendCode.where(player_id: player.id).delete_all
+        GuildMessage.where(player_id: player.id).delete_all
+        GuildMessage.where(reporter_id: player.id).update_all(reporter_id: nil, updated_at: Time.current)
+        GuildMessage.where(hidden_by_id: player.id).update_all(hidden_by_id: nil, updated_at: Time.current)
         PlayerState.where(player_id: player.id).delete_all
         player
       end

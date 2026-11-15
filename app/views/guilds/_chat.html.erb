@@ -1,0 +1,33 @@
+<%# locals: (lines:) %>
+<%= render PanelComponent.new(tag: :section, class: "guild__panel guild-chat", id: "guild-chat", aria: { labelledby: "guild-chat-heading" }) do %>
+  <h2 class="guild__heading" id="guild-chat-heading"><%= t(".title") %></h2>
+  <% if lines.empty? %>
+    <p class="guild__text"><%= t(".empty") %></p>
+  <% else %>
+    <ol class="guild-chat__lines">
+      <% lines.each do |line| %>
+        <li class="guild-chat__line">
+          <p class="guild-chat__meta">
+            <span class="guild-chat__author"><%= friend_name(line.author) %></span>
+            <time datetime="<%= line.message.created_at.utc.iso8601 %>"><%= l(line.message.created_at, format: :local_datetime) %></time>
+          </p>
+          <% if line.message.hidden? %>
+            <p class="guild-chat__body guild-chat__body--hidden"><%= t(".hidden") %></p>
+          <% else %>
+            <p class="guild-chat__body"><%= line.message.body %></p>
+            <% if line.message.player_id != current_player.id && line.message.reported_at.nil? %>
+              <%= render ButtonComponent.new(variant: :link, size: :small, href: report_guild_message_path(token: line.message.token), method: :post,
+                    confirm: t(".report_confirm"), aria_label: t(".report_label", name: friend_name(line.author))) do %><%= t(".report") %><% end %>
+            <% end %>
+          <% end %>
+        </li>
+      <% end %>
+    </ol>
+  <% end %>
+  <%= form_with url: guild_messages_path, class: "guild-chat__form", data: { turbo: false } do |form| %>
+    <%= form.label :body, t(".field"), class: "visually-hidden" %>
+    <%= form.text_area :body, class: "friends__input guild-chat__field", rows: 2, maxlength: Game::GuildMessage::MAX_LENGTH, required: true,
+          placeholder: t(".placeholder") %>
+    <%= form.button t(".send"), type: :submit, class: "button button--primary button--small" %>
+  <% end %>
+<% end %>
