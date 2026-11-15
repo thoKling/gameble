@@ -3,7 +3,7 @@ module Game
   module GuildDeparture
     Outcome = Data.define(:guild_id, :dissolved)
 
-    def self.call(player_id)
+    def self.call(player_id, now: Time.current)
       guild_id = GuildMembership.where(player_id:).pick(:guild_id)
       return unless guild_id
 
@@ -12,7 +12,7 @@ module Game
 
       successor = guild.memberships.by_seniority.pick(:player_id)
       if successor.nil?
-        guild.destroy!
+        guild.update!(dissolved_at: now)
       elsif guild.leader_id == player_id
         guild.update!(leader_id: successor)
       end

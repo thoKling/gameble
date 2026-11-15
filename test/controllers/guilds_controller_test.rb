@@ -80,6 +80,52 @@ class GuildsControllerTest < ActionDispatch::IntegrationTest
     assert_equal [ @player.id ], Game::GuildMembership.pluck(:player_id)
 
     post leave_guild_path(locale: :en)
-    assert_not Game::Guild.exists?
+    assert_predicate guild.reload, :dissolved_at
+  end
+
+  test "a member reads the war, the guild money and the chat, writes a message and reports one" do
+    fund!(@player, 12_000)
+    guild = Game::FoundGuild.new.call(player: @player).value!
+    Game::JoinGuild.new.call(player: @other, code: guild.invite_code).value!
+    message = Game::PostGuildMessage.new.call(player: @other, body: "Bienvenue <b>à tous</b>").value!
+    sign_in(@player)
+
+    get guild_path(locale: :fr)
+
+    assert_select ".guild__money", "Argent de guilde\u202F: 0"
+    assert_select ".guild-war", /Votre guilde entre en guerre lundi prochain/
+    assert_select ".guild-chat__body", "Bienvenue <b>à tous</b>"
+    assert_select ".guild-chat__line form[action=?]", report_guild_message_path(locale: :fr, token: message.token)
+
+    post guild_messages_path(locale: :fr), params: { body: "Merci" }
+    assert_redirected_to guild_path(locale: :fr, anchor: "guild-chat")
+    assert_equal [ "Bienvenue <b>à tous</b>", "Merci" ], Game::GuildMessage.order(:id).pluck(:body)
+
+    post report_guild_message_path(locale: :fr, token: message.token)
+    assert message.reload.reported_at
+  end
+
+  test "a moderator reads the reported guild messages and hides one" do
+    fund!(@player, 12_000)
+    guild = Game::FoundGuild.new.call(player: @player).value!
+    Game::JoinGuild.new.call(player: @other, code: guild.invite_code).value!
+    message = Game::PostGuildMessage.new.call(player: @player, body: "rude").value!
+    Game::ReportGuildMessage.new.call(player: @other, token: message.token).value!
+    sign_in(@other)
+
+    get back_office_guild_messages_path(locale: :en)
+    assert_select "tr[data-guild-message=?] .guild-message-body", message.token, "rude"
+
+    post back_office_hide_guild_message_path(locale: :en, token: message.token)
+    assert_redirected_to back_office_guild_messages_path(locale: :en)
+    assert_predicate message.reload, :hidden?
+  end
+
+  test "a player who is not staff cannot reach the guild messages queue" do
+    sign_in(@player)
+
+    get back_office_guild_messages_path(locale: :en)
+
+    assert_response :not_found
   end
 end

@@ -99,7 +99,8 @@ class Game::GuildsTest < ActiveSupport::TestCase
     guild = found.value!
 
     assert leave(@alice).value!.dissolved
-    assert_not Game::Guild.exists?(guild.id)
+    assert guild.reload.dissolved_at
+    assert_equal :unknown_guild_code, join(@bob, guild).failure
     assert_equal({ guild_id: guild.id, player_id: @alice.id, dissolved: true }, events(Game::GuildLeft).sole.data)
   end
 

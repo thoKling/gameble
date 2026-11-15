@@ -5,6 +5,8 @@
   <h1 id="guild-heading" class="visually-hidden"><%= t(".title") %></h1>
   <% if @guild %>
     <%= render "guilds/own", result: @guild %>
+    <%= render "guilds/war", standing: @war, last: @last_war, guild: @guild.guild %>
+    <%= render "guilds/chat", lines: @messages %>
   <% else %>
     <%= render "guilds/none", balance: @balance %>
   <% end %>

@@ -25,7 +25,7 @@ module Game
     def not_in_a_guild(player) = GuildMembership.exists?(player_id: player.id) ? Failure(:already_in_guild) : Success()
 
     def guild_of_code(code)
-      guild = Guild.lock.find_by(invite_code: code)
+      guild = Guild.active.lock.find_by(invite_code: code)
       guild ? Success(guild) : Failure(:unknown_guild_code)
     end
 

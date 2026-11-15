@@ -6,6 +6,7 @@
     <p class="guild__kicker"><%= t(".kicker") %></p>
     <h2 class="guild__name"><%= guild_name(guild) %></h2>
     <p class="guild__seats"><%= t(".seats", taken: result.seats_taken, seats: guild.seats) %></p>
+    <p class="guild__money"><%= t(".money", amount: number_with_delimiter(guild.money)) %></p>
     <p class="guild__label" id="guild-code-label"><%= t(".code_label") %></p>
     <p class="guild__code" aria-labelledby="guild-code-label"><%= guild.invite_code %></p>
     <p class="guild__text"><%= t(".code_hint") %></p>

@@ -569,6 +569,79 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_180001) do
     t.index ["player_id"], name: "index_game_guild_memberships_on_player_id", unique: true
   end
 
+  create_table "game_guild_messages", force: :cascade do |t|
+    t.string "token", null: false
+    t.bigint "guild_id", null: false
+    t.bigint "player_id", null: false
+    t.text "body", null: false
+    t.datetime "reported_at"
+    t.bigint "reporter_id"
+    t.datetime "hidden_at"
+    t.bigint "hidden_by_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["guild_id", "created_at"], name: "index_game_guild_messages_on_guild_id_and_created_at"
+    t.index ["hidden_by_id"], name: "index_game_guild_messages_on_hidden_by_id"
+    t.index ["player_id"], name: "index_game_guild_messages_on_player_id"
+    t.index ["reported_at"], name: "index_game_guild_messages_awaiting_moderation", where: "((reported_at IS NOT NULL) AND (hidden_at IS NULL))"
+    t.index ["reporter_id"], name: "index_game_guild_messages_on_reporter_id"
+    t.index ["token"], name: "index_game_guild_messages_on_token", unique: true
+    t.check_constraint "char_length(body) >= 1 AND char_length(body) <= 500", name: "game_guild_messages_body_check"
+  end
+
+  create_table "game_guild_money_entries", force: :cascade do |t|
+    t.bigint "guild_id", null: false
+    t.string "kind", null: false
+    t.bigint "amount", null: false
+    t.bigint "war_id"
+    t.date "day"
+    t.datetime "created_at", null: false
+    t.index ["guild_id"], name: "index_game_guild_money_entries_on_guild_id"
+    t.index ["war_id"], name: "index_game_guild_money_entries_on_war_id"
+    t.check_constraint "kind::text ~ '^(openings|war_won|war_drawn|war_unopposed)$'::text", name: "game_guild_money_entries_kind_check"
+  end
+
+  create_table "game_guild_war_days", force: :cascade do |t|
+    t.bigint "war_id", null: false
+    t.bigint "guild_id", null: false
+    t.date "day", null: false
+    t.integer "openings", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["guild_id"], name: "index_game_guild_war_days_on_guild_id"
+    t.index ["war_id", "guild_id", "day"], name: "index_game_guild_war_days_on_war_id_and_guild_id_and_day", unique: true
+  end
+
+  create_table "game_guild_war_members", force: :cascade do |t|
+    t.bigint "war_id", null: false
+    t.bigint "guild_id", null: false
+    t.bigint "player_id", null: false
+    t.date "week_start", null: false
+    t.datetime "created_at", null: false
+    t.index ["guild_id"], name: "index_game_guild_war_members_on_guild_id"
+    t.index ["player_id", "week_start"], name: "index_game_guild_war_members_on_player_id_and_week_start", unique: true
+    t.index ["war_id"], name: "index_game_guild_war_members_on_war_id"
+  end
+
+  create_table "game_guild_wars", force: :cascade do |t|
+    t.date "week_start", null: false
+    t.bigint "guild_id", null: false
+    t.bigint "opponent_id"
+    t.integer "points", default: 0, null: false
+    t.integer "opponent_points", default: 0, null: false
+    t.date "settled_through"
+    t.bigint "winner_id"
+    t.datetime "ended_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["guild_id"], name: "index_game_guild_wars_on_guild_id"
+    t.index ["opponent_id"], name: "index_game_guild_wars_on_opponent_id"
+    t.index ["week_start", "guild_id"], name: "index_game_guild_wars_on_week_start_and_guild_id", unique: true
+    t.index ["week_start", "opponent_id"], name: "index_game_guild_wars_on_week_start_and_opponent_id", unique: true, where: "(opponent_id IS NOT NULL)"
+    t.index ["winner_id"], name: "index_game_guild_wars_on_winner_id"
+    t.check_constraint "opponent_id IS NULL OR opponent_id <> guild_id", name: "game_guild_wars_opponent_check"
+  end
+
   create_table "game_guilds", force: :cascade do |t|
     t.string "token", null: false
     t.string "name_region", null: false
@@ -576,13 +649,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_180001) do
     t.string "invite_code", null: false
     t.bigint "leader_id", null: false
     t.integer "seats", null: false
+    t.bigint "money", default: 0, null: false
+    t.datetime "dissolved_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["invite_code"], name: "index_game_guilds_on_invite_code", unique: true
     t.index ["leader_id"], name: "index_game_guilds_on_leader_id"
-    t.index ["name_region", "name_division"], name: "index_game_guilds_on_name_region_and_name_division", unique: true
+    t.index ["name_region", "name_division"], name: "index_game_guilds_one_active_name", unique: true, where: "(dissolved_at IS NULL)"
     t.index ["token"], name: "index_game_guilds_on_token", unique: true
     t.check_constraint "invite_code::text ~ '^[2-9A-HJKMNP-Z]{4}-[2-9A-HJKMNP-Z]{4}$'::text", name: "game_guilds_invite_code_check"
+    t.check_constraint "money >= 0", name: "game_guilds_money_check"
     t.check_constraint "seats > 0", name: "game_guilds_seats_check"
   end
 
@@ -1082,7 +1158,21 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_180001) do
   add_foreign_key "game_goals", "accounts_players", column: "player_id"
   add_foreign_key "game_goals", "game_custom_sets", column: "custom_set_id", on_delete: :cascade
   add_foreign_key "game_guild_memberships", "accounts_players", column: "player_id"
-  add_foreign_key "game_guild_memberships", "game_guilds", column: "guild_id", on_delete: :cascade
+  add_foreign_key "game_guild_memberships", "game_guilds", column: "guild_id"
+  add_foreign_key "game_guild_messages", "accounts_players", column: "hidden_by_id"
+  add_foreign_key "game_guild_messages", "accounts_players", column: "player_id"
+  add_foreign_key "game_guild_messages", "accounts_players", column: "reporter_id"
+  add_foreign_key "game_guild_messages", "game_guilds", column: "guild_id"
+  add_foreign_key "game_guild_money_entries", "game_guild_wars", column: "war_id"
+  add_foreign_key "game_guild_money_entries", "game_guilds", column: "guild_id"
+  add_foreign_key "game_guild_war_days", "game_guild_wars", column: "war_id"
+  add_foreign_key "game_guild_war_days", "game_guilds", column: "guild_id"
+  add_foreign_key "game_guild_war_members", "accounts_players", column: "player_id"
+  add_foreign_key "game_guild_war_members", "game_guild_wars", column: "war_id"
+  add_foreign_key "game_guild_war_members", "game_guilds", column: "guild_id"
+  add_foreign_key "game_guild_wars", "game_guilds", column: "guild_id"
+  add_foreign_key "game_guild_wars", "game_guilds", column: "opponent_id"
+  add_foreign_key "game_guild_wars", "game_guilds", column: "winner_id"
   add_foreign_key "game_guilds", "accounts_players", column: "leader_id"
   add_foreign_key "game_holdings", "accounts_players", column: "player_id"
   add_foreign_key "game_holdings", "catalog_card_seasons", column: "card_season_id"

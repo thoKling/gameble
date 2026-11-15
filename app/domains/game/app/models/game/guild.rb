@@ -8,6 +8,8 @@ module Game
     has_secure_token :token, length: 24
     has_many :memberships, class_name: "Game::GuildMembership", inverse_of: :guild
 
+    scope :active, -> { where(dissolved_at: nil) }
+
     def full? = memberships.count >= seats
   end
 end

@@ -4,4 +4,6 @@ class GuildPolicy < ApplicationPolicy
   def join? = player?
   def leave? = player?
   def remove? = player?
+  def post_message? = player?
+  def report? = player?
 end

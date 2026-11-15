@@ -96,3 +96,76 @@
   font: var(--font-label);
   text-transform: uppercase;
 }
+
+.guild__money {
+  margin: 0;
+  color: var(--color-accent);
+}
+
+.guild-war__score {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  margin: 0;
+  font: var(--font-kicker);
+  font-size: 2rem;
+}
+
+.guild-war__rival {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.guild-war__today caption {
+  text-align: start;
+}
+
+.guild-chat__lines {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.guild-chat__line {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.guild-chat__meta {
+  display: flex;
+  gap: var(--space-3);
+  margin: 0;
+  color: var(--color-muted);
+  font: var(--font-label);
+}
+
+.guild-chat__author {
+  color: var(--color-accent);
+}
+
+.guild-chat__body {
+  margin: 0;
+  overflow-wrap: anywhere;
+  white-space: pre-line;
+}
+
+.guild-chat__body--hidden {
+  color: var(--color-muted);
+  font-style: italic;
+}
+
+.guild-chat__form {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-3);
+}
+
+.guild-chat__field {
+  width: 100%;
+  resize: vertical;
+}
