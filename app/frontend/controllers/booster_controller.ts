@@ -29,7 +29,6 @@ import {
   owedBankTaken,
   reserveSelected,
   revealingOpening,
-  topOfPile,
   zoomClosed,
   zoomOpened,
   zoomStepped,
@@ -72,6 +71,7 @@ export class BoosterController extends Controller<HTMLElement> {
     delimiter: String,
     packSize: Number,
     season: Number,
+    seasonName: String,
     bank: Object,
     held: Object,
     strings: Object,
@@ -106,6 +106,7 @@ export class BoosterController extends Controller<HTMLElement> {
   declare readonly delimiterValue: string
   declare readonly packSizeValue: number
   declare readonly seasonValue: number
+  declare readonly seasonNameValue: string
   declare bankValue: BankValues
   declare heldValue: unknown
   declare readonly stringsValue: BoosterStrings
@@ -228,11 +229,15 @@ export class BoosterController extends Controller<HTMLElement> {
     )
     if (action === "reveal") void this.gameplay?.reveals.reveal(index, false)
     else if (action === "store") void this.gameplay?.cardStore.store(index, false)
-    else if (action === "leave") this.gameplay?.cardExit.leaveFor(index)
+    else if (action === "zoom") this.apply((s) => zoomOpened(s, index))
   }
 
   repostCard({ detail: { index } }: Intent<CardIntent>): void {
     void this.gameplay?.cardExit.repost(index)
+  }
+
+  shareCard({ detail: { index } }: Intent<CardIntent>): void {
+    void this.gameplay?.cardExit.share(index)
   }
 
   pressCard(event: Intent<CardIntent>): void {
@@ -243,12 +248,6 @@ export class BoosterController extends Controller<HTMLElement> {
     if (this.state && !abandoned && swipeStores(dx, dy) && canStore(this.state, index, false, performance.now()))
       void this.gameplay?.cardStore.store(index, false)
     else this.gameplay?.cardStore.springBack(index)
-  }
-
-  storeTop(): void {
-    if (!this.state) return
-    const index = topOfPile(this.state.revealed, this.state.stored)
-    if (index !== null) void this.gameplay?.cardStore.store(index, false)
   }
 
   openZoom({ detail: { index } }: Intent<{ index: number }>): void {
@@ -359,6 +358,7 @@ export class BoosterController extends Controller<HTMLElement> {
       delimiter: this.delimiterValue,
       packSize: this.packSizeValue,
       season: this.seasonValue,
+      seasonName: this.seasonNameValue,
       cardUrl: this.cardUrlValue,
       left: () => this.left,
       rarityNames: () => this.faces.rarityNames,

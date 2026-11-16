@@ -15,7 +15,6 @@ import type { ScreenTimers } from "./screen_timers"
 
 export type BoosterStrings = {
   announceCard: string
-  bannerLine: string
   canisterFacts: Template
   canisterLabel: string
   canisterLabelPlain: string
@@ -28,18 +27,21 @@ export type BoosterStrings = {
   faceUpStoreGoals: string
   failed: string
   goalReached: string
-  hintDone: Template
   hintRemaining: Template
   legendarySignal: string
   nextAt: string
   refusedTitle: string
+  rarityTip: string
   repostCard: string
   repostFailed: string
   reposted: string
+  shareCard: string
+  shareFailed: string
+  shared: string
   originBonus: string
   originOpening: string
   originReward: string
-  reserveCount: Template
+  reserveUnit: Template
   specialArrived: string
   standardReady: string
   tabSpecial: string
@@ -72,6 +74,7 @@ export type BoosterRenderHost = Readonly<{
   delimiter: string
   packSize: number
   season: number
+  seasonName: string
   cardUrl: string
   left: () => number | null
   rarityNames: () => Record<Rarity, string>

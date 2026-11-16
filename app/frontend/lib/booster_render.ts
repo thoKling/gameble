@@ -120,8 +120,8 @@ export class BoosterRenderer {
     const info = {
       lit: special ? 0 : available,
       size: this.host.number(shownSize),
-      reserve: t(this.strings.reserveCount, { count: available, n: this.host.number(available) }),
-      tone: view.tone,
+      count: this.host.number(available),
+      reserve: t(this.strings.reserveUnit, { count: available }),
       reserveFull: reserveFull && !special,
       next: special ? null : this.nextLine(state),
       origin: origin && (state.phase === "sealed" ? origin : t(this.strings.originOpening, { origin })),
@@ -164,7 +164,7 @@ export class BoosterRenderer {
           : null,
       label:
         season > 0
-          ? t(this.strings.canisterLabel, { season, count: nextSize })
+          ? t(this.strings.canisterLabel, { season, name: this.host.seasonName, count: nextSize })
           : t(this.strings.canisterLabelPlain, { count: nextSize }),
       busy: state.phase !== "sealed" && state.phase !== "dealt",
       armed: state.armed,
@@ -188,8 +188,6 @@ export class BoosterRenderer {
     switch (hint.kind) {
       case "remaining":
         return t(this.strings.hintRemaining, { count: hint.count, n: this.host.number(hint.count) })
-      case "done":
-        return t(this.strings.hintDone, { count: hint.count, n: this.host.number(hint.count) })
       default:
         return ""
     }
@@ -221,8 +219,10 @@ export class BoosterRenderer {
         legendary: state.legendary === index,
         name: cardName(card, index),
         tierLabel: this.host.tierLabel(card.tier),
+        rarityTip: t(this.strings.rarityTip, { rarity: this.host.rarityNames()[card.tier] }),
         firstCopy: card.firstCopy,
         repostName: t(this.strings.repostCard, { card: card.title }),
+        shareName: t(this.strings.shareCard, { card: card.title }),
         depth: phone ? pileDepth(index, state.stored) : null,
       })
     })
@@ -247,7 +247,6 @@ export class BoosterRenderer {
     stage.render(
       {
         legendary: state.legendary !== null,
-        headShown: state.headShown,
         hand: this.hand(state),
         hint: !phone && view.hint ? this.hintText(view.hint) : null,
       },
@@ -282,29 +281,12 @@ export class BoosterRenderer {
   }
 
   private renderPlate(state: BoosterState, view: Controls): void {
-    const plateOutlet = this.host.outlets().plate
-    if (!plateOutlet) return
-    const answer = state.answer
-    const top = view.plate === null ? null : answer?.cards[view.plate]
     const hint = state.layout === "phone" ? view.hint : null
-    plateOutlet.render(
-      {
-        shown: onTable(state),
-        hint: hint && { kind: hint.kind === "remaining" ? "done" : hint.kind, done: this.hintText(hint) },
-        plate:
-          view.plate !== null && top
-            ? {
-                key: `${answer?.pack.token}-${view.plate}`,
-                tier: top.tier,
-                tierText: this.host.tierLabel(top.tier),
-                line: t(this.strings.bannerLine, { title: top.title, year: top.year ?? "" }),
-              }
-            : null,
-        celebrating: Boolean(shownCelebration(state)) && view.plate === null,
-        busy: view.busy,
-      },
-      this.host.icon,
-    )
+    this.host.outlets().plate?.render({
+      shown: onTable(state),
+      hint: hint && hint.kind !== "remaining" ? { kind: hint.kind } : null,
+      celebrating: Boolean(shownCelebration(state)) && view.plate === null,
+    })
   }
 
   private renderTray(state: BoosterState, view: Controls): void {
@@ -340,7 +322,7 @@ export class BoosterRenderer {
     const zoomOutlet = this.host.outlets().zoom
     if (!zoomOutlet) return
     const { zoom, answer } = state
-    const card = zoom !== null && state.layout === "phone" ? answer?.cards[zoom] : null
+    const card = zoom !== null ? answer?.cards[zoom] : null
     zoomOutlet.render(
       card && zoom !== null && answer
         ? {
@@ -349,6 +331,7 @@ export class BoosterRenderer {
             title: card.title,
             line: t(this.strings.zoomLine, { rarity: this.host.rarityNames()[card.tier], year: card.year ?? "" }),
             href: cardHref(this.host.cardUrl, card.slug, answer.pack.token, zoom),
+            facts: state.layout === "phone" ? null : cardHref(this.host.cardUrl, card.slug, answer.pack.token, zoom),
             repostName: t(this.strings.repostCard, { card: card.title }),
             previous: view.zoomPrevious,
             next: view.zoomNext,

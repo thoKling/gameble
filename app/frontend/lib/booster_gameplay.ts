@@ -39,7 +39,6 @@ export function gameplayFor({
     ...stage,
     legendarySignal: strings.legendarySignal,
     announceCardLine: strings.announceCard,
-    bannerLine: strings.bannerLine,
     rarityNames,
   })
   const cardStore = new CardStore({ ...stage, whenIdle })
@@ -49,6 +48,8 @@ export function gameplayFor({
     repostUrl,
     reposted: strings.reposted,
     repostFailed: strings.repostFailed,
+    shared: strings.shared,
+    shareFailed: strings.shareFailed,
   })
   const everyReveal = new RevealAll({
     ...stage,

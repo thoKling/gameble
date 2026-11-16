@@ -16,8 +16,10 @@ export type CardView = Readonly<{
   legendary: boolean
   name: string
   tierLabel: string
+  rarityTip: string
   firstCopy: boolean
   repostName: string
+  shareName: string
   depth: number | null
 }>
 
@@ -31,7 +33,6 @@ export type HandView = Readonly<{
 
 export type StageView = Readonly<{
   legendary: boolean
-  headShown: boolean
   hand: HandView | null
   hint: string | null
 }>
@@ -48,12 +49,11 @@ export type BannerView = Readonly<{
 export type CardIntent = { index: number }
 
 export default class BoosterStageController extends Controller<HTMLElement> {
-  static targets = ["shake", "fx", "flash", "result", "dealArea", "deal", "hint", "pileArea", "pile", "card", "banner"]
+  static targets = ["shake", "fx", "flash", "dealArea", "deal", "hint", "pileArea", "pile", "card", "banner"]
 
   declare readonly shakeTarget: HTMLElement
   declare readonly fxTarget: HTMLElement
   declare readonly flashTarget: HTMLElement
-  declare readonly resultTarget: HTMLElement
   declare readonly dealAreaTarget: HTMLElement
   declare readonly dealTarget: HTMLOListElement
   declare readonly hintTarget: HTMLElement
@@ -99,15 +99,12 @@ export default class BoosterStageController extends Controller<HTMLElement> {
     this.swipe.forget()
   }
 
-  render({ legendary, headShown, hand, hint }: StageView, fragments: Fragments): void {
+  render({ legendary, hand, hint }: StageView, fragments: Fragments): void {
     this.element.toggleAttribute("data-legendary", legendary)
-    this.resultTarget.toggleAttribute("data-shown", headShown)
-    if (headShown) this.resultTarget.removeAttribute("aria-hidden")
-    else this.resultTarget.setAttribute("aria-hidden", "true")
 
     this.dealAreaTarget.hidden = hand === null
     this.pileAreaTarget.hidden = hand === null
-    this.hintTarget.hidden = hint === null
+    this.hintTarget.toggleAttribute("data-spent", hint === null)
     if (hint !== null) writeText(this.hintTarget, hint)
 
     if ((hand?.key ?? null) !== this.handKey) this.deal(hand, fragments)
@@ -143,9 +140,14 @@ export default class BoosterStageController extends Controller<HTMLElement> {
     const slot = target?.closest<HTMLLIElement>(".booster-card")
     if (!target || !slot) return
     const index = this.indexOf(slot)
-    if (target.closest(".booster-card__repost")) {
+    const action = target.closest(".booster-card__repost")
+      ? "repost"
+      : target.closest(".booster-card__share")
+        ? "share"
+        : null
+    if (action) {
       event.stopPropagation()
-      if (slot.hasAttribute("data-revealed")) this.dispatch("repost", { detail: { index } satisfies CardIntent })
+      if (slot.hasAttribute("data-revealed")) this.dispatch(action, { detail: { index } satisfies CardIntent })
       return
     }
     event.preventDefault()
@@ -226,10 +228,12 @@ export default class BoosterStageController extends Controller<HTMLElement> {
     if (!slot) return null
     slot.dataset.position = String(card.index + 1)
     slot.dataset.tier = card.tier
-    if (card.tier !== "legendary") slot.querySelector(".booster-card__glow")?.remove()
+    const glow = slot.querySelector(".booster-card__glow")
+    if (card.tier !== "legendary") glow?.remove()
     const rays = slot.querySelector(".booster-card__rays")
     if (BANNER_TIERS.includes(card.tier)) rays?.classList.add(`card-rays--${card.tier}`)
     else rays?.remove()
+    if (!hand.phone) this.underCards(slot, [glow, rays])
     const back = slot.querySelector<HTMLElement>(".booster-card__back")
     back?.classList.add(cardBackClass(hand.cardBack))
     for (const [name, value] of cardBackProperties(hand.cardBack)) back?.style.setProperty(name, value)
@@ -240,10 +244,22 @@ export default class BoosterStageController extends Controller<HTMLElement> {
     slot.querySelector(".booster-card__label-icon-box")?.replaceChildren(fragments.icon(card.tier) ?? "")
     const name = slot.querySelector(".booster-card__label-name")
     if (name) name.textContent = card.tierLabel
+    slot.querySelector<HTMLElement>(".booster-card__rarity")?.setAttribute("data-tip", card.rarityTip)
     const repost = slot.querySelector(".booster-card__repost")
-    if (hand.phone) repost?.remove()
-    else repost?.setAttribute("aria-label", card.repostName)
+    const share = slot.querySelector(".booster-card__share")
+    if (hand.phone) {
+      repost?.remove()
+      share?.remove()
+    } else {
+      repost?.setAttribute("aria-label", card.repostName)
+      share?.setAttribute("aria-label", card.shareName)
+    }
     return slot
+  }
+
+  private underCards(slot: HTMLLIElement, parts: (Element | null)[]): void {
+    const frame = slot.querySelector(".booster-card__frame")
+    for (const part of parts.reverse()) if (part?.parentElement) frame?.prepend(part)
   }
 
   private update(hand: HandView): void {

@@ -46,7 +46,7 @@ export type OpeningOutcome = { kind: "opened" } | { kind: "refused"; code: strin
 
 export type TierCounts = Record<Rarity, number>
 
-export type Focus = "open" | "home" | "card" | { slot: number }
+export type Focus = "open" | "home" | "card" | { card: number } | { slot: number }
 
 export type FocusTarget = "open" | "home" | { card: number } | { slot: number }
 
@@ -118,20 +118,17 @@ export type BoosterStart = {
 
 export type OpeningRefusal = Exclude<OpeningResult, { kind: "opened" }>
 
-export type Activation = "reveal" | "store" | "leave" | "none"
+export type Activation = "reveal" | "store" | "zoom" | "none"
 
 export type OpenVariant = "open" | "next" | "empty" | "skip"
 
-export type StatusTone = "alert" | "gold" | "done" | "rest"
-
-export type Hint = { kind: "remaining" | "done"; count: number } | { kind: "tap" | "swipe" }
+export type Hint = { kind: "remaining"; count: number } | { kind: "tap" | "swipe" }
 
 export type Controls = Readonly<{
   open: OpenVariant
   openDisabled: boolean
   busy: boolean
   revealAllDisabled: boolean
-  tone: StatusTone
   hint: Hint | null
   storedCount: number
   top: number | null
