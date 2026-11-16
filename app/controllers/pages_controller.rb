@@ -106,9 +106,7 @@ class PagesController < ApplicationController
     end
 
     def load_showcase
-      chosen = Game::ChosenShowcase.call(current_player).first
-      @showcase_chosen = !chosen.nil?
-      id = chosen || Game::LatestBestCard.call(current_player, season: @season)
+      id = Game::LatestBestCard.call(current_player, season: @season)
       @showcase = Catalog::CardViews.call([ id ], locale: I18n.locale)[id] if id
     end
 

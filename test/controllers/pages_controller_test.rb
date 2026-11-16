@@ -49,7 +49,7 @@ class PagesControllerTest < ActionDispatch::IntegrationTest
     }
   }.freeze
 
-  PLAYER_HUB_QUERIES = 31
+  PLAYER_HUB_QUERIES = 30
 
   OWNERSHIP_NOTICE = "Toutes les illustrations appartiennent aux éditeurs des jeux et à leurs artistes, que nous respectons."
 
@@ -228,24 +228,20 @@ class PagesControllerTest < ActionDispatch::IntegrationTest
     assert_select "[style]", false
   end
 
-  test "the first card the player chose shows under VITRINE, any rarity; with none left, the automatic card under DERNIÈRE OBTENTION" do
+  test "the hub's showcase shows the latest find under DERNIÈRE OBTENTION, whatever cards the player chose for the profile" do
     common, rare, portal = catalog_card_seasons(:common_card_one, :rare_card_one, :portal_one).map(&:id)
-    [ common, rare, portal ].each { Game::Holding.create!(player_id: @player.id, card_season_id: it, quantity: 1) }
+    hold(@player, common, gained_at: 3.hours.ago)
+    hold(@player, rare, gained_at: 2.hours.ago)
+    hold(@player, portal, gained_at: 1.hour.ago)
     [ rare, common ].each { Game::AddToShowcase.new.call(player: @player, card_season_id: it).value! }
     sign_in(@player, origin: "/fr")
 
     get home_path(locale: :fr)
     assert_select ".hub-showcase:not(.hub-showcase--empty)" do
-      assert_select ".hub-showcase__kicker", "Vitrine"
-      assert_select "h2.hub-showcase__name", "Profondeurs bleues"
-      assert_select "a.button.button--secondary[href='/fr/cards/blue-depths/seasons/1']", "Voir la fiche"
-      assert_select "form.button-form[action='/fr/cards/blue-depths/seasons/1/repost'] button", "Reposter"
+      assert_select ".hub-showcase__kicker", "Dernière obtention"
+      assert_select "h2.hub-showcase__name", "Portal"
+      assert_select "a.button.button--secondary[href='/fr/cards/portal/seasons/1']", "Voir la fiche"
     end
-
-    [ rare, common ].each { Game::RemoveFromShowcase.new.call(player: @player, card_season_id: it).value! }
-    get home_path(locale: :fr)
-    assert_select ".hub-showcase__kicker", "Dernière obtention"
-    assert_select "h2.hub-showcase__name", "Portal"
   end
 
   test "a player holding no card sees the empty showcase, its primary opening a booster" do
@@ -345,7 +341,7 @@ class PagesControllerTest < ActionDispatch::IntegrationTest
     assert_select ".top-bar .packs-chip__next[data-controller=countdown][data-countdown-refresh-value=false][data-countdown-refresh-url-value='/en/packs-chip']"
   end
 
-  test "once the day's booster is collected, the daily panel stays: collected, with the countdown to 00:00 UTC and its bar" do
+  test "once the day's booster is collected, the daily panel folds behind a toggle: a check, collected, the countdown to 00:00 UTC and its bar" do
     travel_to(Time.current.utc.change(hour: 22, min: 30, sec: 15)) do
       Game::CollectDailyBonus.new.call(player: @player).value!
       sign_in(@player)
@@ -354,17 +350,23 @@ class PagesControllerTest < ActionDispatch::IntegrationTest
 
       assert_select ".daily-booster.daily-booster--collected" do
         assert_select ".daily-booster__state", "Collected"
+        assert_select ".daily-booster__state.visually-hidden", "Collected"
+        assert_select ".daily-booster__head > button.hub-fold[type=button][aria-expanded=false][data-controller=hub-fold][data-action='hub-fold#toggle']" do
+          assert_select ".visually-hidden", "Daily capsule: details"
+          assert_select "svg.pixel-icon.hub-done-icon[aria-hidden=true] + svg.pixel-icon.hub-fold__chevron[aria-hidden=true]"
+        end
         assert_select ".daily-booster__text", "A capsule joins your reserve. The next one will be ready on #{next_day.strftime("%Y-%m-%d")} 00:00 UTC."
         assert_select ".daily-booster__text time[datetime='#{next_day.iso8601}'][data-controller=local-time]"
         assert_select ".daily-booster__next[data-controller=countdown][data-countdown-seconds-value='5385'][data-countdown-hours-value=true]" do
           assert_select ".daily-booster__next-label", "Next in"
           assert_select ".daily-booster__clock[data-countdown-target=clock]", "01:29:45"
+          assert_select ".daily-booster__bar-clock[aria-hidden=true][data-countdown-target=clock]", "01:29:45"
           assert_select ".gauge[aria-hidden=true] .gauge__segment[data-countdown-target=segment]", count: 24
           assert_select ".gauge__segment--lit", count: 22
           assert_select ".visually-hidden", "Next capsule: #{next_day.strftime("%Y-%m-%d")} 00:00 UTC"
           assert_select ".visually-hidden time[datetime='#{next_day.iso8601}']"
         end
-        assert_select "button, a.button, form", false
+        assert_select "button:not(.hub-fold), a.button, form", false
       end
     end
     assert_select ".hub-menu a.menu-item[href='/en/booster'] .menu-item__badge"
@@ -433,13 +435,14 @@ class PagesControllerTest < ActionDispatch::IntegrationTest
     assert_select "#community-goal .hub-goal__status", false
     assert_select "#community-goal .gauge__segment", count: 24
     assert_select "#community-goal .gauge__segment--lit", count: 0
+    assert_select "#community-goal .hub-fold", false
 
     get home_path(locale: :fr)
     assert_select "#community-goal .hub-goal__line", text: /\AOuvrez 50[\s\u00a0\u202f]000 capsules cette semaine\.\z/
     assert_select "#community-goal .hub-goal__reward", text: "Récompense\u202F: une capsule rare par contributeur"
   end
 
-  test "a reached goal reads Accomplie on its reward line with a full lime gauge, in both languages" do
+  test "a reached goal folds behind its title bar and reads Accomplie on its reward line with a full lime gauge, in both languages" do
     week = Game::WeeklyGoal.week_start(Time.current)
     Game::WeeklyGoal.create!(week_start: week, total: 210, target: 200)
     sign_in(accounts_players(:moderator))
@@ -451,6 +454,8 @@ class PagesControllerTest < ActionDispatch::IntegrationTest
     assert_select "#community-goal .hub-goal__figures", text: "210 / 200"
     assert_select "#community-goal .gauge__segment--lit", count: 24
     assert_select "#community-goal .hub-goal__previous", false
+    assert_select "#community-goal > button.hub-fold[type=button][aria-expanded=false][data-controller=hub-fold] .visually-hidden",
+      "#{I18n.t("pages.home.goal.title", locale: :en)}: details"
 
     sign_in(@player, origin: "/fr")
     get home_path(locale: :fr)
@@ -580,7 +585,7 @@ class PagesControllerTest < ActionDispatch::IntegrationTest
     # marker), the weekly goal (one read once the job
     # has created the week's row), bank (count, next pack, daily claim), the
     # goal reward's claim slot,
-    # showcase (cards chosen, card held, card view), collection (owned, total), the
+    # showcase (card held, card view), collection (owned, total), the
     # player's goals (none here, so nothing to measure),
     # the top bar's copies per tier and rarity legend, the player menu's friends online, menu 06's
     # achievements earned and the rewards waiting to be claimed, the trades

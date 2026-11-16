@@ -46,7 +46,7 @@ class DailyBonusesControllerTest < ActionDispatch::IntegrationTest
       assert_equal "1", reserve_badge(:special)
       assert_select ".daily-booster.daily-booster--collected .daily-booster__state", "Collected"
       assert_select ".daily-booster .daily-booster__clock", "02:00:00"
-      assert_select ".daily-booster form, .daily-booster button", 0
+      assert_select ".daily-booster form, .daily-booster button:not(.hub-fold)", 0
 
       post daily_bonus_path(locale: :en)
 

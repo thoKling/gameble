@@ -1,0 +1,293 @@
+/*
+ * The profile's showcase stage: up to five cards fanned out like a winning
+ * hand, the best one raised in the centre, the next ones on either side,
+ * smaller, tilted and tucked behind it. Sizes follow the stage's width, so
+ * the hand fits a small phone as it does a desktop. The cards are dealt
+ * from the centre when the page opens.
+ */
+
+.profile-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+  text-align: center;
+}
+
+.profile-stage__floor {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  max-width: 480px;
+  padding: var(--space-6) 0 var(--space-5);
+  container-type: inline-size;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--color-gold) 12%, transparent), transparent);
+}
+
+.profile-stage__rays {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.profile-stage__fan {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.profile-stage__slot {
+  --fan-width: 23cqi;
+  --fan-rotate: 0deg;
+  --fan-drop: 0px;
+  --fan-from: 0cqi;
+  --fan-delay: 0ms;
+
+  position: relative;
+  flex: none;
+  width: var(--fan-width);
+  margin-inline: -6cqi;
+  container-type: inline-size;
+  transform-origin: 50% 100%;
+  rotate: var(--fan-rotate);
+  translate: 0 var(--fan-drop);
+  transition:
+    translate 200ms ease-out,
+    rotate 200ms ease-out,
+    opacity 200ms ease-out;
+  animation: profile-stage-deal 520ms cubic-bezier(0.2, 0.8, 0.3, 1.15) var(--fan-delay) backwards;
+}
+
+.profile-stage__slot > .card-link {
+  position: relative;
+  display: block;
+  width: 100cqi;
+  height: calc(1.5 * 100cqi);
+  transition:
+    scale 160ms ease-out,
+    filter 160ms ease-out;
+}
+
+/* Hovered, a card rises in place and stays behind its neighbours; keyboard
+   focus brings it forward so its whole focus ring shows. */
+.profile-stage__slot:hover,
+.profile-stage__slot:focus-within {
+  translate: 0 calc(var(--fan-drop) - 12px);
+}
+
+.profile-stage__slot:has(:focus-visible) {
+  z-index: 4;
+}
+
+/* The owner lifts a chosen card and carries it along the hand: the other
+   chosen cards slide aside to make its room, the cards that only fill in
+   fade back, and a tag names the place it would take. */
+.profile-stage__slot[data-stage-order-target="slot"] > .card-link {
+  cursor: grab;
+  -webkit-touch-callout: none;
+}
+
+.profile-stage__fan[data-sorting],
+.profile-stage__fan[data-sorting] .card-link {
+  cursor: grabbing;
+}
+
+.profile-stage__fan[aria-busy="true"] .card-link {
+  cursor: progress;
+}
+
+.profile-stage__fan[data-sorting] .profile-stage__slot:not([data-dragging]) {
+  translate: 0 var(--fan-drop);
+}
+
+.profile-stage__fan[data-sorting] .profile-stage__slot:not([data-stage-order-target]) {
+  opacity: 0.35;
+}
+
+.profile-stage__slot[data-dragging] {
+  z-index: 5;
+  rotate: 0deg;
+  transition: rotate 160ms ease-out;
+}
+
+.profile-stage__slot[data-dragging] > .card-link {
+  scale: 1.08;
+  filter: drop-shadow(0 14px 12px var(--color-backdrop));
+}
+
+.profile-stage__slot[data-dragging] .card[data-tilt] {
+  transform: none;
+}
+
+.profile-stage__placing {
+  position: absolute;
+  top: var(--space-2);
+  left: 50%;
+  z-index: 6;
+  margin: 0;
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--color-accent);
+  background: var(--color-panel);
+  color: var(--color-accent);
+  font: var(--font-label);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  white-space: nowrap;
+  translate: -50% 0;
+  pointer-events: none;
+}
+
+.profile-stage__slot--1 {
+  --fan-width: 38cqi;
+
+  z-index: 3;
+  order: 3;
+}
+
+.profile-stage__slot--1 > .card-link {
+  animation: card-idle-float 14s ease-in-out 700ms infinite;
+}
+
+.profile-stage__slot--2 {
+  --fan-width: 30cqi;
+  --fan-rotate: -6deg;
+  --fan-drop: 2cqi;
+  --fan-from: 26cqi;
+  --fan-delay: 90ms;
+
+  z-index: 2;
+  order: 2;
+}
+
+.profile-stage__slot--3 {
+  --fan-width: 30cqi;
+  --fan-rotate: 6deg;
+  --fan-drop: 2cqi;
+  --fan-from: -26cqi;
+  --fan-delay: 180ms;
+
+  z-index: 2;
+  order: 4;
+}
+
+.profile-stage__slot--4 {
+  --fan-rotate: -12deg;
+  --fan-drop: 5cqi;
+  --fan-from: 44cqi;
+  --fan-delay: 270ms;
+
+  z-index: 1;
+  order: 1;
+}
+
+.profile-stage__slot--5 {
+  --fan-rotate: 12deg;
+  --fan-drop: 5cqi;
+  --fan-from: -44cqi;
+  --fan-delay: 360ms;
+
+  z-index: 1;
+  order: 5;
+}
+
+@keyframes profile-stage-deal {
+  from {
+    opacity: 0;
+    rotate: 0deg;
+    translate: var(--fan-from) 6cqi;
+  }
+}
+
+.profile-stage__name {
+  max-width: 100%;
+  margin: var(--space-2) 0 0;
+  color: var(--color-text-max);
+  font: var(--font-showcase-name-phone);
+  letter-spacing: var(--tracking-showcase-name-phone);
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+
+.profile-stage__rarity {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0;
+  font: var(--font-card-meta-xl);
+  letter-spacing: var(--tracking-card-meta-xl);
+  text-transform: uppercase;
+}
+
+.profile-stage__rarity-icon {
+  width: 14px;
+  height: 14px;
+}
+
+.profile-stage__rarity--1 {
+  color: var(--color-rarity-commune);
+}
+
+.profile-stage__rarity--2 {
+  color: var(--color-rarity-peu-commune);
+}
+
+.profile-stage__rarity--3 {
+  color: var(--color-rarity-rare);
+}
+
+.profile-stage__rarity--4 {
+  color: var(--color-rarity-epique);
+}
+
+.profile-stage__rarity--5 {
+  color: var(--color-rarity-legendaire);
+}
+
+@media (min-width: 720px) {
+  .profile-stage__floor {
+    max-width: 600px;
+  }
+
+  .profile-stage__slot {
+    --fan-width: 21cqi;
+
+    margin-inline: -3.5cqi;
+  }
+
+  .profile-stage__slot--1 {
+    --fan-width: 30cqi;
+  }
+
+  .profile-stage__slot--2,
+  .profile-stage__slot--3 {
+    --fan-width: 26cqi;
+  }
+
+  .profile-stage__name {
+    font: var(--font-showcase-name);
+    letter-spacing: var(--tracking-showcase-name);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:not([data-motion="full"]) .profile-stage__slot,
+  html:not([data-motion="full"]) .profile-stage__slot > .card-link,
+  html:not([data-motion="full"]) .profile-stage__slot--1 > .card-link {
+    transition: none;
+    animation: none;
+  }
+}
+
+html[data-motion="reduced"] .profile-stage__slot,
+html[data-motion="reduced"] .profile-stage__slot > .card-link,
+html[data-motion="reduced"] .profile-stage__slot--1 > .card-link {
+  transition: none;
+  animation: none;
+}
