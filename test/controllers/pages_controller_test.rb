@@ -26,30 +26,30 @@ class PagesControllerTest < ActionDispatch::IntegrationTest
       "terms.no_property" => "Les cartes, capsules et dos de cartes sont des éléments du jeu\u202F: ils ne sont pas votre propriété et n'ont aucune valeur en argent, ni dans Gameble ni en dehors. Leur prix en PiCoins n'est qu'une règle du jeu.",
       "terms.real_money" => "Il est interdit d'échanger des cartes ou des PiCoins contre de l'argent réel, dans Gameble ou en dehors\u202F: ni vente, ni achat, ni cession, ni intermédiaire. Un compte qui le fait peut être suspendu.",
       "terms.picoins" => "Les PiCoins sont la monnaie du jeu\u202F: ils ne se gagnent qu'en confiant des cartes à la Confrérie ou en vendant aux enchères, ne s'achètent jamais et ne se retirent jamais.",
-      "privacy.stored.market" => "votre activité sur le marché\u202F: votre portefeuille de PiCoins (solde disponible et solde engagé), chaque mouvement de PiCoins, vos annonces, vos enchères avec les maximums que vous avez fixés, et vos notifications du marché\u202F;",
+      "privacy.stored.market" => "votre activité sur le marché\u202F: votre portefeuille de PiCoins (solde disponible et solde engagé), chaque mouvement de PiCoins, vos annonces, vos enchères avec les maximums que vous avez fixés, vos ordres d'achat, vos ventes à des ordres, vos achats aux Archives, vos emplacements achetés, et vos notifications du marché\u202F;",
       "privacy.stored.signals" => "des signaux de comptes multiples, calculés chaque jour à partir de votre activité de capsules, d'échanges, de ventes et d'enchères, que seul le personnel de modération consulte, et dont aucune décision n'est tirée automatiquement\u202F;",
       "privacy.market_visibility" => "Sur le marché, votre nom de profil figure sur vos annonces, dans l'historique des enchères où vous misez et dans les entrées du fil qui annoncent vos ventes, visibles de tous, y compris des visiteurs non connectés, quel que soit le réglage de votre profil. Vos maximums, eux, ne sont jamais montrés aux autres joueurs.",
-      "privacy.retention.market" => "votre portefeuille, vos mouvements de PiCoins, vos annonces, vos enchères et vos notifications du marché\u202F: tant que le compte existe\u202F; à la suppression du compte, les notifications du marché et les entrées du fil qui annoncent vos ventes sont supprimées, votre nom est effacé des historiques d'enchères et le solde est détruit, mais le registre des PiCoins reste, sans identité, tant que le jeu existe\u202F;",
+      "privacy.retention.market" => "votre portefeuille, vos mouvements de PiCoins, vos annonces, vos enchères, vos ordres d'achat, vos ventes à des ordres, vos achats aux Archives et vos notifications du marché\u202F: tant que le compte existe\u202F; à la suppression du compte, les notifications du marché et les entrées du fil qui annoncent vos ventes sont supprimées, votre nom est effacé des historiques d'enchères et le solde est détruit, mais le registre des PiCoins reste, sans identité, tant que le jeu existe\u202F;",
       "privacy.retention.signals" => "les signaux de comptes multiples\u202F: remplacés chaque jour, ils ne gardent que les faits du dernier calcul\u202F;",
-      "privacy.market_deletion" => "Sur le marché, la suppression de votre compte supprime vos notifications du marché et les entrées du fil qui annoncent vos ventes, efface votre nom des historiques d'enchères, retire vos annonces en cours et libère vos maximums. Votre solde de PiCoins est détruit sans remboursement, une fois vos annonces et vos enchères en tête réglées. Le registre des PiCoins est conservé sans identité, pendant la durée indiquée plus haut.",
-      "updated" => "Dernière mise à jour\u202F: 10 novembre 2026"
+      "privacy.market_deletion" => "Sur le marché, la suppression de votre compte supprime vos notifications du marché et les entrées du fil qui annoncent vos ventes, efface votre nom des historiques d'enchères, retire vos annonces et vos ordres d'achat en cours et libère vos maximums. Les ordres d'achat en cours d'un compte suspendu sont aussi retirés et leurs PiCoins rendus à son solde. Votre solde de PiCoins est détruit sans remboursement, une fois vos annonces, vos enchères en tête et vos ordres d'achat réglés. Le registre des PiCoins est conservé sans identité, pendant la durée indiquée plus haut.",
+      "updated" => "Dernière mise à jour\u202F: 23 novembre 2026"
     },
     "en" => {
       "terms.no_money" => "No real money flows through it: nothing is bought with money, and cards are sold for PiCoins, the game's currency, never for money.",
       "terms.no_property" => "Cards, capsules and card backs are parts of the game: they are not your property and have no value in money, in Gameble or outside it. Their price in PiCoins is only a rule of the game.",
       "terms.real_money" => "Trading cards or PiCoins for real money is forbidden, in Gameble or outside it: no sale, no purchase, no transfer, no go-between. An account that does so may be suspended.",
       "terms.picoins" => "PiCoins are the game's currency: they are earned only by entrusting cards to the Brotherhood or by selling at auction, and they are never bought and never withdrawn.",
-      "privacy.stored.market" => "your market activity: your PiCoin wallet (available and committed balance), every PiCoin entry, your listings, your bids with the maximums you set, and your market notices;",
+      "privacy.stored.market" => "your market activity: your PiCoin wallet (available and committed balance), every PiCoin entry, your listings, your bids with the maximums you set, your buy orders, your sales to orders, your Archive purchases, your bought slots, and your market notices;",
       "privacy.stored.signals" => "alt-account signals, worked out each day from your capsule, trade, sale and bid activity, which only the moderation staff read and from which no decision is taken automatically;",
       "privacy.market_visibility" => "On the market, your profile name appears on your listings, in the bid histories where you bid and in the feed entries announcing your sales, visible to everyone, signed-out visitors included, whatever your profile setting. Your maximums, though, are never shown to other players.",
-      "privacy.retention.market" => "your wallet, your PiCoin entries, your listings, your bids and your market notices: as long as the account exists; when the account is deleted, the market notices and the feed entries announcing your sales are deleted, your name is erased from the bid histories and the balance is destroyed, but the PiCoin record stays, without identity, as long as the game exists;",
+      "privacy.retention.market" => "your wallet, your PiCoin entries, your listings, your bids, your buy orders, your sales to orders, your Archive purchases and your market notices: as long as the account exists; when the account is deleted, the market notices and the feed entries announcing your sales are deleted, your name is erased from the bid histories and the balance is destroyed, but the PiCoin record stays, without identity, as long as the game exists;",
       "privacy.retention.signals" => "alt-account signals: replaced every day, they keep only the facts of the latest calculation;",
-      "privacy.market_deletion" => "On the market, deleting your account deletes your market notices and the feed entries announcing your sales, erases your name from the bid histories, withdraws your open listings and releases your maximums. Your PiCoin balance is destroyed without refund, once your listings and leading bids are resolved. The PiCoin record is kept without identity, for the period stated above.",
-      "updated" => "Last updated: 10 November 2026"
+      "privacy.market_deletion" => "On the market, deleting your account deletes your market notices and the feed entries announcing your sales, erases your name from the bid histories, withdraws your open listings and your open buy orders and releases your maximums. A suspended account's open buy orders are withdrawn too and their PiCoins returned to its balance. Your PiCoin balance is destroyed without refund, once your listings, leading bids and buy orders are resolved. The PiCoin record is kept without identity, for the period stated above.",
+      "updated" => "Last updated: 23 November 2026"
     }
   }.freeze
 
-  PLAYER_HUB_QUERIES = 31
+  PLAYER_HUB_QUERIES = 36
 
   OWNERSHIP_NOTICE = "Toutes les illustrations appartiennent aux éditeurs des jeux et à leurs artistes, que nous respectons."
 
@@ -115,7 +115,7 @@ class PagesControllerTest < ActionDispatch::IntegrationTest
     assert_select ".hub-showcase form[action='/en/cards/portal/seasons/1/repost'] button", "Repost"
   end
 
-  test "the hub's extras list, hidden behind its back button: how it works, then support, GitHub and Discord in a new tab" do
+  test "the hub's extras list, hidden behind its back button: how it works, the release notes, then support, GitHub and Discord in a new tab" do
     sign_in(@player)
 
     get home_path(locale: :fr)
@@ -129,16 +129,21 @@ class PagesControllerTest < ActionDispatch::IntegrationTest
         assert_select ".menu-item__number", "01"
         assert_select ".menu-item__label", "Comment ça marche"
       end
+      assert_select "a.menu-item[href='/fr/release-notes'][aria-keyshortcuts='2'][data-hub-menu-target=item][data-action='hub-menu#remember'][data-turbo-prefetch=false]" do
+        assert_select ".menu-item__number", "02"
+        assert_select ".menu-item__label", "Notes de version"
+      end
     end
     external = css_select("#hub-menu-extras a.menu-item[target=_blank]")
-    assert_equal [ [ "2", "02", "Soutenir", "https://buymeacoffee.com/theiereman" ], [ "3", "03", "GitHub", "https://github.com/theiereman/gameble" ],
-      [ "4", "04", "Discord", "https://discord.gg/B5utMfwEN" ] ],
+    assert_equal [ [ "3", "03", "Soutenir", "https://fr.tipeee.com/gameble-trading-card-game" ], [ "4", "04", "GitHub", "https://github.com/theiereman/gameble" ],
+      [ "5", "05", "Discord", "https://discord.gg/B5utMfwEN" ] ],
       external.map { [ it["aria-keyshortcuts"], it.at_css(".menu-item__number").text, it.at_css(".menu-item__label").text, it["href"] ] }
     external.each do |link|
       assert_equal %w[noopener noreferrer external], link["rel"].split
       assert_equal "(nouvel onglet)", link.at_css(".visually-hidden").text.strip
       assert link.at_css("svg.menu-item__external")
-      assert_nil link["data-action"]
+      assert_equal link["href"] == "https://discord.gg/B5utMfwEN", link["data-action"].nil?
+      assert_includes link["data-action"], "link-open#record" unless link["href"] == "https://discord.gg/B5utMfwEN"
     end
   end
 
@@ -154,9 +159,9 @@ class PagesControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select ".hub[data-controller=hub-menu]"
-    assert_select "nav.hub-menu[aria-label=?] > ol.hub-menu__list:not([hidden]) > li", "Menu du pont", count: 7
-    assert_equal %w[1 2 3 4 5 6 7], main_menu_items.map { it["aria-keyshortcuts"] }
-    assert_equal %w[01 02 03 04 05 06 07], css_select(".hub-menu > ol:not([hidden]) .menu-item__number").map(&:text)
+    assert_select "nav.hub-menu[aria-label=?] > ol.hub-menu__list:not([hidden]) > li", "Menu du pont", count: 8
+    assert_equal %w[1 2 3 4 5 6 7 8], main_menu_items.map { it["aria-keyshortcuts"] }
+    assert_equal %w[01 02 03 04 05 06 07 08], css_select(".hub-menu > ol:not([hidden]) .menu-item__number").map(&:text)
 
     # 01: the booster screen, its reserve in a lime badge.
     assert_select ".hub-menu a.menu-item[href='/fr/booster'][data-hub-menu-target=item][data-turbo-prefetch=false]" do
@@ -172,29 +177,38 @@ class PagesControllerTest < ActionDispatch::IntegrationTest
       assert_select ".visually-hidden", "1 carte unique sur 5"
     end
     assert_select ".hub-menu a.menu-item[href='/fr/library/cards']", 0
-    # 03: the trades, their badge hidden when nothing waits.
+    # 03: the trades between friends, their badge hidden when nothing waits.
     assert_select ".hub-menu a.menu-item[href='/fr/trades'][aria-keyshortcuts='3'][data-hub-menu-target=item][data-turbo-prefetch=false]" do
       assert_select ".menu-item__label", "Échanges"
       assert_select "#menu-trades-badge.stream-slot", 1
       assert_select ".menu-item__badge, .visually-hidden", 0
     end
-    # 04: the market.
+    # 04: the market, its badge hidden when no auction is outbid.
     assert_select ".hub-menu a.menu-item[href='/fr/market'][aria-keyshortcuts='4'][data-hub-menu-target=item][data-turbo-prefetch=false]" do
       assert_select ".menu-item__label", "Marché"
+      assert_select "#menu-market-badge.stream-slot", 1
+      assert_select ".menu-item__badge, .visually-hidden", 0
     end
-    # 05: the activity feed.
-    assert_select ".hub-menu a.menu-item[href='/fr/feed'][aria-keyshortcuts='5'][data-hub-menu-target=item][data-turbo-prefetch=false]" do
+    assert_select ".hub-menu a.menu-item[href='/fr/exchanges']", 0
+    # 05: the duels, tagged alpha, with no badge.
+    assert_select ".hub-menu a.menu-item[href='/fr/duels'][aria-keyshortcuts='5'][data-hub-menu-target=item][data-turbo-prefetch=false]" do
+      assert_select ".menu-item__label", "Duels"
+      assert_select ".alpha-tag", "ALPHA"
+      assert_select ".menu-item__badge, .visually-hidden", 0
+    end
+    # 06: the activity feed.
+    assert_select ".hub-menu a.menu-item[href='/fr/feed'][aria-keyshortcuts='6'][data-hub-menu-target=item][data-turbo-prefetch=false]" do
       assert_select ".menu-item__label", "Fil d'activité"
     end
     assert_select ".hub-menu a.menu-item[href='/fr/register']", 0
-    # 06: the achievements screen, none earned yet.
-    assert_select ".hub-menu a.menu-item[href='/fr/achievements'][aria-keyshortcuts='6'][data-hub-menu-target=item][data-turbo-prefetch=false]" do
+    # 07: the achievements screen, none earned yet.
+    assert_select ".hub-menu a.menu-item[href='/fr/achievements'][aria-keyshortcuts='7'][data-hub-menu-target=item][data-turbo-prefetch=false]" do
       assert_select ".menu-item__label", "Succès"
-      assert_select ".menu-item__meta[aria-hidden=true]", "0/30"
-      assert_select ".visually-hidden", "0 succès obtenu sur 30"
+      assert_select ".menu-item__meta[aria-hidden=true]", "0/#{Game::Achievements.offered.size}"
+      assert_select ".visually-hidden", "0 succès obtenu sur #{Game::Achievements.offered.size}"
     end
-    # 07: the extras, a button that swaps the list in place for the hidden one.
-    assert_select ".hub-menu button.menu-item[type=button][aria-keyshortcuts='7'][aria-expanded=false][aria-controls=hub-menu-extras][data-hub-menu-target~=extrasEntry][data-action='hub-menu#openExtras']" do
+    # 08: the extras, a button that swaps the list in place for the hidden one.
+    assert_select ".hub-menu button.menu-item[type=button][aria-keyshortcuts='8'][aria-expanded=false][aria-controls=hub-menu-extras][data-hub-menu-target~=extrasEntry][data-action='hub-menu#openExtras']" do
       assert_select ".menu-item__label", "Extras"
     end
     assert_select ".hub-menu [aria-disabled]", false
@@ -228,24 +242,20 @@ class PagesControllerTest < ActionDispatch::IntegrationTest
     assert_select "[style]", false
   end
 
-  test "the first card the player chose shows under VITRINE, any rarity; with none left, the automatic card under DERNIÈRE OBTENTION" do
+  test "the hub's showcase shows the latest find under DERNIÈRE OBTENTION, whatever cards the player chose for the profile" do
     common, rare, portal = catalog_card_seasons(:common_card_one, :rare_card_one, :portal_one).map(&:id)
-    [ common, rare, portal ].each { Game::Holding.create!(player_id: @player.id, card_season_id: it, quantity: 1) }
+    hold(@player, common, gained_at: 3.hours.ago)
+    hold(@player, rare, gained_at: 2.hours.ago)
+    hold(@player, portal, gained_at: 1.hour.ago)
     [ rare, common ].each { Game::AddToShowcase.new.call(player: @player, card_season_id: it).value! }
     sign_in(@player, origin: "/fr")
 
     get home_path(locale: :fr)
     assert_select ".hub-showcase:not(.hub-showcase--empty)" do
-      assert_select ".hub-showcase__kicker", "Vitrine"
-      assert_select "h2.hub-showcase__name", "Profondeurs bleues"
-      assert_select "a.button.button--secondary[href='/fr/cards/blue-depths/seasons/1']", "Voir la fiche"
-      assert_select "form.button-form[action='/fr/cards/blue-depths/seasons/1/repost'] button", "Reposter"
+      assert_select ".hub-showcase__kicker", "Dernière obtention"
+      assert_select "h2.hub-showcase__name", "Portal"
+      assert_select "a.button.button--secondary[href='/fr/cards/portal/seasons/1']", "Voir la fiche"
     end
-
-    [ rare, common ].each { Game::RemoveFromShowcase.new.call(player: @player, card_season_id: it).value! }
-    get home_path(locale: :fr)
-    assert_select ".hub-showcase__kicker", "Dernière obtention"
-    assert_select "h2.hub-showcase__name", "Portal"
   end
 
   test "a player holding no card sees the empty showcase, its primary opening a booster" do
@@ -345,7 +355,7 @@ class PagesControllerTest < ActionDispatch::IntegrationTest
     assert_select ".top-bar .packs-chip__next[data-controller=countdown][data-countdown-refresh-value=false][data-countdown-refresh-url-value='/en/packs-chip']"
   end
 
-  test "once the day's booster is collected, the daily panel stays: collected, with the countdown to 00:00 UTC and its bar" do
+  test "once the day's booster is collected, the daily panel folds behind a toggle: a check, collected, the countdown to 00:00 UTC and its bar" do
     travel_to(Time.current.utc.change(hour: 22, min: 30, sec: 15)) do
       Game::CollectDailyBonus.new.call(player: @player).value!
       sign_in(@player)
@@ -354,17 +364,23 @@ class PagesControllerTest < ActionDispatch::IntegrationTest
 
       assert_select ".daily-booster.daily-booster--collected" do
         assert_select ".daily-booster__state", "Collected"
+        assert_select ".daily-booster__state.visually-hidden", "Collected"
+        assert_select ".daily-booster__head > button.hub-fold[type=button][aria-expanded=false][data-controller=hub-fold][data-action='hub-fold#toggle']" do
+          assert_select ".visually-hidden", "Daily capsule: details"
+          assert_select "svg.pixel-icon.hub-done-icon[aria-hidden=true] + svg.pixel-icon.hub-fold__chevron[aria-hidden=true]"
+        end
         assert_select ".daily-booster__text", "A capsule joins your reserve. The next one will be ready on #{next_day.strftime("%Y-%m-%d")} 00:00 UTC."
         assert_select ".daily-booster__text time[datetime='#{next_day.iso8601}'][data-controller=local-time]"
         assert_select ".daily-booster__next[data-controller=countdown][data-countdown-seconds-value='5385'][data-countdown-hours-value=true]" do
           assert_select ".daily-booster__next-label", "Next in"
           assert_select ".daily-booster__clock[data-countdown-target=clock]", "01:29:45"
+          assert_select ".daily-booster__bar-clock[aria-hidden=true][data-countdown-target=clock]", "01:29:45"
           assert_select ".gauge[aria-hidden=true] .gauge__segment[data-countdown-target=segment]", count: 24
           assert_select ".gauge__segment--lit", count: 22
           assert_select ".visually-hidden", "Next capsule: #{next_day.strftime("%Y-%m-%d")} 00:00 UTC"
           assert_select ".visually-hidden time[datetime='#{next_day.iso8601}']"
         end
-        assert_select "button, a.button, form", false
+        assert_select "button:not(.hub-fold), a.button, form", false
       end
     end
     assert_select ".hub-menu a.menu-item[href='/en/booster'] .menu-item__badge"
@@ -433,13 +449,14 @@ class PagesControllerTest < ActionDispatch::IntegrationTest
     assert_select "#community-goal .hub-goal__status", false
     assert_select "#community-goal .gauge__segment", count: 24
     assert_select "#community-goal .gauge__segment--lit", count: 0
+    assert_select "#community-goal .hub-fold", false
 
     get home_path(locale: :fr)
     assert_select "#community-goal .hub-goal__line", text: /\AOuvrez 50[\s\u00a0\u202f]000 capsules cette semaine\.\z/
     assert_select "#community-goal .hub-goal__reward", text: "Récompense\u202F: une capsule rare par contributeur"
   end
 
-  test "a reached goal reads Accomplie on its reward line with a full lime gauge, in both languages" do
+  test "a reached goal folds behind its title bar and reads Accomplie on its reward line with a full lime gauge, in both languages" do
     week = Game::WeeklyGoal.week_start(Time.current)
     Game::WeeklyGoal.create!(week_start: week, total: 210, target: 200)
     sign_in(accounts_players(:moderator))
@@ -451,6 +468,8 @@ class PagesControllerTest < ActionDispatch::IntegrationTest
     assert_select "#community-goal .hub-goal__figures", text: "210 / 200"
     assert_select "#community-goal .gauge__segment--lit", count: 24
     assert_select "#community-goal .hub-goal__previous", false
+    assert_select "#community-goal > button.hub-fold[type=button][aria-expanded=false][data-controller=hub-fold] .visually-hidden",
+      "#{I18n.t("pages.home.goal.title", locale: :en)}: details"
 
     sign_in(@player, origin: "/fr")
     get home_path(locale: :fr)
@@ -580,14 +599,15 @@ class PagesControllerTest < ActionDispatch::IntegrationTest
     # marker), the weekly goal (one read once the job
     # has created the week's row), bank (count, next pack, daily claim), the
     # goal reward's claim slot,
-    # showcase (cards chosen, card held, card view), collection (owned, total), the
+    # showcase (card held, card view), collection (owned, total), the
     # player's goals (none here, so nothing to measure),
     # the top bar's copies per tier and rarity legend, the player menu's friends online, menu 06's
     # achievements earned and the rewards waiting to be claimed, the trades
     # waiting (menu 03 and the Trades tab share one count), the invitations waiting
     # (the player menu's), the LIVE ticker's entries and the feed strip's
-    # (none here, so no players or cards), and the Flukeometer panel's standing,
-    # distribution, Privileged threshold and top three, and the market settings in force.
+    # (none here, so no players or cards), the Flukeometer panel's standing,
+    # distribution, Privileged threshold and top three, the market settings in force,
+    # and the Grand Inventaire panel (two counts, the latest discovery, its card and its pioneer).
     assert_hub_queries(PLAYER_HUB_QUERIES)
     assert_select ".hub-showcase .card"
 
@@ -665,7 +685,7 @@ class PagesControllerTest < ActionDispatch::IntegrationTest
     assert_select ".legal__affiliation", /n'est affilié ni à Valve ni à Steam/
     assert_select ".legal__section", text: /CNIL/
     donation = css_select("main a.legal__donation").sole
-    assert_equal [ "https://buymeacoffee.com/theiereman", "_blank", "Soutenir (nouvel onglet)" ],
+    assert_equal [ "https://fr.tipeee.com/gameble-trading-card-game", "_blank", "Soutenir (nouvel onglet)" ],
       [ donation["href"], donation["target"], donation.text.squish ]
     assert_includes donation["rel"].split, "noopener"
     assert_select "section[aria-labelledby=legal-support]", text: /Ils passent par Buy Me a Coffee/
@@ -717,7 +737,7 @@ class PagesControllerTest < ActionDispatch::IntegrationTest
     assert_select ".legal__contact a[href=?]", "mailto:contact@example.test", "contact@example.test"
     assert_select ".legal__host-name", "Example Hosting"
     assert_select ".legal__host-address", "1 rue de l'Exemple, 75000 Paris"
-    assert_select ".legal__access", 'access: from the settings, with "Export" under "My data", which downloads a copy of your data in a reusable file, your sign-in methods and your Steam library list, and your market data: your wallet, your PiCoin entries, your listings and your bids with your own maximums, included;'
+    assert_select ".legal__access", 'access: from the settings, with "Export" under "My data", which downloads a copy of your data in a reusable file, your sign-in methods and your Steam library list, and your market data: your wallet, your PiCoin entries, your listings, your bids with your own maximums, your buy orders, your sales to orders, your Archive purchases and your bought slots, included;'
     assert_select ".legal__access a", false
   end
 
@@ -737,7 +757,7 @@ class PagesControllerTest < ActionDispatch::IntegrationTest
     get legal_path(locale: :fr)
 
     assert_response :success
-    assert_select ".legal__updated", "Dernière mise à jour\u202F: 10 novembre 2026"
+    assert_select ".legal__updated", "Dernière mise à jour\u202F: 23 novembre 2026"
     %w[.legal__moderation .legal__notice .legal__rectification .legal__objection .legal__death .legal__banned].each do |line|
       assert_select "#{line} a.legal__link[href=?]", "mailto:contact@example.test", "contact@example.test"
     end
@@ -805,11 +825,11 @@ class PagesControllerTest < ActionDispatch::IntegrationTest
     configure_legal
     wording = {
       en: { paragraph: [ "market notices and the feed entries announcing your sales", "erases your name from the bid histories", "balance is destroyed without refund",
-                         "once your listings and leading bids are resolved", "without identity" ],
+                         "once your listings, leading bids and buy orders are resolved", "withdraws your open listings and your open buy orders", "without identity" ],
             retention: [ "market notices and the feed entries announcing your sales are deleted", "your name is erased from the bid histories", "the balance is destroyed" ],
             signals: "replaced every day", not_erased: /erases your name from (your )?(market )?notices/ },
       fr: { paragraph: [ "notifications du marché et les entrées du fil qui annoncent vos ventes", "efface votre nom des historiques d'enchères", "détruit sans remboursement",
-                         "une fois vos annonces et vos enchères en tête réglées", "sans identité" ],
+                         "une fois vos annonces, vos enchères en tête et vos ordres d'achat réglés", "retire vos annonces et vos ordres d'achat en cours", "sans identité" ],
             retention: [ "les notifications du marché et les entrées du fil qui annoncent vos ventes sont supprimées", "votre nom est effacé des historiques d'enchères", "le solde est détruit" ],
             signals: "remplacés chaque jour", not_erased: /efface votre nom des notifications/ }
     }
@@ -829,8 +849,8 @@ class PagesControllerTest < ActionDispatch::IntegrationTest
   test "the access right names the Steam library and the market data the export covers, in both languages" do
     configure_legal
     words = {
-      fr: [ "la liste de votre bibliothèque Steam", "votre portefeuille", "vos mouvements de PiCoins", "vos annonces", "vos enchères avec vos propres maximums" ],
-      en: [ "your Steam library list", "your wallet", "your PiCoin entries", "your listings", "your bids with your own maximums" ]
+      fr: [ "la liste de votre bibliothèque Steam", "votre portefeuille", "vos mouvements de PiCoins", "vos annonces", "vos enchères avec vos propres maximums", "vos ordres d'achat", "vos ventes à des ordres", "vos achats aux Archives", "vos emplacements achetés" ],
+      en: [ "your Steam library list", "your wallet", "your PiCoin entries", "your listings", "your bids with your own maximums", "your buy orders", "your sales to orders", "your Archive purchases", "your bought slots" ]
     }
 
     words.each do |locale, terms|
@@ -869,12 +889,12 @@ class PagesControllerTest < ActionDispatch::IntegrationTest
             retention: "la liste des jeux de votre bibliothèque Steam\u202F: tant que le compte existe et que la synchronisation est activée\u202F; elle est effacée aussitôt que vous désactivez «\u202FSynchroniser mes jeux Steam\u202F» dans les paramètres ou supprimez votre compte\u202F;",
             list: "la liste de votre bibliothèque Steam", setting: "synchronisation des jeux Steam", objection: "désactivez «\u202FSynchroniser mes jeux Steam\u202F»",
             service: "Steam (Valve) gère la connexion et fournit votre nom de profil et, une fois par jour tant que la synchronisation est activée, les jeux de votre bibliothèque Steam\u202F;",
-            updated: "Dernière mise à jour\u202F: 10 novembre 2026" },
+            updated: "Dernière mise à jour\u202F: 23 novembre 2026" },
       en: { stored: 'if you sign in with Steam and leave "Sync my Steam games" on in the settings: the list of the catalog games your Steam library holds, read from Steam once a day for your "My Steam library" set, with the date of its last sync and, when Steam stops sharing your library, since when;',
             retention: 'the list of your Steam library\'s games: as long as the account exists and the sync is on; it is erased at once when you turn "Sync my Steam games" off in the settings or delete your account;',
             list: "your Steam library list", setting: "Steam games sync", objection: 'turn "Sync my Steam games" off',
             service: "Steam (Valve) handles sign-in and provides your profile name and, once a day while the sync is on, the games of your Steam library;",
-            updated: "Last updated: 10 November 2026" }
+            updated: "Last updated: 23 November 2026" }
     }
 
     library.each do |locale, copy|
@@ -916,18 +936,6 @@ class PagesControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
-  test "a signed-in player finds the legal page beside the version, in their locale" do
-    sign_in(@player)
-
-    get home_path(locale: :en)
-
-    assert_select "body > .app-version a.app-version__legal[href=?]", "/en/legal", "Legal notice"
-
-    get home_path(locale: :fr)
-
-    assert_select "body > .app-version a.app-version__legal[href=?]", "/fr/legal", "Mentions légales"
-  end
-
   test "the privacy section opens by naming the controller of the data, with the contact when there is one" do
     configure_legal(contact_email: "contact@example.test")
 
@@ -957,7 +965,7 @@ class PagesControllerTest < ActionDispatch::IntegrationTest
     seller = accounts_players(:moderator)
     soon = listing!(seller:, card_season: catalog_card_seasons(:common_card_one), ends_at: 15.minutes.from_now)
     listing!(seller:, card_season: catalog_card_seasons(:rare_card_one), hours: 24)
-    Game::Market::Mint.credit(player_id: @player.id, amount: 4_000, settings_id: Game::Market::CurrentSettings.call.id)
+    Game::Market::Ledger.post(Game::Market::Mint.credit(player_id: @player.id, amount: 4_000, settings_id: Game::Market::CurrentSettings.call.id))
     sign_in(@player)
 
     get home_path(locale: :en)

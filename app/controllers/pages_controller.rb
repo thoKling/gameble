@@ -25,6 +25,7 @@ class PagesController < ApplicationController
     @goals = Game::GoalNeeds.call(current_player)
     @live_strip = LiveStream.strip_items
     @fortune_panel = Game::FortunePanel.call(current_player)
+    @grand_inventory = Game::GrandInventory.new(seasons: :all)
     @market_pulse = Game::Market::MarketPulse.call(locale: I18n.locale, limit: 3) if helpers.shell_balance
   end
 
@@ -106,9 +107,7 @@ class PagesController < ApplicationController
     end
 
     def load_showcase
-      chosen = Game::ChosenShowcase.call(current_player).first
-      @showcase_chosen = !chosen.nil?
-      id = chosen || Game::LatestBestCard.call(current_player, season: @season)
+      id = Game::LatestBestCard.call(current_player, season: @season)
       @showcase = Catalog::CardViews.call([ id ], locale: I18n.locale)[id] if id
     end
 

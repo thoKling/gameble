@@ -1,6 +1,14 @@
-<% unless waiting.nil? %>
-  <%= turbo_stream.update "menu-trades-badge", partial: "pages/menu_trades_badge", locals: { waiting: } %>
-  <%= turbo_stream.update "tab-trades-badge", partial: "shell/tab_trades_badge", locals: { waiting: } %>
+<% unless waiting.nil? || outbid.nil? %>
+  <%= turbo_stream.update "menu-trades-badge", partial: "pages/menu_trades_badge", locals: { waiting:, outbid: 0 } %>
+  <%= turbo_stream.update "menu-market-badge", partial: "pages/menu_trades_badge", locals: { waiting: 0, outbid: } %>
+  <%= turbo_stream.update "tab-trades-badge", partial: "shell/tab_trades_badge", locals: { waiting:, outbid: } %>
+  <%= turbo_stream.update "subtab-friends-badge", partial: "exchanges/friends_badge", locals: { waiting: } %>
+  <%= turbo_stream.update "subtab-market-badge", partial: "exchanges/market_badge", locals: { outbid: } %>
+  <%= turbo_stream.update "market-bids-badge", partial: "markets/bids_badge", locals: { outbid: } %>
+<% end %>
+<% unless duels_active.nil? %>
+  <%= turbo_stream.update "tab-duels-badge", partial: "shell/tab_duels_badge", locals: { count: duels_active } %>
+  <%= turbo_stream.update "menu-duels-badge", partial: "pages/menu_duels_badge", locals: { count: duels_active } %>
 <% end %>
 <% unless invitations.nil? %>
   <%= turbo_stream.update "player-menu-invitations-badge", partial: "pages/menu_invitations_badge", locals: { invitations: } %>
@@ -16,11 +24,6 @@
 <% unless balance.nil? %>
   <%= turbo_stream.update_all ".balance-chip", partial: "shell/balance_figures", locals: { balance: } %>
 <% end %>
-<% unless outbid.nil? %>
-  <%= turbo_stream.update "menu-market-badge", partial: "pages/menu_market_badge", locals: { outbid: } %>
-  <%= turbo_stream.update "tab-market-badge", partial: "shell/tab_market_badge", locals: { outbid: } %>
-  <%= turbo_stream.update "market-bids-badge", partial: "markets/bids_badge", locals: { outbid: } %>
-<% end %>
 <% outbid_lines.each do |line| %>
   <%= turbo_stream.append "market-status-lines", partial: "shell/market_status_line", locals: { line: } %>
 <% end %>
@@ -35,6 +38,15 @@
 <% card_backs.each do |key| %>
   <%= turbo_stream.append "toasts", ToastComponent.new(title: t("card_backs.unlocked.title"), message: card_back_name(Game::CardBacks.find(key)),
         after_reveal: true) %>
+<% end %>
+<% if duel.received? %>
+  <%= turbo_stream.update "duel-received", partial: "shell/duel_dialog", locals: { player: } %>
+<% end %>
+<% duel.closings.each do |closing| %>
+  <%= turbo_stream.append "toasts", ToastComponent.new(message: t("duels.received.#{closing.kind}", name: duel_plain_name(closing.other))) %>
+<% end %>
+<% if (outcome = duel.outcome) %>
+  <%= turbo_stream.update "duel-sheet-outcome", partial: "duels/sheet_outcome", locals: { outcome: } %>
 <% end %>
 <% signals.each do |signal| %>
   <%= turbo_stream_action_tag "gameble-event", event: signal %>

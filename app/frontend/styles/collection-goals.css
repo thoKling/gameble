@@ -20,6 +20,26 @@
   --goal: var(--color-goal-5);
 }
 
+.goal-tone--6 {
+  --goal: var(--color-goal-6);
+}
+
+.goal-tone--7 {
+  --goal: var(--color-goal-7);
+}
+
+.goal-tone--8 {
+  --goal: var(--color-goal-8);
+}
+
+.goal-tone--9 {
+  --goal: var(--color-goal-9);
+}
+
+.goal-tone--10 {
+  --goal: var(--color-goal-10);
+}
+
 /* A numbered bookmark: the outline is a filter on the wrapper, since a clip-path would cut it. */
 .goal-bookmark {
   --bookmark-width: 18px;
@@ -79,6 +99,7 @@
   align-items: baseline;
   justify-content: space-between;
   gap: var(--space-4);
+  padding-block: var(--space-2);
 }
 
 .goals__count {
@@ -305,8 +326,20 @@
   margin-top: var(--space-3);
 }
 
+.goal-control__refusal--bought {
+  color: var(--color-text);
+}
+
 .goal-control__limit {
   text-transform: uppercase;
+}
+
+.goal-control__price {
+  margin: var(--space-3) 0 0;
+  color: var(--color-muted);
+  font: var(--font-body-small);
+  letter-spacing: var(--tracking-body-small);
+  text-align: right;
 }
 
 .goal-control__link {
@@ -346,6 +379,26 @@
 
 .set-album__header:has(.goal-control--set.goal-tone--5) {
   --goal: var(--color-goal-5);
+}
+
+.set-album__header:has(.goal-control--set.goal-tone--6) {
+  --goal: var(--color-goal-6);
+}
+
+.set-album__header:has(.goal-control--set.goal-tone--7) {
+  --goal: var(--color-goal-7);
+}
+
+.set-album__header:has(.goal-control--set.goal-tone--8) {
+  --goal: var(--color-goal-8);
+}
+
+.set-album__header:has(.goal-control--set.goal-tone--9) {
+  --goal: var(--color-goal-9);
+}
+
+.set-album__header:has(.goal-control--set.goal-tone--10) {
+  --goal: var(--color-goal-10);
 }
 
 @media (max-width: 719px) {

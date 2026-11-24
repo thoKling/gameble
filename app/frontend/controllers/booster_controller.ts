@@ -6,6 +6,7 @@ import { reflectChange } from "../lib/booster_reflect"
 import { startingState } from "../lib/booster_start"
 import { AfterRender } from "../lib/booster_after_render"
 import { gameplayFor, type Gameplay } from "../lib/booster_gameplay"
+import type { BoosterMarket } from "../lib/booster_market"
 import { BoosterFaces } from "../lib/booster_faces"
 import { LayoutWatch } from "../lib/booster_layout_watch"
 import { BoosterRenderer } from "../lib/booster_render"
@@ -29,7 +30,6 @@ import {
   owedBankTaken,
   reserveSelected,
   revealingOpening,
-  topOfPile,
   zoomClosed,
   zoomOpened,
   zoomStepped,
@@ -46,7 +46,7 @@ import type BoosterInfoController from "./booster_info_controller"
 import type BoosterReservesController from "./booster_reserves_controller"
 import type BoosterPlateController from "./booster_plate_controller"
 import type BoosterStageController from "./booster_stage_controller"
-import type { CardIntent } from "./booster_stage_controller"
+import type { CardIntent, MarketIntent } from "./booster_stage_controller"
 import type BoosterTrayController from "./booster_tray_controller"
 import type BoosterZoomController from "./booster_zoom_controller"
 
@@ -68,10 +68,12 @@ export class BoosterController extends Controller<HTMLElement> {
     reserve: String,
     cardUrl: String,
     repostUrl: String,
+    market: Object,
     bankUrl: String,
     delimiter: String,
     packSize: Number,
     season: Number,
+    seasonName: String,
     bank: Object,
     held: Object,
     strings: Object,
@@ -102,10 +104,12 @@ export class BoosterController extends Controller<HTMLElement> {
   declare readonly reserveValue: Reserve
   declare readonly cardUrlValue: string
   declare readonly repostUrlValue: string
+  declare readonly marketValue: BoosterMarket
   declare readonly bankUrlValue: string
   declare readonly delimiterValue: string
   declare readonly packSizeValue: number
   declare readonly seasonValue: number
+  declare readonly seasonNameValue: string
   declare bankValue: BankValues
   declare heldValue: unknown
   declare readonly stringsValue: BoosterStrings
@@ -177,6 +181,7 @@ export class BoosterController extends Controller<HTMLElement> {
   }
 
   disconnect(): void {
+    this.gameplay?.cardMarket.flush(false)
     this.timers.dispose()
     this.countdown?.dispose()
     this.countdown = undefined
@@ -203,6 +208,7 @@ export class BoosterController extends Controller<HTMLElement> {
     void this.apply((s) => reserveSelected(s, reserve))
 
   open(): void {
+    this.gameplay?.cardMarket.flush(true)
     void this.openings?.opening.open()
   }
 
@@ -228,12 +234,18 @@ export class BoosterController extends Controller<HTMLElement> {
     )
     if (action === "reveal") void this.gameplay?.reveals.reveal(index, false)
     else if (action === "store") void this.gameplay?.cardStore.store(index, false)
-    else if (action === "leave") this.gameplay?.cardExit.leaveFor(index)
+    else if (action === "zoom") this.apply((s) => zoomOpened(s, index))
   }
 
   repostCard({ detail: { index } }: Intent<CardIntent>): void {
     void this.gameplay?.cardExit.repost(index)
   }
+
+  moveToMarket({ detail: { index, place } }: Intent<MarketIntent>): void {
+    this.gameplay?.cardMarket.move(index, place)
+  }
+
+  undoMarketMove = ({ detail: { index } }: Intent<CardIntent>): void => this.gameplay?.cardMarket.undo(index)
 
   pressCard(event: Intent<CardIntent>): void {
     if (this.state && canStore(this.state, event.detail.index, false, performance.now())) event.preventDefault()
@@ -243,12 +255,6 @@ export class BoosterController extends Controller<HTMLElement> {
     if (this.state && !abandoned && swipeStores(dx, dy) && canStore(this.state, index, false, performance.now()))
       void this.gameplay?.cardStore.store(index, false)
     else this.gameplay?.cardStore.springBack(index)
-  }
-
-  storeTop(): void {
-    if (!this.state) return
-    const index = topOfPile(this.state.revealed, this.state.stored)
-    if (index !== null) void this.gameplay?.cardStore.store(index, false)
   }
 
   openZoom({ detail: { index } }: Intent<{ index: number }>): void {
@@ -347,6 +353,7 @@ export class BoosterController extends Controller<HTMLElement> {
       delimiter: this.delimiterValue,
       cardUrl: this.cardUrlValue,
       repostUrl: this.repostUrlValue,
+      market: this.marketValue,
       state: () => this.state,
       rarityNames: () => this.faces.rarityNames,
       whenIdle: () => this.whenIdle(),
@@ -359,6 +366,7 @@ export class BoosterController extends Controller<HTMLElement> {
       delimiter: this.delimiterValue,
       packSize: this.packSizeValue,
       season: this.seasonValue,
+      seasonName: this.seasonNameValue,
       cardUrl: this.cardUrlValue,
       left: () => this.left,
       rarityNames: () => this.faces.rarityNames,

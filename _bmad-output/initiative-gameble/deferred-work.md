@@ -634,3 +634,161 @@
 - source_plan: `_bmad-output/initiative-gameble/epic-instant-capsule-opening/story-a-capsule-opens-and-reveals-at-once-while-its-confirmation-g-plan.md`
   summary: The opening confirmation queue in localStorage is not tied to a player; after another account signs in on the same browser, the first player's queued token is sent, refused and dropped (nothing is lost on the server, the capsule stays unopened).
   evidence: `QUEUE_STORAGE_KEY` in `app/frontend/lib/opening_queue.ts` is a single key; clearing it on sign-out belongs with the offline-screen story's sign-out cleanup.
+
+- source_plan: `_bmad-output/initiative-gameble/plan-season-names.md`
+  summary: A timer of `annonce_controller.ts` (line 106, `postLive`) fires after its test is torn down and throws "Cannot read properties of undefined (reading 'posted')" at `lib/annonce.ts:67`, failing `npm run test:js` at random.
+  evidence: Seen in 3 of 7 full vitest runs on 2026-11-15, with all 1388 tests passing; the file alone passes, and later runs on both the baseline and the branch came out clean, so it is load- or order-dependent and predates this change.
+
+- source_plan: none
+  summary: Achievements for actions that leave no trace today — complete 10/25/50 goals (reached goals are deleted silently, so a counter from 0), change avatar 1/5 times, look at the GitHub repo and the support page (clicks on SOURCE_CODE_URL and DONATION_URL in ExternalLinksHelper, recorded by a POST since GETs never write).
+  evidence: Split on 2026-11-16 from the achievements-wave request; it needs new per-player counters and a click beacon, independent of the metrics built on existing data.
+- source_plan: none
+  summary: Profile-visit achievements — view another player's profile 1/5/20 times and receive 10/50/100 visits, one visit at most per visitor/profile per hour, recorded by a POST beacon from the public profile; deletion, export and the legal text must cover the new data.
+  evidence: Split on 2026-11-16 from the achievements-wave request; it adds a personal-data table and its privacy coverage.
+- source_plan: none
+  summary: A "join the gameble Discord" achievement verified by a Discord bot that checks guild membership of the player's linked Discord identity (Clerk oauth_discord); the author creates the bot and adds its token and the guild id to the credentials.
+  evidence: Split on 2026-11-16 from the achievements-wave request; it is an external integration that waits on the author's bot setup.
+- source_plan: none
+  summary: A "contribute to the code" achievement the author grants by hand from the back office.
+  evidence: Split on 2026-11-16 from the achievements-wave request; it needs a new back-office action, independent of the metric-based achievements.
+
+- source_plan: `_bmad-output/initiative-gameble/plan-repost-set-tiers.md`
+  summary: FeedsControllerTest "the counters of a page are read in one query whatever the number of entries" fails when run alone or with few files (2 reaction queries instead of 1).
+  evidence: fails on baseline e34e9da0 with `bin/rails test test/controllers/feeds_controller_test.rb:777`; passes in the full run, so it is order-dependent.
+- source_plan: `_bmad-output/initiative-gameble/epic-duel-stats-and-decks/story-every-card-s-detail-shows-its-duel-profile-recomputed-each-m-plan.md`
+  summary: `Game::DuelMeasures` treats every published season as regular; when the tribute season of exotic cards lands, its card-seasons must get no duel stats row.
+  evidence: no season kind or tribute season exists yet (exotic cards parked); the measures filter only `status = 'published'` and `rarity IS NOT NULL` (`app/domains/game/app/queries/game/duel_measures.rb`).
+- source_plan: `_bmad-output/initiative-gameble/epic-duel-stats-and-decks/story-every-card-s-detail-shows-its-duel-profile-recomputed-each-m-plan.md`
+  summary: `LibraryControllerTest` "a player sees their unique cards…" fails on develop: it still expects the all-seasons rarity legend figure ("3 / 155") that the shell commit dropping the all-seasons column removed.
+  evidence: `test/controllers/library_controller_test.rb:119`, Expected ["3 / 150", "3 / 155"], Actual ["3 / 150"]; the commit `f22bf3b7` changed the legend and its shell and booster tests but not this one; unrelated to the duel stats.
+  resolved: `f62dd90d` brought the test level; it expects "3 / 150" alone (refactor sweep of the duel stats and decks epic, 2026-11-16).
+- source_plan: `_bmad-output/initiative-gameble/epic-duel-stats-and-decks/story-every-card-s-detail-shows-its-duel-profile-recomputed-each-m-plan.md`
+  summary: After a season publication between two Mondays, the next Monday's last weekly percentiles are the season run's values, not the previous Monday's, so the Monday feed entry and the editor's arrows miss what moved between that Monday and the publication.
+  evidence: a `first` or `weekly` run copies the row's current percentiles into the weekly ones (`Game::DuelStatRows#weekly_percentiles`), and a `season` run has already replaced those current percentiles; the row keeps one previous set only. Two ways out, an author's choice: a second set of stored percentiles (the last weekly run's), or a season run that keeps the rows of card-seasons already ranked and ranks only the new season (groups are per season, so the old rows stay consistent). The Monday feed entry story reads these percentiles first; it bites from the first season published after the duel stats ship.
+
+## Deferred from: build of story-a-player-builds-a-deck-of-twelve-cards-in-the-deck-editor-plan (2026-11-15)
+
+- source_plan: `_bmad-output/initiative-gameble/epic-duel-stats-and-decks/story-a-player-builds-a-deck-of-twelve-cards-in-the-deck-editor-plan.md`
+  summary: Deck-blocked copies read as "in a trade" on the collection grid, the set album and the card page until `Game::ReservedCopies` gains the in-deck share.
+  evidence: the deck operations raise `game_holdings.reserved` and `Game::ReservedCopies` computes `in_trade` as reserved minus listings (`app/domains/game/app/queries/game/reserved_copies.rb`); the epic gives the in-deck share to the story naming deck cards on the trade, sale and entrust screens; staging only, since release 1.4 ships the epic together.
+  resolved: `Game::ReservedCopies` returns the in-deck share, and the grid, album and card page read "Dans un deck" (story-a-deck-card-s-copy-is-named-and-freed-on-the-trade-sale-and-plan, 2026-11-15).
+- source_plan: `_bmad-output/initiative-gameble/epic-duel-stats-and-decks/story-a-player-builds-a-deck-of-twelve-cards-in-the-deck-editor-plan.md`
+  summary: `npm run test:js` sometimes exits 1 on an unhandled error from `annonce_controller.test.ts` (`posted` reading `state` of a disconnected controller from a timer), while every test passes.
+  evidence: reproduced on the baseline `ad7a35b8` in a clean worktree (132 files, 1388 tests passed, 1 unhandled error, exit 1); `app/frontend/controllers/annonce_controller.ts:180` `postLive` runs from a timer after disconnect; unrelated to the deck editor.
+
+## Deferred from: build of story-each-monday-the-feed-says-the-cards-standing-has-moved-plan (2026-11-15)
+
+- source_plan: `_bmad-output/initiative-gameble/epic-duel-stats-and-decks/story-each-monday-the-feed-says-the-cards-standing-has-moved-plan.md`
+  summary: After a season publication between two Mondays, the Monday feed post (and later the deck editor's arrows) compares with the season run's percentiles, not the previous Monday's, so the moves of the first part of that week are never reported.
+  evidence: `Game::DuelStatRows` rotates the last weekly percentiles on every non-season run from the previous row's percentiles, which a mid-week season run has replaced; the post reads the stored `*_weekly_percentile` (`Game::DuelProfiles.weekly_changes`). Keeping last Monday's values across a season run needs a second set of columns in `game_duel_stats`; seasons are published a few times a year.
+
+## Deferred from: build of story-the-duels-tab-the-duels-screen-with-the-player-s-decks-and-e-plan (2026-11-15)
+
+- source_plan: `_bmad-output/initiative-gameble/epic-duel-stats-and-decks/story-the-duels-tab-the-duels-screen-with-the-player-s-decks-and-e-plan.md`
+  summary: The native apps' five tabs (DUELS in MARCHÉ's place, ÉCHANGES starting at `/exchanges`) were changed in code only and never compiled or run; a build of both apps must check the tabs, the `atRoot` rule for `/trades` and `/market`, and the new `tab-duels` icon before the apps are submitted.
+  evidence: no Swift or Kotlin toolchain on the build machine; `mobile/ios/Gameble/Tabs.swift`, `mobile/android/app/src/main/java/net/gameble/app/Tabs.kt`, `res/layout/activity_main.xml` (`duels_host`), `res/values{,-fr}/strings.xml` (`tab_duels`); submitting the apps is the author's.
+- source_plan: `_bmad-output/initiative-gameble/epic-duel-stats-and-decks/story-the-duels-tab-the-duels-screen-with-the-player-s-decks-and-e-plan.md`
+  summary: On the market screens a gap shows between the ÉCHANGES sub-tab bar and the market panel, since the market keeps its own top padding.
+  evidence: `app/views/exchanges/_tabs.html.erb` renders above the `market-tab` frame, whose `.market-screen` keeps its padding (`app/frontend/styles/exchanges-tabs.css`); cosmetic.
+
+## Deferred from: build of story-refactor-sweep-plan (2026-11-16)
+
+- source_plan: `_bmad-output/initiative-gameble/epic-duel-stats-and-decks/story-refactor-sweep-plan.md`
+  summary: A failed or throttled deck deletion, and a deck removal with no referer, land on the new-deck editor rather than the Duels screen.
+  evidence: `app/controllers/decks_controller.rb` (`throttle_player ... path: -> { new_deck_path }`, `redirect_refused(..., new_deck_path)`) and `app/controllers/deck_removals_controller.rb` (`throttle_player` path, `redirect_back_or_to new_deck_path`); the removal's two are asserted in `test/controllers/deck_blocked_copies_test.rb:127,138`, the deletion's two by no test; a leftover of the editor being built before the Duels screen; moving them changes where a player lands, so it is a story, not cleanup.
+- source_plan: `_bmad-output/initiative-gameble/epic-duel-stats-and-decks/story-refactor-sweep-plan.md`
+  summary: `TradeSuggestions.still_spared` and the suggestions' `Spare.copies` still count free copies through `FreeEditions`, beside the one spare rule of `Game::SpareCopies`.
+  evidence: `app/domains/game/app/queries/game/trade_suggestions.rb` (`still_spared`, `DUPLICATE_COPIES`); the two differ only on unrated editions, so reading `SpareCopies` there changes which suggestions survive.
+- source_plan: `_bmad-output/initiative-gameble/epic-duel-stats-and-decks/story-refactor-sweep-plan.md`
+  summary: The duel profile's bar copies the progress-bar rules other screens repeat, and its day format the `:long_day` / `:long_day_first` choice four other helpers repeat.
+  evidence: `app/frontend/styles/duel-profile.css` beside `hub-daily-sets.css` (`.set-row__bar`) and the other stylesheets styling `progress`; `DuelProfileHelper#duel_profile_date` beside `card_details_helper.rb`, `card_backs_helper.rb`, `custom_sets_helper.rb` and `market_health_helper.rb`; one shared class and one helper touch screens outside the epic.
+
+## Deferred from: build of story-the-phone-duel-screen-calls-answers-and-reveals-each-round-a-plan (2026-11-17)
+
+- source_plan: `_bmad-output/initiative-gameble/epic-live-friend-duels/story-the-phone-duel-screen-calls-answers-and-reveals-each-round-a-plan.md`
+  summary: After ANNONCER or RÉPONDRE fires, the button stays `aria-disabled` if the request fails at the network level, so the player must change a choice to retry.
+  evidence: `app/frontend/controllers/duel_controller.ts` (`release` disables the button and calls `requestSubmit()`); the retry and "ENVOI…" state belong to the dropped-connection entry (43.7).
+  resolved: entry 43.7 (2026-11-17): `duel#failed` shows the sending label on the button and sends the same form again every 2 s while the move's timer runs; a resent move refused by its `move_number` comes back without an alert.
+- source_plan: `_bmad-output/initiative-gameble/epic-live-friend-duels/story-the-phone-duel-screen-calls-answers-and-reveals-each-round-a-plan.md`
+  summary: "Joué" over a 12-column deck thumbnail (about 26 px wide at 390 px, about 22 px at 320) may clip; unverified, needs a real-phone look.
+  evidence: `app/views/duels/_deck.html.erb`, `app/frontend/styles/duel-board.css` (`.duel-deck__played`, `overflow: hidden` on the item); hitl follow-up with the 400 ms touch guard, the flip, the drawn-card slide and a screen-reader pass.
+- source_plan: `_bmad-output/initiative-gameble/epic-live-friend-duels/story-the-phone-duel-screen-calls-answers-and-reveals-each-round-a-plan.md`
+  summary: The rematch's availability is read when the result is rendered; a friend going offline later shows on reload only.
+  evidence: `app/models/duel_screen.rb` (`rematch` reads `Game::ReachableFriends` at render; the result board is pushed once at the finishing move).
+
+## Deferred from: build of story-a-dropped-connection-or-a-reload-never-breaks-a-duel-plan (2026-11-17)
+
+- source_plan: `_bmad-output/initiative-gameble/epic-live-friend-duels/story-a-dropped-connection-or-a-reload-never-breaks-a-duel-plan.md`
+  summary: The native apps are not changed: a native tab or top-bar destination does not yet count as a disconnection through native code, and the native DUELS tab badge is not wired.
+  evidence: no Swift or Kotlin toolchain on the build machine; `mobile/` untouched; on the web the lease lapses 20 s after the page leaves.
+- source_plan: `_bmad-output/initiative-gameble/epic-live-friend-duels/story-a-dropped-connection-or-a-reload-never-breaks-a-duel-plan.md`
+  summary: After a move's timer has run out the button keeps its sending label until a board arrives; a cable that never connects shows no own-connection banner; the resume bell line also shows on the duel's own page.
+  evidence: `app/frontend/controllers/duel_controller.ts` (`resend`), `app/frontend/lib/duel_link.ts` (`linkChecked`), `Game::BellItems.duel_seats`.
+- source_plan: `_bmad-output/initiative-gameble/epic-live-friend-duels/story-a-dropped-connection-or-a-reload-never-breaks-a-duel-plan.md`
+  summary: Every board push also renders the connection slot and the absence sweep re-pushes an unchanged slot every 10 s while a seat is away; the load is unmeasured.
+  evidence: `app/jobs/duel_stream_job.rb`, `app/jobs/duel_absence_job.rb`; epic Unknown: live duel load.
+
+## Deferred from: build of story-refactor-sweep-plan (2026-11-17)
+
+- source_plan: `_bmad-output/initiative-gameble/epic-live-friend-duels/story-refactor-sweep-plan.md`
+  summary: `CallRound` and `AnswerRound` open their locked block with the same four steps (`role_of`, `duel.rules`, a turn check, `card_in_hand`) and differ only in the turn predicate; a shared step would need a turn-kind argument that reads no better than the two short blocks.
+  evidence: `app/domains/game/app/operations/game/call_round.rb` (`calling`), `app/domains/game/app/operations/game/answer_round.rb` (`answering`).
+- source_plan: `_bmad-output/initiative-gameble/epic-live-friend-duels/story-refactor-sweep-plan.md`
+  summary: `duel_sheet_controller.ts` and `duel_received_controller.ts` both carry `guard` and the open-attribute `keepOpen`, and the two clock controllers both set `TICK_MS = 250`; each is a one-to-three-line copy between two Stimulus controllers.
+  evidence: `app/frontend/controllers/duel_sheet_controller.ts`, `duel_received_controller.ts`, `duel_clock_controller.ts`, `duel_link_controller.ts`.
+
+## Deferred from: build of story-ten-duel-achievements-and-the-duelliste-card-back-plan (2026-11-17)
+
+- source_plan: `_bmad-output/initiative-gameble/epic-duel-capsule-record-and-achievements/story-ten-duel-achievements-and-the-duelliste-card-back-plan.md`
+  summary: Built before the duel capsule ticket, on purpose; nothing of this ticket needs the duel pack kind, `duel_day` or the Fortune columns, but the capsule ticket's emblem grid and its `origin_canisters.mjs` entry are still to come, and the Duelliste back draws its own crossed blades.
+  evidence: `script/pixel_art/named_backs.mjs` (the `duelliste` design) and `script/pixel_art/origin_canisters.mjs` (no duel origin yet); the capsule ticket may reuse the DESIGN.md emblem grid for both.
+  resolved: the duel capsule ticket added the DESIGN.md emblem grid and the duel origin to `origin_canisters.mjs`; the Duelliste back keeps its own motif, seven rows of blades over two cards in the back's own palette, because the emblem's 17 × 17 grid leaves no room for the cards; the two blade drawings do not share data and nothing contradicts DESIGN.md (2026-11-17).
+- source_plan: `_bmad-output/initiative-gameble/epic-duel-capsule-record-and-achievements/story-ten-duel-achievements-and-the-duelliste-card-back-plan.md`
+  summary: The ticket names a flavour per achievement, but the achievement locale structure has only a name and a condition per key, so no flavour was added.
+  evidence: `config/locales/en.yml` and `config/locales/fr.yml` (`achievements.names`, `achievements.conditions`); no flavour key exists for any of the 30 earlier achievements.
+
+## Deferred from: build of story-the-first-real-win-of-the-day-gives-a-duel-capsule-plan (2026-11-17)
+
+- source_plan: `_bmad-output/initiative-gameble/epic-duel-capsule-record-and-achievements/story-the-first-real-win-of-the-day-gives-a-duel-capsule-plan.md`
+  summary: The winner's top-bar capsule chips do not update on the duel's closing push; they read the new capsule on the next page load.
+  evidence: `PlayerStream` turns `Game::DuelFinished` into a duels notice only, and the event carries no capsule case.
+- source_plan: `_bmad-output/initiative-gameble/epic-duel-capsule-record-and-achievements/story-the-first-real-win-of-the-day-gives-a-duel-capsule-plan.md`
+  summary: A published season with an empty tier makes `Game::DrawPool.current` raise inside the finishing move, as it already does when a capsule opens; the duel then cannot finish until the season is repaired.
+  evidence: `Game::DuelCapsule.award` calls `Game::DrawPool.current` only for a granted win; a season cannot be published with an empty tier.
+
+## Deferred from: build of story-the-profile-and-the-duels-screen-show-the-player-s-record-an-plan (2026-11-17)
+
+- source_plan: `_bmad-output/initiative-gameble/epic-duel-capsule-record-and-achievements/story-the-profile-and-the-duels-screen-show-the-player-s-record-an-plan.md`
+  summary: DERNIERS DUELS reads each row's opponent with its own query, up to ten per Duels screen load, because the accounts domain has no query for several players at once.
+  evidence: `DuelHistory#rows` calls `Accounts::PlayerById` per result; `Accounts::PlayersById` does not exist.
+  resolved: `Accounts::PlayersById` reads the opponents of all rows in one query (refactor sweep of the epic, 2026-11-17).
+
+## Deferred from: build of story-refactor-sweep-plan (2026-11-17, epic-duel-capsule-record-and-achievements)
+
+- source_plan: `_bmad-output/initiative-gameble/epic-duel-capsule-record-and-achievements/story-refactor-sweep-plan.md`
+  summary: Three drawings of crossed blades exist (the 17 × 17 canister emblem, the 7 × 7 achievement glyph, the Duelliste back's motif) and the DUELS tab icon is a fourth; they differ in size and palette on purpose, so a shared grid would change the art.
+  evidence: `script/pixel_art/origin_canisters.mjs` (`BLADES`), `script/pixel_art/export.mjs` (`ACHIEVEMENT_GLYPHS.blades`), `script/pixel_art/named_backs.mjs` (`duelliste`).
+- source_plan: `_bmad-output/initiative-gameble/epic-duel-capsule-record-and-achievements/story-refactor-sweep-plan.md`
+  summary: `Game::DuelCapsule.award` returns `nil` both when nobody won and when the winner is removed or the pool is missing; a named constant for it would add a value no caller reads.
+  evidence: `app/domains/game/app/models/game/duel_capsule.rb`, `app/domains/game/app/operations/game/answer_round.rb` (`finish`).
+
+## Deferred from: code review of plan-grand-inventaire-screen (2026-11-19)
+
+- The pace-line pioneer link for a friend of a friends-only pioneer has no test; only `GrandInventoriesController` builds the friends set. Resolved 2026-11-19: test added.
+- The back link to a Grand Inventaire page past 60 cards has no test; it needs a 61-card fixture. Resolved 2026-11-19: test added.
+- source_plan: `_bmad-output/initiative-gameble/epic-market-volume/story-the-confier-wanted-table-applies-every-choice-in-one-validat-plan.md`
+  summary: ApplyWantedChoices' `stamp_not_covered` and `start_below_minimum` refusals reuse keys needing `%{amount}`/`%{rarity}` that `Refused(line:, code:)` does not carry.
+  evidence: `t("errors.game.#{code}")` on those codes raises MissingInterpolationArgument; the Confier table view must either get the values on `Refused` or new keys.
+  resolved: the Confier wanted table story (2026-11-23): `Refused` gains `amount:` (the rarity's minimum on `start_below_minimum`, the validation's whole stamp shortfall on `stamp_not_covered`); `Market::WantedChoicesController` interpolates it with the line's rarity name, and the operation test asserts both messages render.
+- source_plan: `_bmad-output/initiative-gameble/epic-market-volume/story-the-confier-wanted-table-applies-every-choice-in-one-validat-plan.md`
+  summary: ApplyWantedChoices tests miss the deleted-seller `:player_required` path and `no_rarity` on auction and order lines.
+  evidence: apply_wanted_choices_test.rb sets only `banned_at` and asserts `no_rarity` only on an entrust line.
+- source_plan: `_bmad-output/initiative-gameble/epic-market-volume/story-the-confier-wanted-table-applies-every-choice-in-one-validat-plan.md`
+  summary: ApplyWantedChoices and SellToOrder read `now` before taking locks, so an order expiring during the lock wait can still be served.
+  evidence: `now = Time.current` precedes `TradeLocks.players`; the recheck and `served_at` use it.
+
+## Deferred from: code review of the market-volume epic (2026-11-23)
+
+- The non-Turbo HTML response of `Market::ArchivePurchasesController#create` has no test; the form lives in a turbo frame, so the fallback is rarely reached. Model it on the slot purchase "without Turbo" test.
+- The wanted result panel is both a live region (`role="status"`) and receives focus on its heading; whether a screen reader reads it twice is unverified. A screen-reader pass settles it.
+- Capsule quick entrust (`EntrustmentsController#create`, JSON) entrusts wanted copies without the set-apart step. Decided 2026-11-23: leave as is.

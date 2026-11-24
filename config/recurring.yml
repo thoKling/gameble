@@ -45,6 +45,12 @@ drop_presence: &drop_presence
   queue: default
   schedule: every minute
 
+# A due buy order expires within a minute of its end, its PiCoins released to the buyer.
+expire_due_orders: &expire_due_orders
+  class: Game::Market::ExpireDueOrdersJob
+  queue: default
+  schedule: every minute
+
 check_market_health: &check_market_health
   class: Game::CheckMarketHealthJob
   queue: default
@@ -74,6 +80,18 @@ reconcile_wallets: &reconcile_wallets
   queue: default
   schedule: every day at 12:10am
 
+# A move whose deadline job was lost, or whose mover left the duel screen, is still played within seconds.
+sweep_duel_deadlines: &sweep_duel_deadlines
+  class: Game::SweepDuelDeadlinesJob
+  queue: duels
+  schedule: every 10 seconds
+
+# A seat whose lease has lapsed is shown to the other player as disconnected, with the time left to return.
+sweep_duel_absence: &sweep_duel_absence
+  class: DuelAbsenceJob
+  queue: duels
+  schedule: every 10 seconds
+
 # The Archives' stock of each edition is summed from the players' deposits.
 sum_archive_stocks: &sum_archive_stocks
   class: Game::ArchiveStocksJob
@@ -86,12 +104,26 @@ refresh_alt_signals: &refresh_alt_signals
   queue: default
   schedule: every day at 12:40am
 
+# A linked Discord account that joined the server earns its achievement.
+check_discord_memberships: &check_discord_memberships
+  class: Game::CheckDiscordMembershipsJob
+  queue: default
+  schedule: every hour
+
+# Every card's duel profile is recomputed as the week starts.
+compute_duel_stats: &compute_duel_stats
+  class: Game::ComputeDuelStatsJob
+  queue: default
+  args: [ "weekly" ]
+  schedule: every monday at midnight UTC
+
 development:
   recover_stalled_imports: *recover_stalled_imports
   sum_weekly_goal: *sum_weekly_goal
   broadcast_goal: *broadcast_goal
   expire_trades: *expire_trades
   close_due_auctions: *close_due_auctions
+  expire_due_orders: *expire_due_orders
   drop_presence: *drop_presence
   check_market_health: *check_market_health
   reconcile_wallets: *reconcile_wallets
@@ -100,6 +132,10 @@ development:
   publish_weekly_verdict: *publish_weekly_verdict
   apply_retention: *apply_retention
   sync_steam_libraries: *sync_steam_libraries
+  check_discord_memberships: *check_discord_memberships
+  compute_duel_stats: *compute_duel_stats
+  sweep_duel_deadlines: *sweep_duel_deadlines
+  sweep_duel_absence: *sweep_duel_absence
 
 production:
   recover_stalled_imports: *recover_stalled_imports
@@ -107,6 +143,7 @@ production:
   broadcast_goal: *broadcast_goal
   expire_trades: *expire_trades
   close_due_auctions: *close_due_auctions
+  expire_due_orders: *expire_due_orders
   drop_presence: *drop_presence
   check_market_health: *check_market_health
   reconcile_wallets: *reconcile_wallets
@@ -115,6 +152,10 @@ production:
   publish_weekly_verdict: *publish_weekly_verdict
   apply_retention: *apply_retention
   sync_steam_libraries: *sync_steam_libraries
+  check_discord_memberships: *check_discord_memberships
+  compute_duel_stats: *compute_duel_stats
+  sweep_duel_deadlines: *sweep_duel_deadlines
+  sweep_duel_absence: *sweep_duel_absence
   clear_solid_queue_finished_jobs:
     command: "SolidQueue::Job.clear_finished_in_batches(sleep_between_batches: 0.3)"
     schedule: every hour at minute 12

@@ -26,20 +26,24 @@ class PlayerStreamJobTest < ActiveSupport::TestCase
 
   def template(stream) = Nokogiri::HTML5.fragment(stream.at_css("template").inner_html)
 
-  test "a trades notice sends the waiting badge and the trades signal, in each locale" do
+  test "a trades notice sends the summed badge, the friends sub-tab's and the trades signal, in each locale" do
     PlayerStreamJob.perform_now([ { player_id: @hugo.id, topic: "trades" }, { player_id: @lea.id, topic: "trades" } ])
 
     english = received(@hugo, :en)
     menu = template(streams(english, "update", "menu-trades-badge").sole)
     assert_equal "1", menu.at_css(".menu-item__badge.menu-item__badge--alert").text
-    assert_equal "1 trade waiting for you", menu.at_css(".visually-hidden").text
+    assert_equal ", 1 trade to see", menu.at_css(".visually-hidden").text
     tab = template(streams(english, "update", "tab-trades-badge").sole)
     assert_equal "1", tab.at_css(".tab-bar__badge--alert").text
+    friends = template(streams(english, "update", "subtab-friends-badge").sole)
+    assert_equal [ "1", ", 1 trade waiting" ], [ friends.at_css(".exchanges-tabs__badge").text, friends.at_css(".visually-hidden").text ]
+    assert_empty template(streams(english, "update", "subtab-market-badge").sole).children
     assert_equal [ "trades-updated" ], streams(english, "gameble-event").map { it["event"] }
     assert_empty streams(english, "append")
 
     french = received(@hugo, :fr)
-    assert_equal "1 échange en attente de vous", template(streams(french, "update", "menu-trades-badge").sole).at_css(".visually-hidden").text
+    assert_equal ", 1 échange à voir", template(streams(french, "update", "menu-trades-badge").sole).at_css(".visually-hidden").text
+    assert_equal ", 1 échange en attente", template(streams(french, "update", "subtab-friends-badge").sole).at_css(".visually-hidden").text
 
     lea = received(@lea, :en)
     assert_empty template(streams(lea, "update", "menu-trades-badge").sole).children, "hidden at zero"
@@ -102,12 +106,85 @@ class PlayerStreamJobTest < ActiveSupport::TestCase
     assert_empty streams(english, "append")
   end
 
-  test "a market notice sends the market signal once and nothing else" do
+  test "a duels notice sends the duels signal and the DUELS badges, nothing else, in each locale" do
+    PlayerStreamJob.perform_now([ { player_id: @hugo.id, topic: "duels" } ])
+
+    %i[en fr].each do |locale|
+      fragment = received(@hugo, locale)
+      assert_equal [ "duels-updated" ], streams(fragment, "gameble-event").map { it["event"] }
+      assert_equal %w[tab-duels-badge menu-duels-badge], streams(fragment, "update").map { it["target"] }
+      assert_empty template(streams(fragment, "update", "tab-duels-badge").sole).text.strip
+      assert_empty streams(fragment, "append")
+    end
+  end
+
+  def duel_between(challenger, opponent, state:, seats:)
+    duel = Game::Duel.create!(state:, ended_at: (Time.current if %w[cancelled refused lapsed].include?(state)))
+    Game::DuelSeat.create!(duel:, role: "challenger", player_id: challenger.id, status: seats.first)
+    Game::DuelSeat.create!(duel:, role: "opponent", player_id: opponent.id, status: seats.last)
+    duel
+  end
+
+  def duel_notice(player, duel, kind, role) = { player_id: player.id, topic: "duels", duel_id: duel.id, kind:, role: }
+
+  test "a challenge sent to the invited player pushes the received dialog, in each locale" do
+    duel = duel_between(@lea, @hugo, state: "challenged", seats: %w[seated invited])
+
+    PlayerStreamJob.perform_now([ duel_notice(@hugo, duel, "sent", "opponent") ])
+
+    { en: "Léa challenges you to a duel.", fr: "Léa vous défie en duel." }.each do |locale, title|
+      fragment = received(@hugo, locale)
+      dialog = template(streams(fragment, "update", "duel-received").sole)
+      assert_equal title, dialog.at_css("dialog#duel-dialog .modal__title").text
+      assert_includes dialog.at_css("form[action$='/refusal']")["action"], duel.token
+      assert_empty streams(fragment, "append")
+    end
+    assert_empty broadcasts(PlayerStream.name(@lea, :en))
+  end
+
+  test "a challenge cancelled or lapsed empties the dialog and tells the invited player with a toast" do
+    cancelled = duel_between(@lea, @hugo, state: "cancelled", seats: %w[left left])
+    lapsed = duel_between(@lea, @hugo, state: "lapsed", seats: %w[left left])
+
+    PlayerStreamJob.perform_now([ duel_notice(@hugo, cancelled, "cancelled", "opponent") ])
+    PlayerStreamJob.perform_now([ duel_notice(@hugo, lapsed, "lapsed", "opponent") ])
+
+    english = broadcasts(PlayerStream.name(@hugo, :en)).map { Nokogiri::HTML5.fragment(ActiveSupport::JSON.decode(it)) }
+    english.each { assert_empty template(streams(it, "update", "duel-received").sole).children }
+    assert_equal [ "Léa cancelled their challenge.", "Léa's challenge has expired." ],
+      english.map { template(streams(it, "append", "toasts").sole).at_css(".toast__message").text }
+    french = Nokogiri::HTML5.fragment(ActiveSupport::JSON.decode(broadcasts(PlayerStream.name(@hugo, :fr)).first))
+    assert_equal "Léa a annulé son défi.", template(streams(french, "append", "toasts").sole).at_css(".toast__message").text
+  end
+
+  test "a challenge refused or lapsed tells the challenger in the open sheet, one that is accepted lands on the duel" do
+    @hugo.update!(persona_name: "Hugo")
+    refused = duel_between(@lea, @hugo, state: "refused", seats: %w[left left])
+
+    PlayerStreamJob.perform_now([ duel_notice(@lea, refused, "refused", "challenger") ])
+    line = template(streams(received(@lea, :en), "update", "duel-sheet-outcome").sole).at_css("p[data-duel-sheet-target=outcome]")
+    assert_equal "Hugo has no complete deck.", line.text, "the friend holds no complete deck"
+    assert_nil line["data-duel-sheet-landing"]
+
+    lapsed = duel_between(@lea, @hugo, state: "lapsed", seats: %w[left left])
+    PlayerStreamJob.perform_now([ duel_notice(@lea, lapsed, "lapsed", "challenger") ])
+    french = Nokogiri::HTML5.fragment(ActiveSupport::JSON.decode(broadcasts(PlayerStream.name(@lea, :fr)).last))
+    assert_equal "Hugo n'a pas répondu.", template(streams(french, "update", "duel-sheet-outcome").sole).at_css("p").text
+
+    accepted = duel_between(@lea, @hugo, state: "challenged", seats: %w[seated seated])
+    PlayerStreamJob.perform_now([ duel_notice(@lea, accepted, "accepted", "challenger") ])
+    english = Nokogiri::HTML5.fragment(ActiveSupport::JSON.decode(broadcasts(PlayerStream.name(@lea, :en)).last))
+    landing = template(streams(english, "update", "duel-sheet-outcome").sole).at_css("p")
+    assert_equal "/en/duels/#{accepted.token}", landing["data-duel-sheet-landing"]
+  end
+
+  test "a market notice sends the market signal once and the trades badges" do
     PlayerStreamJob.perform_now([ { player_id: @hugo.id, topic: "market" }, { player_id: @hugo.id, topic: "market" } ])
 
     english = received(@hugo, :en)
     assert_equal [ "market-updated" ], streams(english, "gameble-event").map { it["event"] }
-    assert_equal %w[menu-market-badge tab-market-badge market-bids-badge], streams(english, "update").map { it["target"] }
+    assert_equal %w[menu-trades-badge menu-market-badge tab-trades-badge subtab-friends-badge subtab-market-badge market-bids-badge],
+      streams(english, "update").map { it["target"] }
     assert_empty streams(english, "append")
   end
 
@@ -118,9 +195,10 @@ class PlayerStreamJobTest < ActiveSupport::TestCase
       starting_price: 20_000, current_price: 20_000, duration_hours: 24, ends_at: 1.day.from_now)
   end
 
-  test "a market notice shows no badge at zero and the count of outbid auctions, with its accessible name, in each locale" do
-    PlayerStreamJob.perform_now([ { player_id: @hugo.id, topic: "market" } ])
-    assert_empty template(streams(received(@hugo, :en), "update", "menu-market-badge").sole).css(".menu-item__badge")
+  test "a market notice sums the outbid auctions with the trades waiting on the tab, splits them between menus 03 and 04, and gives the market sub-tab its own count" do
+    PlayerStreamJob.perform_now([ { player_id: @lea.id, topic: "market" } ])
+    assert_empty template(streams(received(@lea, :en), "update", "menu-trades-badge").sole).css(".menu-item__badge")
+    assert_empty template(streams(received(@lea, :en), "update", "subtab-market-badge").sole).children
 
     listing = market_listing(accounts_players(:administrator))
     Game::Market::Bid.create!(listing:, player: @hugo, maximum: 30_000, price_after: 20_000, outcome: "beaten")
@@ -129,19 +207,26 @@ class PlayerStreamJobTest < ActiveSupport::TestCase
     PlayerStreamJob.perform_now([ { player_id: @hugo.id, topic: "market" } ])
 
     english = received(@hugo, :en)
+    menu = template(streams(english, "update", "menu-trades-badge").sole)
+    assert_equal [ "1", ", 1 trade to see" ], [ menu.at_css(".menu-item__badge--alert").text, menu.at_css(".visually-hidden").text ]
     menu = template(streams(english, "update", "menu-market-badge").sole)
-    assert_equal "1", menu.at_css(".menu-item__badge--alert").text
-    assert_equal "1 auction outbid", menu.at_css(".visually-hidden").text
-    assert_equal "1", template(streams(english, "update", "tab-market-badge").sole).at_css(".tab-bar__badge--alert").text
+    assert_equal [ "1", ", 1 auction to see" ], [ menu.at_css(".menu-item__badge--alert").text, menu.at_css(".visually-hidden").text ]
+    assert_equal "2", template(streams(english, "update", "tab-trades-badge").sole).at_css(".tab-bar__badge--alert").text
+    market = template(streams(english, "update", "subtab-market-badge").sole)
+    assert_equal [ "1", ", 1 auction outbid" ], [ market.at_css(".exchanges-tabs__badge").text, market.at_css(".visually-hidden").text ]
     chip = template(streams(english, "update", "market-bids-badge").sole)
     assert_equal [ "1", "1 outbid" ], [ chip.at_css(".market-screen__badge").text, chip.at_css(".visually-hidden").text ]
-    assert_equal "1 enchère dépassée", template(streams(received(@hugo, :fr), "update", "menu-market-badge").sole).at_css(".visually-hidden").text
+    french = received(@hugo, :fr)
+    assert_equal ", 1 échange et 1 enchère à voir", template(streams(french, "update", "tab-trades-badge").sole).at_css(".visually-hidden").text
+    assert_equal ", 1 enchère dépassée", template(streams(french, "update", "subtab-market-badge").sole).at_css(".visually-hidden").text
   end
 
-  test "a notice without the market topic sends no market badge" do
+  test "a notice without the trades or market topic sends no trades badge" do
     PlayerStreamJob.perform_now([ { player_id: @hugo.id, balance: true } ])
 
-    assert_empty streams(received(@hugo, :en), "update", "menu-market-badge")
+    %w[menu-trades-badge menu-market-badge tab-trades-badge subtab-friends-badge subtab-market-badge market-bids-badge].each do |target|
+      assert_empty streams(received(@hugo, :en), "update", target), target
+    end
   end
 
   test "an outbid notice appends the line once, in the viewer's language, by listing token" do

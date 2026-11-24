@@ -5,6 +5,7 @@ require_relative "../../../support/holdings"
 require_relative "../../../support/market"
 
 class Game::Market::WantedNoticesTest < ActiveSupport::TestCase
+  include ActiveJob::TestHelper
   include CustomSets
   include GameSets
   include Holdings
@@ -16,12 +17,14 @@ class Game::Market::WantedNoticesTest < ActiveSupport::TestCase
     @holder = accounts_players(:administrator)
     @card = catalog_card_seasons(:common_card_one)
     @settings = open_market!
-    Game::Market::Mint.credit(player_id: @seller.id, amount: 1_000, settings_id: @settings.id)
+    Game::Market::Ledger.post(Game::Market::Mint.credit(player_id: @seller.id, amount: 1_000, settings_id: @settings.id))
     hold(@seller, @card.id, 2)
     insert_set([ @card.id, *unheld_cards(2) ], { complete: 3 }, key: "roguelike", params: { "theme" => "roguelike" })
   end
 
-  def aim(player) = Game::AddGoal.new.call(player:, kind: "theme", key: "roguelike").value!
+  def aim(player) = refreshed { Game::AddGoal.new.call(player:, kind: "theme", key: "roguelike").value! }
+
+  def refreshed(&) = perform_enqueued_jobs(only: Game::Market::RefreshWantedJob, &)
 
   def list(starting_price: @settings.minimum_price_common)
     Game::Market::ListCard.new.call(player: @seller, card_season_id: @card.id, starting_price:, duration_hours: 24, settings_token: @settings.token).value!
@@ -41,6 +44,7 @@ class Game::Market::WantedNoticesTest < ActiveSupport::TestCase
     [ @wanting, @holder, @seller ].each { aim(it) }
     Game::Goal.create!(player_id: accounts_players(:banned).id, position: 1, set_kind: "theme", set_key: "roguelike")
     hold(@holder, @card.id, 1)
+    Game::Market::RebuildWanted.new.call(player: @holder).value!
 
     list
 
@@ -48,7 +52,8 @@ class Game::Market::WantedNoticesTest < ActiveSupport::TestCase
   end
 
   test "a goal on a custom set holding the card notices its player too" do
-    Game::AddGoal.new.call(player: @wanting, custom_set: create_custom_set(@wanting, card_ids: [ @card.card_id, *fixture_card_ids.excluding(@card.card_id).first(2) ]).token).value!
+    custom_set = create_custom_set(@wanting, card_ids: [ @card.card_id, *fixture_card_ids.excluding(@card.card_id).first(2) ])
+    refreshed { Game::AddGoal.new.call(player: @wanting, custom_set: custom_set.token).value! }
 
     list
 

@@ -8,7 +8,7 @@ class BankCounterSystemTest < ApplicationSystemTestCase
 
   PHONE = [ 390, 844 ].freeze
 
-  test "the merged counter and its detail follow a change of the bank" do
+  test "the Capsule tab's badge follows a change of the bank" do
     player = accounts_players(:player)
     create_pack(player)
     mock_steam_sign_in(player.steam_id)
@@ -21,10 +21,28 @@ class BankCounterSystemTest < ApplicationSystemTestCase
       window.dispatchEvent(new CustomEvent("gameble:bank-changed", { detail: { available: 7, special: 3 } }))
     JS
 
-    assert_selector ".bank-counter__item:not(.bank-counter__item--special) .bank-counter__count", text: "7"
-    assert_selector ".bank-counter__item--special .bank-counter__count", text: "3"
-    find(".bank-counter__button").click
-    assert_selector "#bank-detail .bank-detail__row:first-child .bank-counter__count", text: "7"
-    assert_selector "#bank-detail .bank-detail__row:last-child .bank-counter__count", text: "3"
+    assert_selector ".tab-bar__capsules .tab-bar__badge", text: "10"
+    assert_selector ".tab-bar__capsules .visually-hidden", text: "10 capsules ready to open", visible: :all
+
+    page.execute_script(<<~JS)
+      window.dispatchEvent(new CustomEvent("gameble:bank-changed", { detail: { available: 0, special: 0 } }))
+    JS
+
+    assert_no_selector ".tab-bar__capsules"
+  end
+
+  test "the Capsule tab's icon sits level with the other tabs' while the badge shows" do
+    player = accounts_players(:player)
+    create_pack(player)
+    mock_steam_sign_in(player.steam_id)
+    visit home_path(locale: :en)
+    click_steam_sign_in
+    assert_signed_in
+    resize_to(*PHONE)
+
+    assert_selector ".tab-bar__capsules .tab-bar__badge"
+    tops = page.evaluate_script("Array.from(document.querySelectorAll('.tab-bar__icon'), (icon) => icon.getBoundingClientRect().top)")
+
+    assert_equal 1, tops.uniq.size
   end
 end

@@ -68,6 +68,21 @@ class PlayerStreamTest < ActiveSupport::TestCase
       PlayerStream.notices(Game::InvitationAccepted.new(data:))
   end
 
+  test "every end of a challenge and of a duel tells both players' Duels screens what happened to whom; a round tells no one" do
+    data = { duel_id: 1, challenger_id: @alice.id, opponent_id: @bob.id }
+    kinds = { Game::DuelChallengeSent => "sent", Game::DuelChallengeAccepted => "accepted", Game::DuelChallengeLapsed => "lapsed",
+              Game::DuelChallengeRefused => "refused", Game::DuelChallengeCancelled => "cancelled", Game::DuelFinished => "finished" }
+
+    assert_equal kinds.keys, PlayerStream::DUEL_EVENTS
+    kinds.each do |type, kind|
+      assert_includes PlayerStream::EVENTS, type
+      assert_equal [ { player_id: @alice.id, topic: "duels", duel_id: 1, kind:, role: "challenger" },
+                     { player_id: @bob.id, topic: "duels", duel_id: 1, kind:, role: "opponent" } ],
+        PlayerStream.notices(type.new(data:)), type.name
+    end
+    assert_empty PlayerStream.notices(Game::DuelRoundCalled.new(data: { duel_id: 1, number: 1 }))
+  end
+
   test "an ignored invitation tells its recipient alone, so the sender never learns of it" do
     data = { invitation_id: 1, sender_id: @alice.id, recipient_id: @bob.id }
 
@@ -143,6 +158,44 @@ class PlayerStreamTest < ActiveSupport::TestCase
 
     assert_equal [ { player_id: @alice.id, balance: true }, { player_id: @bob.id, topic: "market" } ],
       PlayerStream.notices(Game::Market::CardListed.new(data: { listing_id: listing.id, seller_id: @alice.id, card_season_id: @one }))
+  end
+
+  test "each market-volume event yields a balance notice for every player whose PiCoins it moved" do
+    order = { order_id: 1, player_id: @alice.id, card_id: 1, amount: 100 }
+    single = [ Game::Market::OrderPlaced, Game::Market::OrderCancelled, Game::Market::OrderWithdrawn ].map { it.new(data: order) }
+    single << Game::Market::ArchivePurchased.with(player_id: @alice.id, card_season_id: @one, price: 100)
+    single << Game::SlotBought.with(player_id: @alice.id, kind: "goal")
+    single.each do |event|
+      assert_includes PlayerStream::EVENTS, event.class
+      assert_equal [ { player_id: @alice.id, balance: true } ], PlayerStream.notices(event), event.class.name
+    end
+
+    expired = Game::Market::OrderExpired.new(data: order)
+    assert_equal [ { player_id: @alice.id, balance: true }, { player_id: @alice.id, topic: "market" } ], PlayerStream.notices(expired)
+
+    served = Game::Market::OrderServed.new(data: { order_id: 1, buyer_id: @alice.id, seller_id: @bob.id, card_season_id: @one, price: 100 })
+    assert_equal [ @alice.id, @bob.id ].map { { player_id: it, balance: true } } + [ { player_id: @alice.id, topic: "market" } ],
+      PlayerStream.notices(served)
+
+    carol = accounts_players(:administrator)
+    sales = [ @alice, carol, @alice ].map { { order_id: 1, buyer_id: it.id, card_season_id: @one, price: 100 } }
+    applied = Game::Market::WantedChoicesApplied.with(seller_id: @bob.id, sales:, listing_ids: [], entrusted: [])
+    assert_equal [ @bob.id, @alice.id, carol.id ].map { { player_id: it, balance: true } } + [ @alice.id, carol.id ].map { { player_id: it, topic: "market" } },
+      PlayerStream.notices(applied)
+  end
+
+  test "a Confier validation refreshes the market of the players its listings noticed, above their order or not" do
+    settings = open_market!
+    portal = catalog_card_seasons(:portal_one)
+    listing = listing!(seller: @alice, card_season: portal, settings:)
+    Game::Market::Notice.record(player_id: @bob.id, listing_id: listing.id, kind: "wanted", amount: 1_300)
+    carol = accounts_players(:administrator)
+    order = Game::Market::Order.create!(player: carol, card_id: portal.card_id, settings:, price: 100, expires_at: 7.days.from_now)
+    Game::Market::Notice.record(player_id: carol.id, listing_id: listing.id, order_id: order.id, kind: "listed_above_order", amount: 1_300)
+
+    applied = Game::Market::WantedChoicesApplied.with(seller_id: @alice.id, sales: [], listing_ids: [ listing.id ], entrusted: [])
+    assert_equal [ { player_id: @alice.id, balance: true } ] + [ @bob.id, carol.id ].sort.map { { player_id: it, topic: "market" } },
+      PlayerStream.notices(applied)
   end
 
   test "a refused entrustment enqueues nothing" do

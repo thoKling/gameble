@@ -1,9 +1,14 @@
 module Game
   module Achievements
+    DUEL_METRICS = %i[duels_finished duels_won common_beats_legendary_rounds shutout_duels margin_wins distinct_duel_opponents
+      distinct_stats_won].freeze
+
     Achievement = Data.define(:key, :metric, :threshold) do
       def met?(progress)
         progress.fetch(metric) >= threshold
       end
+
+      def duel? = DUEL_METRICS.include?(metric)
     end
 
     CATALOGUE = [
@@ -36,17 +41,81 @@ module Game
       Achievement.new(:competitive_tender, :most_bidders_on_a_sale, 3),
       Achievement.new(:capital_gain, :doubled_resales, 1),
       Achievement.new(:quarterly_targets_met, :cards_sold, 25),
-      Achievement.new(:insider_trading, :doubled_resales, 5)
+      Achievement.new(:insider_trading, :doubled_resales, 5),
+      Achievement.new(:boosters_1000, :packs_opened, 1_000),
+      Achievement.new(:boosters_5000, :packs_opened, 5_000),
+      Achievement.new(:boosters_10000, :packs_opened, 10_000),
+      Achievement.new(:reposts_10, :reposts, 10),
+      Achievement.new(:reposts_50, :reposts, 50),
+      Achievement.new(:reposts_200, :reposts, 200),
+      Achievement.new(:trades_10, :trades_accepted, 10),
+      Achievement.new(:trades_50, :trades_accepted, 50),
+      Achievement.new(:trades_100, :trades_accepted, 100),
+      Achievement.new(:picoins_50k, :picoins_held, 50_000),
+      Achievement.new(:picoins_500k, :picoins_held, 500_000),
+      Achievement.new(:picoins_1m, :picoins_held, 1_000_000),
+      Achievement.new(:friends_10, :friends, 10),
+      Achievement.new(:friends_25, :friends, 25),
+      Achievement.new(:friends_50, :friends, 50),
+      Achievement.new(:reactions_50, :reactions_given, 50),
+      Achievement.new(:reactions_200, :reactions_given, 200),
+      Achievement.new(:reactions_500, :reactions_given, 500),
+      Achievement.new(:self_assessment, :reactions_to_own_posts, 1),
+      Achievement.new(:viral_memo, :most_reactions_on_a_post, 10),
+      Achievement.new(:showcase_full, :showcase_cards, ShowcaseEntry::SIZE),
+      Achievement.new(:everything_must_go, :showcase_cleared_after_full, 1),
+      Achievement.new(:entrusted_100, :cards_entrusted, 100),
+      Achievement.new(:entrusted_1000, :cards_entrusted, 1_000),
+      Achievement.new(:entrusted_5000, :cards_entrusted, 5_000),
+      Achievement.new(:entrusted_10000, :cards_entrusted, 10_000),
+      Achievement.new(:employee_of_the_week, :verdicts_won, 1),
+      Achievement.new(:room_for_improvement, :last_places, 1),
+      Achievement.new(:sustained_growth, :lucky_week_streak, 3),
+      Achievement.new(:turnaround_plan, :unlucky_week_streak, 3),
+      Achievement.new(:statement_of_requirements, :largest_custom_set, 10),
+      Achievement.new(:delivered_on_schedule, :largest_completed_custom_set, 10),
+      Achievement.new(:goals_10, :goals_completed, 10),
+      Achievement.new(:goals_25, :goals_completed, 25),
+      Achievement.new(:goals_50, :goals_completed, 50),
+      Achievement.new(:avatar_changed, :avatar_choices, 1),
+      Achievement.new(:avatar_rebrand, :avatar_choices, 5),
+      Achievement.new(:source_audit, :source_code_opened, 1),
+      Achievement.new(:funding_review, :support_opened, 1),
+      Achievement.new(:code_contribution, :code_contributions, 1),
+      Achievement.new(:profiles_viewed_1, :profiles_viewed, 1),
+      Achievement.new(:profiles_viewed_5, :profiles_viewed, 5),
+      Achievement.new(:profiles_viewed_20, :profiles_viewed, 20),
+      Achievement.new(:profile_visits_10, :profile_visits, 10),
+      Achievement.new(:profile_visits_50, :profile_visits, 50),
+      Achievement.new(:profile_visits_100, :profile_visits, 100),
+      Achievement.new(:discord_member, :discord_member, 1),
+      Achievement.new(:first_dispute_settled_amicably, :duels_finished, 1),
+      Achievement.new(:competitive_advantage_observed, :duels_won, 1),
+      Achievement.new(:dominant_position, :duels_won, 10),
+      Achievement.new(:abuse_of_dominant_position, :duels_won, 50),
+      Achievement.new(:de_facto_monopoly, :duels_won, 100),
+      Achievement.new(:valuation_error, :common_beats_legendary_rounds, 1),
+      Achievement.new(:merger_by_absorption, :shutout_duels, 1),
+      Achievement.new(:settled_at_the_margin, :margin_wins, 1),
+      Achievement.new(:client_base_diversification, :distinct_duel_opponents, 5),
+      Achievement.new(:certified_versatility, :distinct_stats_won, DuelStat::STATS.size)
     ].freeze
 
     BY_KEY = CATALOGUE.index_by { it.key.to_s }.freeze
+
+    OFFERED = CATALOGUE.reject(&:duel?).freeze
+    OFFERED_KEYS = OFFERED.map { it.key.to_s }.freeze
 
     def self.find(key)
       BY_KEY[key.to_s]
     end
 
+    def self.offered = OFFERED
+
+    def self.offered_keys = OFFERED_KEYS
+
     def self.unearned(unlocked_keys)
-      CATALOGUE.reject { unlocked_keys.include?(it.key) }
+      OFFERED.reject { unlocked_keys.include?(it.key) }
     end
 
     def self.metrics(achievements)

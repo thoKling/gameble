@@ -18,6 +18,9 @@ search:
 # Failure keys are built from failure codes at runtime (Steam::SignInIdentity.failure_key,
 # Accounts::SignIn.failure_key, Game::Operation), which the static search cannot see.
 ignore_unused:
+  - "duels.tutorial.steps.*"
+  - "duels.archetypes.*"
+  - "booster.canister_kind.*"
   - "charts.*.words.*"
   - "errors.*"
   - "shell.bell.market.*"
@@ -30,8 +33,14 @@ ignore_unused:
   - "back_office.market_health.indicators.*"
   - "back_office.market_health.lines.*"
   - "back_office.market_health.show.snapshot.facts.*"
+  - "market.my_orders.status.*"
+  - "slot_purchases.ordinals.*"
+  - "slot_purchases.confirmation.title.*"
+  - "slot_purchases.confirmation.spoken_title.*"
+  - "slot_purchases.confirmation.lead.*"
   - "back_office.market_signals.sentences.*"
   - "back_office.market_signals.signals.*"
+  - "back_office.market_signals.tie_sentences.*"
   # Model validation messages, looked up by Active Record from errors.add symbols.
   - "activerecord.errors.messages.*"
   # Number formats, read by the number helpers (number_with_delimiter, …).

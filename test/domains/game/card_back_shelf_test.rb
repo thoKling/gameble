@@ -13,10 +13,14 @@ class Game::CardBackShelfTest < ActiveSupport::TestCase
   def states = shelf.to_h { [ it.key, it.state ] }
 
   test "a new account has Standard active, the other base backs unlocked and every other back locked" do
-    assert_equal Game::CardBacks::KEYS, shelf.map(&:key)
+    assert_equal Game::CardBacks::KEYS - %w[duelliste], shelf.map(&:key)
     assert_equal :active, states["standard"]
     assert_equal [ :unlocked ], states.slice("emeraude", "amethyste", "rubis", "argent").values.uniq
     assert_equal [ :locked ], states.except(*Game::CardBacks::BASE_KEYS).values.uniq
+  end
+
+  test "the shelf leaves out the back a duel achievement unlocks" do
+    assert_not_includes shelf.map(&:key), "duelliste"
   end
 
   test "an unlocked back is offered and the chosen one is active" do

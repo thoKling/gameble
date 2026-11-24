@@ -129,6 +129,7 @@ class LibraryTest < ApplicationSystemTestCase
     within(filter_sheet(:state)) { find(".filter-chip__text", text: /\AOwned\z/i).click }
     assert_selector ".collection-grid .card--not-owned", count: 57, visible: :all
     assert_selector "#{pastille(:state)} .filter-row__count", text: "1", visible: :all
+    assert_no_selector ".collection-slot__copies", visible: :all
 
     # Back to the owned cards, then a rarity, then a genre none of them has.
     within(filter_sheet(:state)) { find(".filter-chip__text", text: /\AOwned\z/i).click }
@@ -151,7 +152,7 @@ class LibraryTest < ApplicationSystemTestCase
     open_filter_sheet(:more)
     within("#{filter_sheet(:more)} [data-group=genre]") { find(".filter-chip__text", text: /\ARPG\z/i).click }
     assert_selector ".collection-grid__empty", text: "Nothing matches these filters.", visible: :all
-    assert_equal "RPG", page.evaluate_script("document.activeElement.parentElement.textContent.trim()")
+    eventually("the focus should stay on the RPG chip") { evaluate_script("document.activeElement?.parentElement?.textContent.trim()") == "RPG" }
     assert_selector "#{filter_sheet(:more)} p.filter-sheet__status", text: "No card shown."
     assert_selector "#{pastille(:more)} .filter-row__count", text: "1", visible: :all
     close_filter_sheet(:more)
@@ -221,7 +222,7 @@ class LibraryTest < ApplicationSystemTestCase
     assert_current_path library_cards_path(locale: :en, **filters)
   end
 
-  test "the grid is one tab stop: arrow keys move the focus by card and by row, into appended pages, End reaches the last card" do
+  test "the grid is one tab stop: arrow keys move the focus by card and by row, into appended pages, End reaches the last card; back from a card of an appended page, the grid shows its appended cards, the focus on that card's link" do
     visit library_cards_path(locale: :en)
     assert_slots 60
     assert_selector ".collection-grid a.card-link[tabindex='0']", count: 1, visible: :all
@@ -244,9 +245,7 @@ class LibraryTest < ApplicationSystemTestCase
     assert_focused ".collection-grid > li:nth-child(120) a.card-link"
     page.send_keys(:tab)
     eventually("the focus stayed in the grid") { evaluate_script("!document.activeElement?.closest('.collection-grid')") }
-  end
 
-  test "back from a card of an appended page, the grid shows its appended cards, the focus on that card's link" do
     visit library_cards_path(locale: :en)
     scroll_to_pages
     assert_slots 120
@@ -281,6 +280,7 @@ class LibraryTest < ApplicationSystemTestCase
       find(pastille(group)).click
       assert_selector filter_sheet(group), visible: true
       eventually("the #{group} sheet should be a modal dialog") { evaluate_script("document.querySelector('#{filter_sheet(group)}').matches(':modal')") }
+      wait_for_dialog_to_finish_opening(filter_sheet(group))
     end
 
     def close_filter_sheet(group)

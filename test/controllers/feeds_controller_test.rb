@@ -41,7 +41,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
 
   def names = css_select(".feed__sentence .feed__name").map(&:text).uniq.sort
 
-  test "a stranger reads the pulls of Epic or better" do
+  test "a stranger reads the pulls of Epic or better, each linking its player and game, with no discovery chip" do
     open_epic
 
     get feed_path(locale: :en)
@@ -54,9 +54,13 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".feed__entry--filler", 0
     assert_select ".feed__sentence .feed__name", text: "Hugo"
     assert_select ".feed__tag--epic", /Epic/
+    assert_select ".feed__sentence a.feed__name[href^=?]", "/en/brothers/"
+    assert_select ".feed__sentence a.feed__game[href=?]", card_path(locale: :en, slug: "portal")
+    assert_select "[style]", 0
+    assert_select ".feed__chip", 0
   end
 
-  test "each entry also carries the post a phone shows: the player's avatar and name, then what happened as a headline" do
+  test "each entry also carries the post a phone shows; All without a filter listens to the public stream, its list named for new entries, with a polite status line" do
     open_epic
 
     get feed_path(locale: :fr)
@@ -71,6 +75,16 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     end
     assert_select ".feed__entry--epic", 5
     assert_select ".feed__entry--decor-pull, .feed__entry--decor-discovery", 5
+    assert_equal %w[live:fr], stream_names
+    assert_select "section.feed[data-controller=feed-announcer]"
+    assert_select "section.feed[data-controller=feed-announcer]" do |section|
+      templates = JSON.parse(section.sole["data-feed-announcer-templates-value"])
+      assert_equal "3 nouvelles entrées dans le fil.", templates["other"].sub("%{count}", "3")
+      assert_equal "1 nouvelle entrée dans le fil.", templates["one"]
+      assert templates["zero"]
+    end
+    assert_select "ul#feed-entries.feed__list[data-feed-announcer-target=list] > li.feed__entry", 6
+    assert_select ".feed p.visually-hidden[role=status][data-feed-announcer-target=status]", text: ""
   end
 
   test "a trade's headline names the partner and both games" do
@@ -109,8 +123,8 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
-  test "each kind of entry but the sets and the verdict has its filter" do
-    assert_equal Game::FeedEntry::KINDS - %w[set verdict], FeedsController::FILTERS.values
+  test "each kind of entry but the sets, the verdict and the duel stats has its filter" do
+    assert_equal Game::FeedEntry::KINDS - %w[set verdict duel_stats], FeedsController::FILTERS.values
   end
 
   test "pulls shows the pulls under the chosen filter and keeps the tab" do
@@ -179,24 +193,6 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
 
     get feed_path(locale: :en, filter: "pulls")
     assert_select ".feed__entry", 0
-  end
-
-  test "an entry's player and game are links to the profile and the card page" do
-    open_epic
-
-    get feed_path(locale: :en)
-
-    assert_select ".feed__sentence a.feed__name[href^=?]", "/en/brothers/"
-    assert_select ".feed__sentence a.feed__game[href=?]", card_path(locale: :en, slug: "portal")
-    assert_select "[style]", 0
-  end
-
-  test "a pull carries no discovery chip" do
-    open_epic
-
-    get feed_path(locale: :en)
-
-    assert_select ".feed__chip", 0
   end
 
   test "an entry's time is the instant in UTC, for the browser to show in its own time" do
@@ -460,23 +456,6 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     css_select("turbo-cable-stream-source:not([channel=PlayerStreamChannel])").map { Turbo::StreamsChannel.verified_stream_name(it["signed-stream-name"]) }
   end
 
-  test "All without a filter listens to the public stream, its list named for new entries, with a polite status line" do
-    open_epic
-
-    get feed_path(locale: :fr)
-
-    assert_equal %w[live:fr], stream_names
-    assert_select "section.feed[data-controller=feed-announcer]"
-    assert_select "section.feed[data-controller=feed-announcer]" do |section|
-      templates = JSON.parse(section.sole["data-feed-announcer-templates-value"])
-      assert_equal "3 nouvelles entrées dans le fil.", templates["other"].sub("%{count}", "3")
-      assert_equal "1 nouvelle entrée dans le fil.", templates["one"]
-      assert templates["zero"]
-    end
-    assert_select "ul#feed-entries.feed__list[data-feed-announcer-target=list] > li.feed__entry", 6
-    assert_select ".feed p.visually-hidden[role=status][data-feed-announcer-target=status]", text: ""
-  end
-
   test "an empty All keeps its live list for the first entry, beside the empty line" do
     get feed_path(locale: :en)
 
@@ -558,12 +537,17 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
       css_select(".feed__entry .feed__sentence").map(&:text)
   end
 
+  def record_legacy_tier_entry(player, set_id, tier)
+    Game::FeedEntry.create!(kind: "set", player_id: player.id, set_id:, tier:, set_count: 1, notable: true, occurred_at: Time.current)
+  end
+
   def reach_roguelike_silver(player = @player)
     common, uncommon, rare, = fixture_tier_ids
-    insert_set([ common, uncommon, rare, *unheld_cards(2) ], { silver: 2, gold: 3, complete: 5 })
+    theme = insert_set([ common, uncommon, rare, *unheld_cards(2) ], { silver: 2, gold: 3, complete: 5 })
     Game::Holding.create!(player_id: player.id, card_season_id: uncommon, quantity: 1)
     create_pack(player, cards: [ common ] * 5)
     Game::OpenPack.new.call(player:).value!
+    record_legacy_tier_entry(player, theme, "silver")
   end
 
   test "a stranger reads a set reached naming the player, the set and the tier's badge in the headline, with no thumbnail" do
@@ -588,10 +572,11 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
 
   test "a rank reached shows its rank's badge in the headline only, behind its rank's mark" do
     common, uncommon, rare, legendary = fixture_tier_ids.values_at(0, 1, 2, 4)
-    insert_set([ common, uncommon, rare, legendary, fixture_tier_ids[3] ], Catalog::TierTable.tiers(5))
+    theme = insert_set([ common, uncommon, rare, legendary, fixture_tier_ids[3] ], Catalog::TierTable.tiers(5))
     [ uncommon, rare ].each { Game::Holding.create!(player_id: @player.id, card_season_id: it, quantity: 1) }
     create_pack(@player, cards: [ common ] * 5)
     Game::OpenPack.new.call(player: @player).value!
+    record_legacy_tier_entry(@player, theme, "master")
 
     get feed_path(locale: :en)
 
@@ -636,22 +621,17 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
 
   def next_link = css_select(".feed__pages a[rel=next]").first
 
-  test "a feed longer than a page links to the older entries with an opaque cursor" do
+  test "a feed longer than a page links to the older entries with an opaque cursor, opened as a page without JavaScript and as a stream carrying the bars with it" do
     add_pulls(Game::FeedEntries::LIMIT + 5)
 
     get feed_path(locale: :en)
 
     assert_select ".feed__list#feed-entries > .feed__entry", Game::FeedEntries::LIMIT
     assert_select ".feed__pages[data-next-page-target=pages] a[rel=next][href*=\"cursor=\"]", 1
-    cursor = Rack::Utils.parse_query(URI(next_link["href"]).query)["cursor"]
+    href = next_link["href"]
+    cursor = Rack::Utils.parse_query(URI(href).query)["cursor"]
     assert_no_match(/\d{4}-\d{2}-\d{2}/, cursor)
     assert_no_match(/\d{10}/, cursor)
-  end
-
-  test "the next link opens the older entries as a page without JavaScript, and as a stream with it" do
-    add_pulls(Game::FeedEntries::LIMIT + 5)
-    get feed_path(locale: :en)
-    href = next_link["href"]
 
     get href
     assert_response :success
@@ -662,6 +642,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     get href, headers: { "Accept" => Mime[:turbo_stream].to_s }
     assert_equal Mime[:turbo_stream], response.media_type
     assert_select "turbo-stream[action=append][target=feed-entries] .feed__entry", 5
+    assert_select "turbo-stream[action=append][target=feed-entries] .feed__entry .feed__reactions", 5
     assert_select "turbo-stream[action=replace][target=feed-pages]"
   end
 
@@ -744,7 +725,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
 
     entries = css_select(".feed__entry").size
     assert_select ".feed__reactions[role=group]", entries
-    assert_select ".feed__reactions .feed__reaction", entries * 5
+    assert_select ".feed__reactions .feed__reaction", entries * Game::FeedReaction::KINDS.size
     assert_select ".feed__reactions button", 0
     assert_select "[data-reaction-count='#{ReactionStream.slot(entry.token, "heart")}']", "1"
     assert_equal [ "reactions:en", "live:en" ], all_stream_names
@@ -759,12 +740,12 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     get feed_path(locale: :en)
 
     entries = css_select(".feed__entry").size
-    assert_select ".feed__reaction-pill button", entries * 5
-    assert_select ".feed__reaction-choice", entries * 5
+    assert_select ".feed__reaction-pill button", entries * Game::FeedReaction::KINDS.size
+    assert_select ".feed__reaction-choice", entries * Game::FeedReaction::KINDS.size
     assert_select "button[data-reaction-toggle]", entries - 1
     assert_select "#reactions-#{entry.token} .feed__reaction--mine[data-reaction-kind=wow][aria-pressed=true]", 1
     assert_select "#reactions-#{entry.token} .feed__reaction-choice[aria-pressed=true][data-reaction-kind=wow]", 1
-    assert_select "form[action='/en/feed/entries/#{entry.token}/reaction']", 11
+    assert_select "form[action='/en/feed/entries/#{entry.token}/reaction']", 2 * Game::FeedReaction::KINDS.size + 1
   end
 
   test "the counters of a page are read in one query whatever the number of entries" do
@@ -772,7 +753,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     sign_in(@player)
     counts = lambda do |&block|
       queries = []
-      subscriber = ActiveSupport::Notifications.subscribe("sql.active_record") { |*, payload| queries << payload[:sql] if payload[:sql].include?("game_feed_reactions") }
+      subscriber = ActiveSupport::Notifications.subscribe("sql.active_record") { |*, payload| queries << payload[:sql] if payload[:name] != "SCHEMA" && payload[:sql].include?("game_feed_reactions") }
       block.call
       queries.size
     ensure
@@ -785,15 +766,6 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
 
     assert_equal 1, few
     assert_equal 1, many
-  end
-
-  test "the pages the endless scroll appends carry the bars" do
-    add_pulls(Game::FeedEntries::LIMIT + 5)
-    get feed_path(locale: :en)
-
-    get next_link["href"], headers: { "Accept" => Mime[:turbo_stream].to_s }
-
-    assert_select "turbo-stream[action=append][target=feed-entries] .feed__entry .feed__reactions", 5
   end
 
   test "no name and no database id comes with a counter" do
@@ -818,5 +790,83 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     end
     assert_select ".feed__tag--verdict", "Verdict"
     assert_select ".feed__entry:has(.feed__tag--verdict) .feed__thumb, .feed__entry:has(.feed__tag--verdict) .reactions", false
+  end
+
+  def record_duel_stats(moves, week_start: Date.new(2026, 11, 16))
+    Game::FeedEntry.record_duel_stats(moves:, week_start:, now: week_start.to_time(:utc))
+  end
+
+  def duel_move(card_season, stat, from, to) = { "card_season_id" => card_season.id, "stat" => stat, "from" => from, "to" => to }
+
+  test "the weekly duel stats post lists each moved card linked to its edition, its stat and both percentiles, with no player, card or reactions" do
+    portal, legendary = catalog_card_seasons(:portal_one, :legendary_card_one)
+    record_duel_stats([ duel_move(portal, "popularity", 55.4, 62.0), duel_move(legendary, "rating", 70.5, 40.2) ])
+
+    get feed_path(locale: :fr)
+
+    assert_response :success
+    assert_select ".feed__entry--duel-stats" do
+      assert_select ".feed__headline-kicker", "Duel"
+      assert_select ".feed__headline-title", "Le cours des cartes a bougé."
+      assert_select ".feed__move", 2
+      assert_select ".feed__move:nth-child(1)", "Portal, popularité en hausse, de 55 à 62" do
+        assert_select "a.feed__game[href=?]", card_season_path(locale: :fr, slug: "portal", number: 1), "Portal"
+      end
+      assert_select ".feed__move:nth-child(2)", "Couronne d'or, note en baisse, de 71 à 40" do
+        assert_select "a.feed__game[href=?]", card_season_path(locale: :fr, slug: "golden-crown", number: 1)
+      end
+      assert_select ".feed__byline, .feed__thumb, .feed__tag, .reactions", false
+    end
+    assert_select ".feed__entry--duel-stats [style]", false
+  end
+
+  test "the duel stats post reads in English, and drops a moved card no longer in the catalog" do
+    portal = catalog_card_seasons(:portal_one)
+    record_duel_stats([ duel_move(portal, "circulation", 12.0, 30.0), { "card_season_id" => 0, "stat" => "release", "from" => 1.0, "to" => 2.0 } ])
+
+    get feed_path(locale: :en)
+
+    assert_select ".feed__entry--duel-stats .feed__headline-title", "The cards' standing has moved."
+    assert_select ".feed__entry--duel-stats .feed__move", 1
+    assert_select ".feed__entry--duel-stats .feed__move", "Portal, circulation up, from 12 to 30"
+  end
+
+  test "a duel stats post whose moved cards are all gone from the catalog is not drawn" do
+    record_duel_stats([ { "card_season_id" => 0, "stat" => "release", "from" => 1.0, "to" => 2.0 } ])
+
+    get feed_path(locale: :en)
+
+    assert_response :success
+    assert_select ".feed__entry--duel-stats", false
+  end
+
+  test "the older and newer pages draw a duel stats post with its rows" do
+    add_pulls(Game::FeedEntries::LIMIT + 5)
+    record_duel_stats([ duel_move(catalog_card_seasons(:portal_one), "popularity", 10.0, 20.0) ], week_start: 1.week.ago.to_date.beginning_of_week)
+    post = Game::FeedEntry.find_by!(kind: "duel_stats")
+    get feed_path(locale: :en)
+
+    get next_link["href"], headers: { "Accept" => Mime[:turbo_stream].to_s }
+
+    assert_select "turbo-stream[action=append][target=feed-entries] .feed__entry--duel-stats .feed__move", "Portal, popularity up, from 10 to 20"
+
+    get feed_path(locale: :en, newer: FeedCursor.encode([ post.occurred_at - 1.second, 0 ])), headers: { "Accept" => Mime[:turbo_stream].to_s }
+
+    assert_select "turbo-stream[action=prepend][target=feed-entries] .feed__entry--duel-stats .feed__move", "Portal, popularity up, from 10 to 20"
+  end
+
+  test "the duel stats post stays out of Friends and the type filters" do
+    record_duel_stats([ duel_move(catalog_card_seasons(:portal_one), "popularity", 10.0, 20.0) ])
+    friends_and_strangers
+
+    get feed_path(locale: :en)
+    assert_select ".feed__entry--duel-stats", 1
+
+    get feed_path(locale: :en, tab: "friends")
+    assert_select ".feed__entry"
+    assert_select ".feed__entry--duel-stats", false
+
+    get feed_path(locale: :en, filter: "pulls")
+    assert_select ".feed__entry--duel-stats", false
   end
 end

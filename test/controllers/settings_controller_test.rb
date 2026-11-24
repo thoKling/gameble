@@ -42,8 +42,8 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "title", /Profil et paramètres/
     assert_select "main h1", "Profil et paramètres"
-    assert_select ".settings-row", 12
-    assert_equal [ "Langue", "Visibilité du profil", "Animations réduites", "Synchroniser mes jeux Steam", "Session", "Connexions", "Mes données", "Compte", "Soutenir" ], css_select(".settings-row__label").map(&:text)
+    assert_select ".settings-row", 14
+    assert_equal [ "Langue", "Visibilité du profil", "Aura de rareté", "Animations réduites", "Synchroniser mes jeux Steam", "Session", "Connexions", "Mes données", "Compte", "Soutenir" ], css_select(".settings-row__label").map(&:text)
     assert_select "[role=group][aria-labelledby=settings-language] a.segmented__option[data-locale-choice][data-turbo-action=replace]", 2
     assert_select "a.segmented__option[href='/fr/settings'][aria-current=true][lang=fr]", "Français"
     assert_select "a.segmented__option[href='/en/settings'][lang=en]:not([aria-current])", "English"
@@ -58,11 +58,24 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
     assert_select "button[name=reduced_motion][value=off][aria-pressed=false]", "Non"
     assert_select "form[action=?][data-turbo=false] button", "/session?locale=fr", text: "Se déconnecter"
     support = css_select("li.settings-row a.settings-row__support").sole
-    assert_equal [ "https://buymeacoffee.com/theiereman", "_blank", "Soutenir (nouvel onglet)" ],
+    assert_equal [ "https://fr.tipeee.com/gameble-trading-card-game", "_blank", "Soutenir (nouvel onglet)" ],
       [ support["href"], support["target"], support.text.squish ]
     assert_includes support["rel"].split, "noopener"
     assert_select ".settings__list > li:last-child a.button--link[href='/fr/legal']", "Mentions légales"
     assert_select ".top-bar a.button[href='/fr']", /Pont/
+  end
+
+  test "the deployed version shows at the foot of the settings and on no other screen" do
+    sign_in(@player)
+
+    get settings_path(locale: :en)
+
+    assert_select ".settings__version", /#{Regexp.escape(ShellHelper.app_version)}/
+
+    get home_path(locale: :en)
+
+    assert_select ".settings__version", false
+    assert_select ".app-version", false
   end
 
   test "the MES DONNÉES row posts the export, a full page load without JavaScript, with the strings its script shows" do
@@ -124,7 +137,7 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
     get settings_path(locale: :en)
 
     assert_select "main h1", "Profile and settings"
-    assert_equal [ "Language", "Profile visibility", "Reduced motion", "Sync my Steam games", "Session", "Sign-ins", "My data", "Account", "Support" ], css_select(".settings-row__label").map(&:text)
+    assert_equal [ "Language", "Profile visibility", "Rarity aura", "Reduced motion", "Sync my Steam games", "Session", "Sign-ins", "My data", "Account", "Support" ], css_select(".settings-row__label").map(&:text)
     assert_select "button[name=reduced_motion][value=on][aria-pressed=true]", "Yes"
     assert_select "button[name=reduced_motion][value=system][aria-pressed=false]", "System"
     assert_select "button[name=reduced_motion][value=off][aria-pressed=false]", "No"
@@ -191,6 +204,7 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
     follow_redirect!
     assert_select "dialog#private-dialog[open]" do
       assert_select ".private-dialog__text", "Passer en privé annule votre échange en cours."
+      assert_select "#private-dialog-text .private-dialog__text", /Vos premières découvertes restent signées/
       assert_select "input[type=hidden][name=confirmed_trades][value=1]"
     end
     assert_nil flash[:notice]
@@ -327,6 +341,28 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
       assert_equal cookie, cookies[:motion]
       assert_match(/motion=#{cookie}.*HttpOnly.*SameSite=Lax/im, Array(response.headers["Set-Cookie"]).join("\n"))
     end
+  end
+
+  test "hiding the rarity aura is stored on the player and shows in the page" do
+    sign_in(@player)
+    get settings_path(locale: :en)
+    assert_select "html[data-rarity-aura]", 0
+
+    patch settings_rarity_aura_path(locale: :en), params: { rarity_aura: "off" }
+
+    assert_redirected_to settings_path(locale: :en)
+    assert_equal false, @player.reload.rarity_aura
+    follow_redirect!
+    assert_select "html[data-rarity-aura=off]"
+    assert_select "button[name=rarity_aura][value=off][aria-pressed=true]"
+  end
+
+  test "an unknown rarity aura choice changes nothing" do
+    sign_in(@player)
+
+    patch settings_rarity_aura_path(locale: :en), params: { rarity_aura: "dim" }
+
+    assert @player.reload.rarity_aura
   end
 
   test "choosing the system empties the setting and removes the cookie" do
@@ -493,7 +529,7 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
     get settings_path(locale: :fr)
 
     assert_select "#settings-support"
-    assert_select "a.settings-row__support[href='https://buymeacoffee.com/theiereman'][target=_blank]"
+    assert_select "a.settings-row__support[href='https://fr.tipeee.com/gameble-trading-card-game'][target=_blank]"
   end
 
   test "the settings screen is under no tab, with a contextual phone back" do
@@ -502,7 +538,7 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
     get settings_path(locale: :fr)
 
     assert_select "a.tab-bar__tab[aria-current]", false
-    assert_select ".top-bar a.top-bar__phone-back[href='/fr/me']", /Moi/
+    assert_select ".top-bar a.top-bar__phone-back[href='/fr/me']", /Mon profil/
   end
 
   # The public profile in brief
@@ -551,6 +587,21 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
       get settings_path(locale: :en)
 
       assert_equal lines, css_select(".settings-summary__visibility").sole.then { |line| line.css("span").any? ? line.css("span").map { it.text.squish } : [ line.text.squish ] }
+    end
+  end
+
+  {
+    "friends_only" => "Vos premières découvertes restent signées de votre nom dans le Grand Inventaire.",
+    "private" => "Vos premières découvertes restent signées de votre nom dans le Grand Inventaire.",
+    "public" => false
+  }.each do |visibility, note|
+    test "a #{visibility} profile #{note ? "is told" : "is not told"} its first discoveries stay signed" do
+      @player.update_columns(visibility:)
+      sign_in(@player)
+
+      get settings_path(locale: :fr)
+
+      assert_select summary, ".settings-summary__visibility + p.settings-summary__signed", note || false
     end
   end
 

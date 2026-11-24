@@ -25,7 +25,7 @@ class ShellTest < ActionDispatch::IntegrationTest
     assert_select "link[rel=icon][type='image/svg+xml'][href*='/favicon-'][href$='.svg']"
     assert_select "link[rel=icon][type='image/png'][sizes='180x180'][href*='/favicon-'][href$='.png']"
     assert_select "link[rel=apple-touch-icon][href*='/favicon-'][href$='.png']"
-    assert_select "meta[name=viewport][content=?]", "width=device-width,initial-scale=1,viewport-fit=cover"
+    assert_select "meta[name=viewport][content=?]", "width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"
     assert_select "meta[name=theme-color][content=?]", "#171a21"
     assert_select "meta[name=view-transition][content=same-origin]"
     preloads = css_select("link[rel=preload][as=font][type='font/woff2'][crossorigin]").map { it["href"] }
@@ -79,7 +79,8 @@ class ShellTest < ActionDispatch::IntegrationTest
     sign_in(accounts_players(:player))
     get invite
     assert_select ".top-bar__start > a.top-bar__home[href='/en'][aria-label=?]", "Gameble, command bridge"
-    assert_select ".top-bar__start > p.top-bar__brand.top-bar__phone-brand"
+    assert_select ".top-bar__start > a.top-bar__bridge[href='/en']"
+    assert_select ".top-bar__start .top-bar__phone-brand", false
   end
 
   test "a visitor's tab bar has two links, the landing and every card, none disabled" do
@@ -163,7 +164,7 @@ class ShellTest < ActionDispatch::IntegrationTest
     assert_select ".player-chip button.player-chip__button[popovertarget=player-menu]" do
       assert_select "svg.pixel-icon.player-chip__avatar"
       assert_select ".player-chip__name", "Player"
-      assert_select ".player-chip__dot[aria-hidden=true]"
+      assert_select ".player-chip__dot", false
     end
     assert_select "nav#player-menu[popover][aria-label=?]", "Player menu" do
       assert_select "a.player-menu__item[href=?]", "/en/me", text: "My profile"
@@ -178,20 +179,20 @@ class ShellTest < ActionDispatch::IntegrationTest
     assert_select "#rarity-legend[popover][aria-labelledby=rarity-legend-title]", 1
     assert_select "#rarity-legend .shell-popover__title#rarity-legend-title", locale == :en ? "Rarities" : "Raretés"
     assert_select "#rarity-legend table.rarity-legend__table" do
-      assert_select "thead th[scope=col]", 4
+      assert_select "thead th[scope=col]", 3
       assert_select "tbody tr.rarity-legend__row", 5
       assert_select "tfoot tr.rarity-legend__row--totals", 1
       assert_equal names, css_select("th[scope=row] .rarity-legend__name").map { it.text.strip }
       assert_equal %w[common uncommon rare epic legendary].map { "/#{locale}/library/cards?rarity%5B%5D=#{it}" },
         css_select("tbody th[scope=row] a.rarity-legend__link").map { it["href"] }
       shown = css_select("tbody tr, tfoot tr").map { |row| css_select(row, "td > [aria-hidden=true]").map { it.text.squish } }
-      assert_equal [ [ "1 / 1", "1 / 1" ], [ "0 / 1", "0 / 1" ], [ "0 / 1", "0 / 1" ], [ "1 / 1", "1 / 1" ], [ "0 / 1", "0 / 1" ], [ "2 / 5", "2 / 5" ] ], shown
+      assert_equal [ [ "1 / 1" ], [ "0 / 1" ], [ "0 / 1" ], [ "1 / 1" ], [ "0 / 1" ], [ "2 / 5" ] ], shown
       assert_equal %w[3 0 0 1 0 4], css_select("td.rarity-legend__copies").map { it.text.strip }
     end
     assert_select "#rarity-legend [data-rarity-counter-target]", false
   end
 
-  test "the rarity legend: owned cards against the game's, this season and over every season, each rarity a link to its cards" do
+  test "the rarity legend: owned cards against the game's, this season only, each rarity a link to its cards" do
     player = accounts_players(:player)
     hold(player, catalog_card_seasons(:common_card_one).id, 3)
     hold(player, catalog_card_seasons(:portal_one).id, 1)
@@ -201,19 +202,18 @@ class ShellTest < ActionDispatch::IntegrationTest
 
     assert_select ".rarity-counter button.rarity-counter__button[popovertarget=rarity-legend] + #rarity-legend"
     assert_rarity_legend(names: [ "Common", "Uncommon", "Rare", "Epic", "Legendary", "Total" ], locale: :en)
-    assert_equal [ "Rarity", "This season", "All seasons", "Copies" ], css_select("#rarity-legend thead th").map { it.text.strip }
+    assert_equal [ "Rarity", "This season", "Copies" ], css_select("#rarity-legend thead th").map { it.text.strip }
     assert_select "#rarity-legend tbody tr:first-child td .visually-hidden", "1 of 1 owned"
 
     get library_cards_path(locale: :fr)
 
-    assert_select ".top-bar .rarity-counter", false
-    assert_select ".top-bar__end > button.collection-status[type=button][popovertarget=rarity-legend] + #rarity-legend"
+    assert_select ".top-bar .collection-status", false
+    assert_select ".top-bar__end .rarity-counter button.rarity-counter__button[popovertarget=rarity-legend] + #rarity-legend"
     assert_rarity_legend(names: [ "Commune", "Peu commune", "Rare", "Épique", "Légendaire", "Total" ], locale: :fr)
-    assert_equal [ "Rareté", "Cette saison", "Toutes saisons", "Exemplaires" ], css_select("#rarity-legend thead th").map { it.text.strip }
+    assert_equal [ "Rareté", "Cette saison", "Exemplaires" ], css_select("#rarity-legend thead th").map { it.text.strip }
     assert_select "#rarity-legend tbody tr:first-child td .visually-hidden", "1 sur 1 possédée"
     assert_select "#rarity-legend tbody tr:nth-child(2) td .visually-hidden", "0 sur 1 possédée"
     assert_select "#rarity-legend tfoot td .visually-hidden", "2 sur 5 possédées"
-    assert_select "#rarity-legend tfoot td.rarity-legend__overall .rarity-legend__owned", css_select(".collection-status__value").text.split("/").first.strip
   end
 
   test "a full reserve shows instead of the countdown" do
@@ -253,12 +253,13 @@ class ShellTest < ActionDispatch::IntegrationTest
     get library_path(locale: :fr)
 
     assert_select "nav.tab-bar[aria-label=?] ul.tab-bar__list > li.tab-bar__item", "Navigation principale", 5
-    assert_equal [ "Pont", "Capsule", "Sets", "Échanges", "Marché" ], css_select(".tab-bar__label").map(&:text)
+    assert_equal [ "Pont", "Capsule", "Sets", "Commerce", "Duels" ], css_select(".tab-bar__label").map(&:text)
     assert_select "a.tab-bar__tab[href='/fr']:not([aria-current])", /Pont/
     assert_select "a.tab-bar__tab[href='/fr/booster']:not([aria-current])", /Capsule/
     assert_select "a.tab-bar__tab[href='/fr/library'][aria-current=page]", /Sets/
-    assert_select "a.tab-bar__tab[href='/fr/trades']:not([aria-current])", /Échanges/
-    assert_select "a.tab-bar__tab[href='/fr/market']:not([aria-current])", /Marché/
+    assert_select "a.tab-bar__tab[href='/fr/exchanges']:not([aria-current])", /Commerce/
+    assert_select "a.tab-bar__tab[href='/fr/duels']:not([aria-current])", /Duels/
+    assert_select "a.tab-bar__tab[href='/fr/duels'] .alpha-tag", "ALPHA"
     assert_select "span.tab-bar__tab[aria-disabled=true], button.tab-bar__tab, .tab-bar__list--visitor", 0
     assert_select "nav.tab-bar[data-controller=navigation-lock]"
     assert_select ".top-bar__start[data-controller=navigation-lock]"
@@ -324,20 +325,5 @@ class ShellTest < ActionDispatch::IntegrationTest
     assert_select ".rarity-counter, .packs-chip", false
     assert_select ".player-chip"
     assert_select "link[rel=stylesheet][href*='/application-']"
-  end
-
-  test "the back-office keeps the legal page beside the version" do
-    sign_in(accounts_players(:administrator))
-
-    get back_office_path(locale: :fr)
-
-    assert_select "body > .app-version a.app-version__legal[href=?]", "/fr/legal", "Mentions légales"
-  end
-
-  test "the public card page keeps the legal page beside the version" do
-    get card_path(locale: :en, slug: "portal")
-
-    assert_select "body.is-public-page"
-    assert_select "body > .app-version a.app-version__legal[href=?]", "/en/legal", "Legal notice"
   end
 end

@@ -44,10 +44,22 @@ class PlayerExport
       goals: game.goals.map do
         { position: it.position, setKind: it.set_kind, setKey: it.set_key, customSet: it.custom_set_token, createdAt: time(it.created_at) }.compact
       end,
+      goalsCompleted: game.markers.goals_completed,
+      profilesViewed: game.markers.profiles_viewed,
+      profileVisitsReceived: game.markers.profile_visits,
+      linksOpened: { sourceCode: time(game.markers.source_code_opened_at), support: time(game.markers.support_opened_at) }.compact,
+      codeContributionGrantedAt: time(game.markers.code_contribution_at),
+      discordMemberAt: time(game.markers.discord_member_at),
+      decks: game.decks.map { { name: it.name, cards: it.card_season_ids.filter_map { card(it) } } },
+      duels:,
       wallet: { available: game.market.wallet.available, committed: game.market.wallet.committed },
       picoinEntries: game.market.entries.map { picoin_entry(it) },
       listings: game.market.listings.map { listing(it) },
       bids: game.market.bids.map { bid(it) },
+      buyOrders: game.market.orders.map { buy_order(it) },
+      salesToOrders: game.market.sales_to_orders.map { { card: card(it.card_season_id), price: it.price, soldAt: time(it.served_at) } },
+      archivePurchases: game.market.archive_purchases.map { { card: card(it.card_season_id), price: it.price, boughtAt: time(it.created_at) } },
+      boughtSlots: game.market.bought_slots.map { { kind: it.kind, bought: it.bought } },
       reportsFiled: accounts.reports_filed.map { { reason: it.reason, createdAt: time(it.created_at) } },
       reportsReceived: accounts.reports_received.map do
         { reason: it.reason, createdAt: time(it.created_at), handledAt: time(it.handled_at) }
@@ -99,6 +111,19 @@ class PlayerExport
       end
     end
 
+    def duels
+      game.duels.map do |duel|
+        { endedAt: time(duel.ended_at), score: duel.score, opponentScore: duel.opponent_score, result: duel.result,
+          rounds: duel.rounds.map { duel_round(it) } }
+      end
+    end
+
+    def duel_round(round)
+      { number: round.number, calledByYou: round.called, card: card(round.card_season_id), opponentCard: card(round.opponent_card_season_id),
+        stat: round.stat, direction: round.direction, value: round.value, opponentValue: round.opponent_value, outcome: round.outcome,
+        playedAutomatically: round.automatic, opponentPlayedAutomatically: round.opponent_automatic }
+    end
+
     def card_backs
       { active: game.card_backs.active, activeSeason: game.card_backs.active_season,
         unlocked: game.card_backs.unlocks.map { { back: it.back, unlockedAt: time(it.unlocked_at) } } }
@@ -138,7 +163,13 @@ class PlayerExport
     end
 
     def picoin_entry(entry)
-      { kind: entry.kind, availableDelta: entry.available_delta, committedDelta: entry.committed_delta, listing: entry.listing_token, at: time(entry.created_at) }
+      { kind: entry.kind, availableDelta: entry.available_delta, committedDelta: entry.committed_delta, listing: entry.listing_token, order: entry.order_token,
+        at: time(entry.created_at) }
+    end
+
+    def buy_order(order)
+      { token: order.token, game: order.card_slug, status: order.status, price: order.price, placedAt: time(order.created_at),
+        expiresAt: time(order.expires_at), servedCard: order.served_card_season_id && card(order.served_card_season_id), servedAt: time(order.served_at) }
     end
 
     def listing(listing)

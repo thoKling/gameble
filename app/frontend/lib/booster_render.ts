@@ -7,16 +7,16 @@ import {
   nextCapsuleWaiting,
   onTable,
   originKind,
-  shownCelebration,
   type BoosterState,
   type Controls,
-  type Hint,
+  type MarketMove,
 } from "./booster"
 import { reserveCount } from "./booster_bank"
 import { animate } from "./booster_effects"
 import { bannerKeyframes, dockKeyframes } from "./booster_keyframes"
 import { DOCK, STORE_MS, bannerDuration, pileDepth } from "./booster_motion"
 import { formatClock } from "./booster_clock"
+import { marketMoveKey } from "./booster_market"
 import { cardHref } from "./booster_page"
 import type { BoosterRenderHost } from "./booster_render_host"
 import { renderCelebrations } from "./booster_render_celebration"
@@ -51,9 +51,9 @@ export class BoosterRenderer {
     this.renderInfo(state, view)
     this.renderActions(state, view)
     this.renderCanister(state)
-    this.renderStage(state, view)
+    this.renderStage(state)
     this.renderBanner(state)
-    this.renderPlate(state, view)
+    this.renderPlate(state)
     this.renderTray(state, view)
     this.renderZoom(state, view)
     renderCelebrations(this.host, state, view)
@@ -83,6 +83,7 @@ export class BoosterRenderer {
     const kind = originKind(state)
     const names: Record<string, string> = {
       bonus: this.strings.originBonus,
+      duel: this.strings.originDuel,
       reward: this.strings.originReward,
     }
     return (kind && names[kind]) || null
@@ -120,8 +121,8 @@ export class BoosterRenderer {
     const info = {
       lit: special ? 0 : available,
       size: this.host.number(shownSize),
-      reserve: t(this.strings.reserveCount, { count: available, n: this.host.number(available) }),
-      tone: view.tone,
+      count: this.host.number(available),
+      reserve: t(this.strings.reserveUnit, { count: available }),
       reserveFull: reserveFull && !special,
       next: special ? null : this.nextLine(state),
       origin: origin && (state.phase === "sealed" ? origin : t(this.strings.originOpening, { origin })),
@@ -164,7 +165,7 @@ export class BoosterRenderer {
           : null,
       label:
         season > 0
-          ? t(this.strings.canisterLabel, { season, count: nextSize })
+          ? t(this.strings.canisterLabel, { season, name: this.host.seasonName, count: nextSize })
           : t(this.strings.canisterLabelPlain, { count: nextSize }),
       busy: state.phase !== "sealed" && state.phase !== "dealt",
       armed: state.armed,
@@ -182,17 +183,6 @@ export class BoosterRenderer {
       })
     }
     this.capsuleWaiting = waiting
-  }
-
-  private hintText(hint: Hint): string {
-    switch (hint.kind) {
-      case "remaining":
-        return t(this.strings.hintRemaining, { count: hint.count, n: this.host.number(hint.count) })
-      case "done":
-        return t(this.strings.hintDone, { count: hint.count, n: this.host.number(hint.count) })
-      default:
-        return ""
-    }
   }
 
   private hand(state: BoosterState): HandView | null {
@@ -220,9 +210,11 @@ export class BoosterRenderer {
         revealedAt: state.revealedAt[index],
         legendary: state.legendary === index,
         name: cardName(card, index),
-        tierLabel: this.host.tierLabel(card.tier),
         firstCopy: card.firstCopy,
         repostName: t(this.strings.repostCard, { card: card.title }),
+        entrustName: t(this.strings.entrustCard, { card: card.title }),
+        sellName: t(this.strings.sellCard, { card: card.title }),
+        ...this.marketMove(state.marketMoves[marketMoveKey(answer.pack.token, index)]),
         depth: phone ? pileDepth(index, state.stored) : null,
       })
     })
@@ -235,21 +227,24 @@ export class BoosterRenderer {
     }
   }
 
+  private marketMove(move: MarketMove | undefined): Pick<CardView, "move" | "undoable"> {
+    if (!move) return { move: null, undoable: false }
+    const template = move.place === "entrust" ? this.strings.entrusted : this.strings.listed
+    return { move: t(template, { count: move.amount, amount: this.host.number(move.amount) }), undoable: !move.sent }
+  }
+
   private faceUpString(phone: boolean, card: OpeningCard): string {
     if (phone) return card.goals ? this.strings.faceUpStoreGoals : this.strings.faceUpStore
     return card.goals ? this.strings.faceUpGoals : this.strings.faceUp
   }
 
-  private renderStage(state: BoosterState, view: Controls): void {
+  private renderStage(state: BoosterState): void {
     const stage = this.host.outlets().stage
     if (!stage) return
-    const phone = state.layout === "phone"
     stage.render(
       {
         legendary: state.legendary !== null,
-        headShown: state.headShown,
         hand: this.hand(state),
-        hint: !phone && view.hint ? this.hintText(view.hint) : null,
       },
       { face: this.host.face, icon: this.host.icon },
     )
@@ -281,30 +276,8 @@ export class BoosterRenderer {
     this.host.timers().later(duration, () => this.host.apply((s) => bannerEnded(s, key)))
   }
 
-  private renderPlate(state: BoosterState, view: Controls): void {
-    const plateOutlet = this.host.outlets().plate
-    if (!plateOutlet) return
-    const answer = state.answer
-    const top = view.plate === null ? null : answer?.cards[view.plate]
-    const hint = state.layout === "phone" ? view.hint : null
-    plateOutlet.render(
-      {
-        shown: onTable(state),
-        hint: hint && { kind: hint.kind === "remaining" ? "done" : hint.kind, done: this.hintText(hint) },
-        plate:
-          view.plate !== null && top
-            ? {
-                key: `${answer?.pack.token}-${view.plate}`,
-                tier: top.tier,
-                tierText: this.host.tierLabel(top.tier),
-                line: t(this.strings.bannerLine, { title: top.title, year: top.year ?? "" }),
-              }
-            : null,
-        celebrating: Boolean(shownCelebration(state)) && view.plate === null,
-        busy: view.busy,
-      },
-      this.host.icon,
-    )
+  private renderPlate(state: BoosterState): void {
+    this.host.outlets().plate?.render({ shown: onTable(state) })
   }
 
   private renderTray(state: BoosterState, view: Controls): void {
@@ -340,7 +313,7 @@ export class BoosterRenderer {
     const zoomOutlet = this.host.outlets().zoom
     if (!zoomOutlet) return
     const { zoom, answer } = state
-    const card = zoom !== null && state.layout === "phone" ? answer?.cards[zoom] : null
+    const card = zoom !== null ? answer?.cards[zoom] : null
     zoomOutlet.render(
       card && zoom !== null && answer
         ? {
@@ -349,6 +322,7 @@ export class BoosterRenderer {
             title: card.title,
             line: t(this.strings.zoomLine, { rarity: this.host.rarityNames()[card.tier], year: card.year ?? "" }),
             href: cardHref(this.host.cardUrl, card.slug, answer.pack.token, zoom),
+            facts: state.layout === "phone" ? null : cardHref(this.host.cardUrl, card.slug, answer.pack.token, zoom),
             repostName: t(this.strings.repostCard, { card: card.title }),
             previous: view.zoomPrevious,
             next: view.zoomNext,

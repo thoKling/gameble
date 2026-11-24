@@ -34,6 +34,14 @@ class Market::ListingsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".balance-chip", false
   end
 
+  test "the card leads to its detail for the season on sale" do
+    annonce
+
+    card_season = catalog_card_seasons(:rare_card_one)
+    assert_select ".market-listing__card a.card-link[href=?][aria-label='Blue Depths'] .card",
+      card_season_path(locale: :en, slug: card_season.card.slug, number: card_season.season.number)
+  end
+
   test "the way back leads to the market" do
     annonce
 
@@ -184,7 +192,7 @@ class Market::ListingsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "the form carries the price and the unusual multiple of the current settings, and the unusual dialog only" do
-    Game::Market::Mint.credit(player_id: accounts_players(:administrator).id, amount: 500, settings_id: Game::Market::CurrentSettings.call.id)
+    Game::Market::Ledger.post(Game::Market::Mint.credit(player_id: accounts_players(:administrator).id, amount: 500, settings_id: Game::Market::CurrentSettings.call.id))
     sign_in(accounts_players(:administrator))
     annonce
 
@@ -196,7 +204,7 @@ class Market::ListingsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "quick amounts fill the minimum or a raise above it" do
-    Game::Market::Mint.credit(player_id: accounts_players(:administrator).id, amount: 500, settings_id: Game::Market::CurrentSettings.call.id)
+    Game::Market::Ledger.post(Game::Market::Mint.credit(player_id: accounts_players(:administrator).id, amount: 500, settings_id: Game::Market::CurrentSettings.call.id))
     sign_in(accounts_players(:administrator))
     annonce
 

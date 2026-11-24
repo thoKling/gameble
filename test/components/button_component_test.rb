@@ -33,6 +33,20 @@ class ButtonComponentTest < ViewComponent::TestCase
     assert_selector "button.button--secondary[type=submit][name=choice][value='1']", text: "Choose"
   end
 
+  test "a submit button can post its form to another action, and only a submit button" do
+    render_inline(ButtonComponent.new(type: :submit, formaction: "/en/market/sell/order")) { "Sell now" }
+
+    assert_selector "button[type=submit][formaction='/en/market/sell/order']", text: "Sell now"
+    assert_raises(ArgumentError) { ButtonComponent.new(formaction: "/en") }
+  end
+
+  test "an aria-disabled submit button stays focusable and points at its reason" do
+    render_inline(ButtonComponent.new(type: :submit, aria_disabled: true, describedby: "why")) { "Send" }
+
+    assert_selector "button.button[type=submit][aria-disabled=true][aria-describedby=why]:not([disabled])", text: "Send"
+    assert_raises(ArgumentError) { ButtonComponent.new(href: "/en", aria_disabled: true) }
+  end
+
   test "a name and a value are refused on a link, a form button and a dialog opener" do
     [ { href: "/en" }, { href: "/en", method: :post }, { opens: "dialog" } ].each do |options|
       assert_raises(ArgumentError) { ButtonComponent.new(name: "choice", value: "1", **options) }

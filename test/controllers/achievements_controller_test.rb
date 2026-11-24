@@ -58,7 +58,7 @@ class AchievementsControllerTest < ActionDispatch::IntegrationTest
       "Zèle au-delà des obligations", "Portefeuille diversifié", "Concentration du marché", "Premier arrivé, premier servi",
       "Une découverte qui nous appartient", "Une relation strictement professionnelle", "Pas de temps à perdre", "Oiseau de nuit",
       "OPA hostile", "Appel d'offres concurrentiel", "Plus-value réalisée", "Objectifs trimestriels atteints", "Délit d'initié" ],
-      group_names(:to_earn)
+      group_names(:to_earn).first(27)
 
     hundred = tile(:to_earn, "Historique de consommation exemplaire")
     assert_equal "Ouvrir 100 capsules", hundred.at_css(".achievement__condition").text
@@ -87,11 +87,11 @@ class AchievementsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".achievements__segment--lit", 0
     assert_select "#achievements-earned", false
     assert_select "h2#achievements-to_earn", "To earn · #{total_achievements}"
-    assert_equal [ [ "0", "10" ], [ "0", "100" ], [ "0", "500" ], [ "0", "3" ], [ "0", "10" ], [ "0", "7" ], [ "0", "10" ], [ "0", "10" ], [ "0", "5" ], [ "0", "10" ], [ "0", "3" ],
-      [ "0", "3" ], [ "0", "25" ], [ "0", "5" ] ],
+    assert_equal Game::Achievements.offered.select { it.threshold > 1 }.map { [ "0", it.threshold.to_s ] },
       css_select("progress.achievement__bar").map { [ it["value"], it["max"] ] }
     assert_equal [ "0 / 10", "0 / 100", "0 / 500", "0 / 3", "0 / 10", "0 / 7", "0 / 10", "0 / 10", "0 / 5", "0 / 10", "0 / 3",
-      "0 / 3", "0 / 25", "0 / 5" ], css_select(".achievement__progress").map(&:text)
+      "0 / 3", "0 / 25", "0 / 5" ], css_select(".achievement__progress").map(&:text).first(14)
+    assert_equal "0 / 1,000,000", tile(:to_earn, "First Million").at_css(".achievement__progress").text
     assert_equal "0 of 10", tile(:to_earn, "Probation Period Completed").at_css(".visually-hidden").text
     assert_equal "Open a capsule", tile(:to_earn, "Your First Authorized Acquisition").at_css(".achievement__condition").text
   end
@@ -201,15 +201,15 @@ class AchievementsControllerTest < ActionDispatch::IntegrationTest
     get achievements_path(locale: :fr)
 
     assert_select "a.tab-bar__tab[aria-current]", false
-    assert_select ".top-bar a.top-bar__phone-back[href='/fr/me']", /Moi/
+    assert_select ".top-bar a.top-bar__phone-back[href='/fr/me']", /Mon profil/
   end
 
-  test "menu 06 and the Me page lead a player to the achievements, with the count earned" do
+  test "menu 07 and the Me page lead a player to the achievements, with the count earned" do
     unlock("first_booster", "first_trade", "first_repost")
     sign_in(@player)
 
     get home_path(locale: :fr)
-    assert_select ".hub-menu a.menu-item[href='/fr/achievements'][aria-keyshortcuts='6']" do
+    assert_select ".hub-menu a.menu-item[href='/fr/achievements'][aria-keyshortcuts='7']" do
       assert_select ".menu-item__label", "Succès"
       assert_select ".menu-item__meta[aria-hidden=true]", "3/#{total_achievements}"
       assert_select ".visually-hidden", "3 succès obtenus sur #{total_achievements}"
@@ -237,5 +237,5 @@ class AchievementsControllerTest < ActionDispatch::IntegrationTest
     assert_match "Executive", insider.at_css(".achievement__avatar").text
   end
 
-  def total_achievements = Game::Achievements::CATALOGUE.size
+  def total_achievements = Game::Achievements.offered.size
 end

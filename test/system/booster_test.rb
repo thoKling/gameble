@@ -1,6 +1,7 @@
 require "application_system_test_case"
 require_relative "../support/game_packs"
 require_relative "../support/steam_sign_in"
+require_relative "../support/market"
 
 # The booster screen: the canister sends the opening exchange and deals the
 # cards face down; one activation reveals a card, "Reveal all" the rest;
@@ -12,10 +13,12 @@ require_relative "../support/steam_sign_in"
 # in a pile, each revealed card is stored in the tray (Store or a tap) and a
 # filled slot opens the card zoom, which steps through the tray; a card's
 # detail walks the booster and coming back shows it again, every card face
-# up. Reduced motion is emulated in every test.
+# up. Once the last card is face up, the booster records how the capsule was
+# revealed. Reduced motion is emulated in every test.
 class BoosterTest < ApplicationSystemTestCase
   include GamePacks
   include SteamSignIn
+  include MarketSettings
 
   PHONE = [ 390, 844 ].freeze
 
@@ -67,6 +70,26 @@ class BoosterTest < ApplicationSystemTestCase
     page.evaluate_script("window.boosterKeys")
   end
 
+  # Every reveal POST's body, in order, kept by a wrapper around fetch.
+  def record_reveal_posts
+    page.execute_script(<<~JS)
+      window.revealPosts = []
+      const realFetch = window.fetch
+      window.fetch = (url, init) => {
+        if (String(url).endsWith("/reveal")) window.revealPosts.push(init && init.body)
+        return realFetch(url, init)
+      }
+    JS
+  end
+
+  def reveal_posts
+    page.evaluate_script("window.revealPosts")
+  end
+
+  def assert_reveal_mode(pack, mode)
+    eventually("the pack's reveal mode should be #{mode}, not #{pack.reload.reveal_mode.inspect}") { pack.reload.reveal_mode == mode }
+  end
+
   def card(position)
     ".booster-card:nth-child(#{position})"
   end
@@ -81,11 +104,7 @@ class BoosterTest < ApplicationSystemTestCase
 
   def assert_dealt(count)
     assert_selector ".booster-card[data-dealt]", count:, wait: 10
-    assert_selector ".booster__state", text: /\AINVENTORY\z/
-  end
-
-  def state
-    find(".booster__state-word").text
+    assert_selector "#booster[data-status=inventory]"
   end
 
   def assert_announced(text, wait: Capybara.default_max_wait_time)
@@ -129,29 +148,62 @@ class BoosterTest < ApplicationSystemTestCase
     assert_match(/\A\h{8}-\h{4}-4\h{3}-[89ab]\h{3}-\h{12}\z/, request_keys.first)
     assert_selector ".booster-card:not([data-revealed])", count: 5
     assert_selector ".booster-card__back", count: 5
-    assert_selector "#{card(1)} .booster-card__label", text: "? ? ?"
     assert_equal "Card 1 of 5, face down. Reveal.", find(hit(1))["aria-label"]
     assert_focus hit(1)
     # The reserve follows the answer; the counts wait for the reveals.
     assert_selector ".top-bar .packs-chip--static .packs-chip__count", text: "1"
     assert_selector ".booster__pip[data-lit]", count: 1
     assert_equal commons, Integer(rarity_count("common"))
-    assert_selector ".booster__hint", text: "Click a card to reveal it · 5 left"
     assert_button "Open the next one", disabled: true
 
     page.send_keys(:enter)
     assert_selector "#{card(1)}[data-revealed]"
-    assert_selector "#{card(1)} .booster-card__label", text: "COMMON"
+    assert_selector "#{card(1)} .booster-card__front .card--rarity-common"
     assert_announced "Card 1: Tin Soldier — 2024. Common."
     assert_equal commons + 1, Integer(rarity_count("common"))
-    assert_equal "Tin Soldier — 2024, Common. See the card.", find(hit(1))["aria-label"]
+    assert_equal "Tin Soldier — 2024, Common. Enlarge.", find(hit(1))["aria-label"]
     assert_focus hit(1)
 
     find(hit(4)).click
-    assert_selector "#{card(4)}[data-revealed] .booster-card__label", text: "EPIC"
+    assert_selector "#{card(4)}[data-revealed]"
     assert_announced "Card 4: Portal — Valve, 2007. Epic."
     assert_equal commons + 1, Integer(rarity_count("common"))
     assert_selector "#{card(4)} .booster-card__front .card.card--m.card--booster.card--rarity-epic"
+  end
+
+  def enlarge(position)
+    eventually("card #{position} opens the card zoom once its reveal guard has passed") do
+      find("#{card(position)} .booster-card__front .card").click unless page.has_css?("dialog.booster-zoom[open]", wait: 0)
+      page.has_css?("dialog.booster-zoom[open]", wait: 0.2)
+    end
+  end
+
+  test "a revealed card opens the card zoom on the screen with its facts; it steps through the revealed cards and See the card leads to its page" do
+    open_screen(card_ids(:common_card_one, :uncommon_card_one, :rare_card_one, :portal_one, :common_card_one))
+    open_canister
+    assert_dealt(5)
+    find(hit(3)).click
+    find(hit(4)).click
+    assert_selector "#{card(4)}[data-revealed]"
+
+    enlarge(3)
+    zoom = "dialog.booster-zoom[open]"
+    assert_selector "#{zoom} h2", text: "BLUE DEPTHS"
+    assert_selector "#{zoom} .booster-zoom__line", text: "RARE · 2014"
+    assert_selector "#{zoom} .booster-zoom__facts .card-detail__fact dt", text: /rarity/i
+    assert_selector "#{zoom} .booster-zoom__nav--previous[disabled]"
+    find("#{zoom} .booster-zoom__nav--next").click
+    assert_selector "#{zoom} h2", text: "PORTAL"
+    assert_selector "#{zoom} .booster-zoom__nav--next[disabled]"
+    assert_current_path "/en/booster"
+
+    page.send_keys(:escape)
+    assert_no_selector "dialog.booster-zoom"
+    assert_focus hit(4)
+
+    enlarge(3)
+    within(zoom) { click_on "See the card" }
+    assert_current_path "/en/cards/blue-depths?pack=#{opened_token}&slot=3"
   end
 
   def reposts = Game::FeedEntry.where(kind: "repost").pluck(:card_season_id)
@@ -175,6 +227,45 @@ class BoosterTest < ApplicationSystemTestCase
     assert_selector "#{card(4)} .booster-card__repost"
     assert_selector ".booster-card[data-revealed]", count: 1
     assert_equal card_ids(:portal_one), reposts
+  end
+
+  test "with the market open, a revealed card is entrusted or sold at once from under it, with an undo while it waits" do
+    open_market!(first_opened_at: 1.day.ago)
+    open_screen(card_ids(:common_card_one, :uncommon_card_one, :rare_card_one, :portal_one, :common_card_one))
+    open_canister
+    assert_dealt(5)
+    assert_no_selector ".booster-card__entrust"
+
+    find(hit(4)).click
+    assert_selector "#{card(4)}[data-revealed]"
+    assert_equal "Entrust Portal to the Brotherhood", find("#{card(4)} .booster-card__entrust")["aria-label"]
+    assert_equal "Sell Portal on the market", find("#{card(4)} .booster-card__sell")["aria-label"]
+
+    find("#{card(4)} .booster-card__sell").click
+    assert_selector "#{card(4)} .booster-card__move", text: "On sale from 223 PiCoins"
+    find("#{card(4)} .booster-card__move button", text: /undo/i).click
+    assert_no_selector "#{card(4)} .booster-card__move"
+    assert_selector "#{card(4)} .booster-card__sell"
+
+    find("#{card(4)} .booster-card__entrust").click
+    assert_selector "#{card(4)} .booster-card__move", text: "Entrusted for 150 PiCoins"
+    assert_selector "#{card(4)} .booster-card__move button", text: /undo/i
+    assert_equal 0, Game::Market::Balance.call(@player).available
+
+    visit market_path(locale: :en)
+    eventually("the entrust is minted once the hand is left") { Game::Market::Balance.call(@player).available == 150 }
+    assert_equal 0, Game::Market::Listing.count
+  end
+
+  test "with the market closed, a revealed card offers only the repost" do
+    close_market!(first_opened_at: 1.day.ago)
+    open_screen(card_ids(:common_card_one, :uncommon_card_one, :rare_card_one, :portal_one, :common_card_one))
+    open_canister
+    assert_dealt(5)
+    find(hit(4)).click
+
+    assert_selector "#{card(4)} .booster-card__repost"
+    assert_no_selector ".booster-card__entrust, .booster-card__sell", visible: :all
   end
 
   def opened_token
@@ -203,9 +294,8 @@ class BoosterTest < ApplicationSystemTestCase
     assert_selector ".booster-card[data-revealed]", count: 5, wait: 15
     assert_announced "4 cards revealed: Legendary × 1, Rare × 1, Uncommon × 1, Common × 1.", wait: 10
     assert_includes announcements, "Legendary signal"
-    assert_selector ".booster__state", text: "INVENTORY COMPLETE"
-    assert_selector ".booster__hint", text: "Capsule inventoried · +5 cards in the collection"
-    assert_selector "#{card(2)} .booster-card__label", text: "LEGENDARY!"
+    assert_selector "#booster[data-status=complete]"
+    assert_selector "#{card(2)} .booster-card__front .card--rarity-legendary"
     assert_focus ".booster__open"
     assert_button "Open the next one"
   end
@@ -224,8 +314,8 @@ class BoosterTest < ApplicationSystemTestCase
     assert_selector ".booster-card[data-revealed]", count: 5, wait: 15
 
     assert_selector copies, text: (commons + 2).to_s, exact_text: true, visible: :all, wait: 10
-    owned = Game::RarityLegend.call(@player).rows.first.overall.owned
-    assert_selector legend_cell(1, ".rarity-legend__overall .rarity-legend__owned"), text: owned.to_s, exact_text: true, visible: :all
+    owned = Game::RarityLegend.call(@player).rows.first.season.owned
+    assert_selector legend_cell(1, ".rarity-legend__season .rarity-legend__owned"), text: owned.to_s, exact_text: true, visible: :all
     assert_equal commons + 2, Integer(rarity_count("common"))
   end
 
@@ -236,7 +326,7 @@ class BoosterTest < ApplicationSystemTestCase
     click_on "Reveal all"
     assert_selector ".booster-card[data-revealed]", count: 5, wait: 10
     # The last reveal over, the button takes activation.
-    assert_selector ".booster__state", text: "INVENTORY COMPLETE"
+    assert_selector "#booster[data-status=complete]"
     assert_selector ".booster__open:not([disabled]):not([aria-disabled])"
 
     click_on "Open the next one"
@@ -261,7 +351,7 @@ class BoosterTest < ApplicationSystemTestCase
 
     assert_selector ".booster-canister", wait: 15
     assert_button "Open the capsule", disabled: false
-    assert_selector ".booster__state", text: "SEALED"
+    assert_selector "#booster[data-status=sealed]"
     assert_selector ".top-bar .packs-chip--static .packs-chip__count", text: "1"
     assert_selector ".booster[data-kept]"
 
@@ -378,7 +468,7 @@ class BoosterTest < ApplicationSystemTestCase
     assert_selector ".booster__reason", text: message
     assert_selector ".toasts .toast--alert", text: /OPENING CANCELLED.*#{Regexp.escape(message)}/m
     assert_announced message
-    assert_selector ".booster__state", text: "WAITING"
+    assert_selector "#booster[data-status=waiting]"
     assert_selector ".booster__empty"
     assert_no_selector ".booster-card"
     assert_button "Reserve empty", disabled: true
@@ -407,7 +497,7 @@ class BoosterTest < ApplicationSystemTestCase
     assert_selector ".booster__reason", text: failed
     assert_selector ".toasts .toast--alert", text: failed
     assert_no_selector ".toasts .toast--alert", text: /OPENING CANCELLED/
-    assert_selector ".booster__state", text: "SEALED"
+    assert_selector "#booster[data-status=sealed]"
     assert_no_selector ".booster-card"
     assert_equal 1, opened_packs
 
@@ -425,6 +515,10 @@ class BoosterTest < ApplicationSystemTestCase
     ".booster-card[data-position='#{position}']"
   end
 
+  def store_on_phone(position)
+    find("#{phone_card(position)} .booster-card__front .card").click
+  end
+
   def phone_hit(position)
     "#{phone_card(position)} .booster-card__hit"
   end
@@ -440,11 +534,8 @@ class BoosterTest < ApplicationSystemTestCase
   # The phone's pile dealt: every card at card-xl, the first on top with the focus.
   def assert_pile(count)
     assert_selector ".booster[data-layout=phone] .booster__pile .booster-card[data-dealt]", count:, wait: 10
-    assert_selector ".booster__state", text: /\AINVENTORY\z/
-  end
-
-  def filled_slots
-    all(".booster-tray__slot--filled").size
+    assert_selector "#booster[data-status=inventory]"
+    assert_focus phone_hit(1)
   end
 
   test "on a phone: a pile of large cards, one at a time, each revealed then stored by Store or a tap, the focus following" do
@@ -454,9 +545,8 @@ class BoosterTest < ApplicationSystemTestCase
     within(".booster-strip") do
       assert_selector "h2#booster-title", text: "SEASON 1 · GRAND CATALOGUE"
       assert_selector ".booster__pip[data-lit]", count: 2
-      assert_selector ".booster__state", text: "SEALED"
     end
-    assert_selector ".booster__canister-hint", text: "TAP TO OPEN"
+    assert_selector "#booster[data-status=sealed]"
     assert_selector ".booster__canister-facts", text: "5 cards"
     assert_no_selector ".booster__info"
     assert_no_selector ".booster__counter"
@@ -472,18 +562,15 @@ class BoosterTest < ApplicationSystemTestCase
     assert_selector ".booster-tray__slot", count: 5
     assert_selector ".booster-tray__slot[data-next]", count: 1
     assert_selector ".booster-tray__count", text: %r{CARD\s+0 / 5}
-    assert_selector ".booster-plate-band__hint", text: "Tap the card to reveal it"
-    assert_no_selector ".booster-plate"
 
-    # One activation reveals the top card; the plate tells it, under the card.
+    # One activation reveals the top card; a tap on it stores it, once its guard is over.
     page.send_keys(:enter)
-    assert_selector "#{phone_card(1)}[data-revealed]"
-    assert_selector ".booster-plate[data-tier=common]", text: /COMMON.*TIN SOLDIER · 2024/m
+    assert_selector "#{phone_card(1)}[data-revealed]", wait: 10
     assert_announced "Card 1: Tin Soldier — 2024. Common."
     assert_equal "Tin Soldier — 2024, Common. Store the card.", find(phone_hit(1))["aria-label"]
     assert_focus phone_hit(1)
     sleep 0.45
-    click_on "Store"
+    store_on_phone(1)
     assert_no_selector phone_card(1)
     assert_selector ".booster-tray__slot--filled[data-tier=common]", count: 1
     assert_selector ".booster-tray__count", text: %r{CARD\s+1 / 5}
@@ -491,34 +578,34 @@ class BoosterTest < ApplicationSystemTestCase
 
     # The second: a tap on the revealed card, once its guard is over.
     page.send_keys(:enter)
-    assert_selector "#{phone_card(2)}[data-revealed]"
+    assert_selector "#{phone_card(2)}[data-revealed]", wait: 10
     sleep 0.45
     find("#{phone_card(2)} .booster-card__front .card").click
     assert_no_selector phone_card(2)
-    assert_equal 2, filled_slots
+    assert_selector ".booster-tray__slot--filled", count: 2
     assert_focus phone_hit(3)
 
     page.send_keys(:enter)
-    assert_selector "#{phone_card(3)}[data-revealed]"
+    assert_selector "#{phone_card(3)}[data-revealed]", wait: 10
     sleep 0.45
-    click_on "Store"
+    store_on_phone(3)
     assert_no_selector phone_card(3)
     assert_selector ".booster-tray__count", text: %r{CARD\s+3 / 5}
     assert_focus phone_hit(4)
 
     page.send_keys(:enter)
-    assert_selector ".booster-plate[data-tier=epic]", text: /EPIC.*PORTAL · 2007/m
+    assert_selector "#{phone_card(4)}[data-revealed]", wait: 10
     sleep 0.45
-    click_on "Store"
+    store_on_phone(4)
     assert_focus phone_hit(5)
     page.send_keys(:enter)
-    assert_selector "#{phone_card(5)}[data-revealed]"
+    assert_selector "#{phone_card(5)}[data-revealed]", wait: 10
     sleep 0.45
-    click_on "Store"
+    store_on_phone(5)
 
-    assert_equal 5, filled_slots
+    assert_selector ".booster-tray__slot--filled", count: 5
     assert_no_selector ".booster__pile .booster-card"
-    assert_selector ".booster__state", text: "INVENTORY COMPLETE"
+    assert_selector "#booster[data-status=complete]"
     assert_selector ".booster-plate-band .booster-celebration", text: /SET COMPLETE\s+VALVE/
     assert_focus ".booster__open"
     assert_button "Open the next one"
@@ -537,9 +624,9 @@ class BoosterTest < ApplicationSystemTestCase
     open_canister
     assert_pile(5)
     page.send_keys(:enter)
-    assert_selector "#{phone_card(1)}[data-revealed]"
+    assert_selector "#{phone_card(1)}[data-revealed]", wait: 10
     sleep 0.45
-    click_on "Store"
+    store_on_phone(1)
     slot = ".booster-tray__slot--filled"
     assert_equal "Blue Depths — 2014, Rare. Enlarge.", find(slot)["aria-label"]
 
@@ -576,10 +663,10 @@ class BoosterTest < ApplicationSystemTestCase
     assert_pile(5)
     assert_no_selector ".booster-card__repost"
     page.send_keys(:enter)
-    assert_selector "#{phone_card(1)}[data-revealed]"
+    assert_selector "#{phone_card(1)}[data-revealed]", wait: 10
     assert_no_selector ".booster-card__repost"
     sleep 0.45
-    click_on "Store"
+    store_on_phone(1)
 
     find(".booster-tray__slot--filled").click
     assert_selector "dialog.booster-zoom[open]"
@@ -610,7 +697,7 @@ class BoosterTest < ApplicationSystemTestCase
     assert_pile(5)
     click_on "Reveal all"
     assert_selector ".booster-tray__slot--filled", count: 5, wait: 20
-    assert_selector ".booster__state", text: "INVENTORY COMPLETE", wait: 10
+    assert_selector "#booster[data-status=complete]", wait: 10
     token = opened_token
 
     all(".booster-tray__slot--filled")[2].click
@@ -646,7 +733,7 @@ class BoosterTest < ApplicationSystemTestCase
     assert_selector ".booster[data-layout=phone]"
     assert_selector ".booster-tray__slot--filled", count: 5
     assert_no_selector ".booster__pile .booster-card"
-    assert_selector ".booster__state", text: "INVENTORY COMPLETE"
+    assert_selector "#booster[data-status=complete]"
     all(".booster-tray__slot--filled")[4].click
     assert_selector "dialog.booster-zoom[open] h2", text: "GOLDEN CROWN"
   end
@@ -663,7 +750,7 @@ class BoosterTest < ApplicationSystemTestCase
     assert_equal 1, announcements.count { it.end_with?("cards revealed: Legendary × 1, Rare × 1, Uncommon × 1, Common × 2.") }
     assert_includes announcements, "Legendary signal"
     assert_no_selector ".booster__pile .booster-card"
-    assert_selector ".booster__state", text: "INVENTORY COMPLETE"
+    assert_selector "#booster[data-status=complete]"
     assert_focus ".booster__open"
 
     # The next booster: the tray clears, a canister docks and opens with a new key.
@@ -695,19 +782,33 @@ class BoosterTest < ApplicationSystemTestCase
     assert_equal 2, request_keys.uniq.size
   end
 
-  test "on the wide layout the set celebration waits for the last reveal, is announced once, and comes back still from its album" do
+  test "on the wide layout the set celebration waits for the last reveal, is announced once, and comes back still from its album; the capsule turned card by card records one_by_one once its last card is face up" do
     open_screen(card_ids(:common_card_one, :uncommon_card_one, :rare_card_one, :portal_one, :common_card_one), more: true)
+    pack = Game::Pack.where(player_id: @player.id).order(:available_at).first
+    record_reveal_posts
     open_canister
     assert_dealt(5)
 
     (1..4).each do |position|
       find(hit(position)).click
       assert_selector "#{card(position)}[data-revealed]"
+      assert_selector ".booster-card[data-revealed]", count: position
       assert_no_selector "[data-navigation-locked]", visible: :all
       assert_no_selector ".booster-celebration"
     end
+    assert_nil pack.reload.reveal_mode
+    assert_empty reveal_posts
+
     find(hit(5)).click
-    assert_selector ".booster__state", text: "INVENTORY COMPLETE"
+    assert_selector ".booster-card[data-revealed]", count: 5
+    assert_reveal_mode pack, "one_by_one"
+    assert_equal 1, reveal_posts.size
+    posted = JSON.parse(reveal_posts.first)
+    assert_equal({ "mode" => "one_by_one", "layout" => "wide" }, posted.slice("mode", "layout"))
+    assert_kind_of Integer, posted["touch_to_blast"]
+    assert_kind_of Integer, posted["touch_to_first_face"]
+
+    assert_selector "#booster[data-status=complete]"
     assert_selector ".booster__info .booster-celebration", text: /SET COMPLETE\s+VALVE/
     assert_no_selector ".booster__info .booster-celebration[data-still]"
     assert_selector ".booster [role=status] > span", text: /\ASet complete: /, count: 1, visible: :all
@@ -718,7 +819,7 @@ class BoosterTest < ApplicationSystemTestCase
     page.go_back
     assert_selector ".booster-card[data-revealed]", count: 5
     assert_selector ".booster__info .booster-celebration[data-still]", text: /SET COMPLETE\s+VALVE/
-    assert_selector ".booster__state", text: "INVENTORY COMPLETE"
+    assert_selector "#booster[data-status=complete]"
 
     click_on "Open the next one"
     assert_no_selector ".booster-celebration"

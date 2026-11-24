@@ -1,6 +1,6 @@
 # Achievements
 
-Referenced by CAP-17 and CAP-20. Sources: GitHub issues #66 (achievement list, condition types, renames) and #68 (lazy opener, hardworking), chosen and approved by the author on 2026-10-30. Titles are the working English titles of #66; the final French and English titles follow `brotherhood-tone.md` and land in `EXPERIENCE.md`.
+Referenced by CAP-17, CAP-20 and CAP-22. Sources: GitHub issues #66 (achievement list, condition types, renames) and #68 (lazy opener, hardworking), chosen and approved by the author on 2026-10-30. Titles are the working English titles of #66; the final French and English titles follow `brotherhood-tone.md` and land in `EXPERIENCE.md`.
 
 ## Rules
 
@@ -48,7 +48,17 @@ Condition, key and earned grants unchanged. Five titles come from #66, the other
 
 The four marked in Back are the hardest to obtain and unlock a card back each (author, 2026-10-30: "the hardest ones"; on 2026-10-31 the back moved from First Claim, All Rights Reserved, too easy early in a season, to A Strictly Professional Relationship): Trèfle fané, Assidu, Siège social and Contrat, designed in `DESIGN.md`. N for the two #68 achievements is set at inception.
 
+## Title feats (2026-11-23)
+
+The top grade of each service (CAP-22, `brotherhood-titles.md`) needs one achievement. Four exist: Open 5,000 capsules, Insider Trading, Have 25 friends, De Facto Monopoly. One is new:
+
+| Title | Type | Condition | Back |
+|---|---|---|---|
+| Prospecting Targets Exceeded (FR: Objectifs de prospection dépassés) | community | Finish a week first on the pioneer ranking, frozen at the week's end like the Chattomètre's employee of the week | |
+
 ## Duel achievements (release 1.4)
+
+Withheld during the duels alpha (author, 2026-11-20): built, neither granted nor listed; they return with the duels beta (spec CAP-42).
 
 Chosen by the author on 2026-11-14 from a proposed list; their French and English titles were approved by the author on 2026-11-14 (French in `EXPERIENCE.md`, Achievement titles and conditions, 24 to 33). They read finished duels (CAP-41); a duel counts once it ends, automatic moves included, except where the condition says otherwise.
 

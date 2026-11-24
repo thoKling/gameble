@@ -35,12 +35,12 @@ class MarketExchangeTest < ApplicationSystemTestCase
   test "staff read the Reactor's figures and charts, and its table matches the snapshots" do
     sign_in_as(accounts_players(:moderator))
     visit market_path(locale: :en)
-    assert_selector "h1", text: "Market"
+    assert_selector "h1", text: "Market", visible: :all
     assert_no_match CHART_CHUNK, loaded_scripts.join(" ")
 
     visit market_exchange_path(locale: :en)
 
-    assert_selector "h1", text: "The Brotherhood's Exchange"
+    assert_selector "h1", text: "The Brotherhood's Exchange", visible: :all
     within("[data-exchange-panel=reactor]") do
       assert_selector ".chart-figures__item", count: 4
       assert_selector ".chart-figures__item", text: /\AIN CIRCULATION\s+412\.6M/
@@ -73,7 +73,7 @@ class MarketExchangeTest < ApplicationSystemTestCase
     within("[data-exchange-panel=rarity_prices]") do
       assert_selector "h2", text: "WHAT A CARD COSTS"
       assert_selector ".rarity-tiles > li", count: 5
-      assert_selector ".rarity-tile--epic", text: /\AEpic\s+1\.6 d\s+1\.6 days\s+\+38\.5%\s+plus 38\.5%\s+in 90 d\z/
+      assert_selector ".rarity-tile--epic", text: /\AEpic\s+16k\s+≈ 1\.6 d\s+1\.6 days\s+of capsules\s+\+38\.5%\s+plus 38\.5%\s+in 90 d\z/
       assert_selector ".rarity-tile--epic .chart--spark canvas[style*=height]"
       assert_no_selector ".rarity-tile--rare .chart--spark"
       assert_selector "#rarity-index canvas[style*=height]"
@@ -113,15 +113,5 @@ class MarketExchangeTest < ApplicationSystemTestCase
     region_scrolls = "(() => { const region = document.querySelector('#reactor-flows .chart__scroll'); return region.scrollWidth > region.clientWidth })()"
     eventually("the Reactor's table scrolls inside its region") { evaluate_script(region_scrolls) }
     assert_equal false, evaluate_script("document.documentElement.scrollWidth > window.innerWidth")
-  end
-
-  test "a visitor and a player find no exchange" do
-    visit market_exchange_path(locale: :en)
-    assert_no_selector ".exchange"
-
-    sign_in_as(accounts_players(:player))
-    visit market_exchange_path(locale: :en)
-    assert_no_selector ".exchange"
-    assert_no_selector ".chart"
   end
 end

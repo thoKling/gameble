@@ -15,6 +15,8 @@ class Game::Market::EditionPriceTest < ActiveSupport::TestCase
 
   def average_of(prices) = Game::Market::EditionPrice.average_of(prices)
 
+  def rarity_average(rarity) = Game::Market::EditionPrice.rarity_average(rarity, settings: @settings, now: @now)
+
   def window(settings: @settings, card: @card) = Game::Market::EditionPrice.sales_in_window(card.id, settings:, now: @now)
 
   test "the minimum sales equal the lower bound of the sale count setting" do
@@ -72,6 +74,18 @@ class Game::Market::EditionPriceTest < ActiveSupport::TestCase
     assert_equal [ 20_000, 10_000 ], window(settings: narrow)
   end
 
+  test "served orders count with sold listings, newest first, a served order before a listing sold at the same time" do
+    at = 1.day.ago
+    sold!(@card, 10_000, sold_at: 3.days.ago)
+    served!(@card, 20_000, served_at: 2.days.ago)
+    sold!(@card, 30_000, sold_at: at)
+    served!(@card, 40_000, served_at: at)
+    served!(@other, 99_000, served_at: at)
+    Game::Market::Order.create!(player: accounts_players(:moderator), card_id: @card.card_id, settings: @settings, price: 50_000, expires_at: 1.day.from_now)
+
+    assert_equal [ 40_000, 30_000, 20_000, 10_000 ], window
+  end
+
   test "another edition's sales and unsold listings are ignored" do
     sold!(@other, 99_000, sold_at: 1.day.ago)
     sold!(@card, 10_000, sold_at: 1.day.ago)
@@ -103,21 +117,31 @@ class Game::Market::EditionPriceTest < ActiveSupport::TestCase
     assert_raises(ActiveRecord::StatementInvalid) { row.update_columns(average: 5) }
   end
 
-  test "a rarity's average is the median of its editions with enough sales" do
+  test "a rarity's average is the median of all its sales in the window, one sale enough" do
     other = catalog_card_seasons(:uncommon_card_one)
     other.update_columns(rarity: 1)
-    Game::Market::EditionPrice.create!(card_season_id: @card.id, average: 1_000, sales_used: 3)
-    Game::Market::EditionPrice.create!(card_season_id: other.id, average: 4_001, sales_used: 4)
-    Game::Market::EditionPrice.create!(card_season_id: @other.id, average: 9_000, sales_used: 3)
+    sold!(@card, 1_000, sold_at: @now - 1.day)
+    sold!(other, 4_000, sold_at: @now - 2.days)
+    sold!(other, 5_000, sold_at: @now - 3.days)
+    sold!(@other, 9_000, sold_at: @now - 1.day)
 
-    assert_equal 2_500, Game::Market::EditionPrice.rarity_average(:common)
-    assert_equal 9_000, Game::Market::EditionPrice.rarity_average(:rare)
+    assert_equal 4_000, rarity_average(:common)
+    assert_equal 9_000, rarity_average(:rare)
   end
 
-  test "a rarity's average skips editions under the minimum and is null with none left" do
-    Game::Market::EditionPrice.create!(card_season_id: @card.id, average: 1_000, sales_used: 2)
+  test "a rarity's average counts served orders" do
+    sold!(@card, 1_000, sold_at: @now - 1.day)
+    served!(@card, 3_000, served_at: @now - 2.days)
+    served!(@card, 4_000, served_at: @now - 3.days)
 
-    assert_nil Game::Market::EditionPrice.rarity_average(:common)
-    assert_nil Game::Market::EditionPrice.rarity_average(:legendary)
+    assert_equal 3_000, rarity_average(:common)
+  end
+
+  test "a rarity's average skips sales outside the window and is null with none left" do
+    sold!(@card, 1_000, sold_at: @now - 91.days)
+    sold!(@card, 2_000, sold_at: @now + 1.minute)
+
+    assert_nil rarity_average(:common)
+    assert_nil rarity_average(:legendary)
   end
 end

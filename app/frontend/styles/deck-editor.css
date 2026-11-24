@@ -1,0 +1,366 @@
+/* ---- The deck editor: the name, save state and count; one panel holding the
+   twelve slots beside the list of what the deck still misses, stuck to the top
+   on desktop while the collection scrolls; then the collection. ---- */
+
+.deck-editor__notice {
+  margin: 0;
+  padding: var(--space-5);
+  background: var(--color-panel);
+  box-shadow: var(--panel-border);
+  color: var(--color-text);
+  font: var(--font-body);
+}
+
+.deck-editor__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.deck-editor__summary {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin: 0;
+  min-height: var(--space-touch-min);
+}
+
+.deck-editor__save {
+  color: var(--color-muted);
+  font: var(--font-body-small);
+  letter-spacing: var(--tracking-body-small);
+}
+
+.deck-editor__save[data-state="saved"] {
+  color: var(--color-lime);
+}
+
+.deck-editor__save[data-state="failed"] {
+  color: var(--color-danger-text);
+}
+
+.deck-editor__count {
+  flex: none;
+  padding: var(--space-1) var(--space-3);
+  box-shadow: inset 0 0 0 1px var(--color-line-deep);
+  color: var(--color-text-bright);
+  font: var(--font-number);
+  letter-spacing: var(--tracking-number);
+}
+
+.deck-editor__name {
+  display: flex;
+  flex: 1 1 280px;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-width: 480px;
+}
+
+.deck-editor__label {
+  color: var(--color-accent);
+  font: var(--font-kicker);
+  letter-spacing: var(--tracking-kicker);
+  text-transform: uppercase;
+}
+
+.deck-editor__input,
+.deck-collection__search {
+  box-sizing: border-box;
+  min-width: 0;
+  min-height: var(--space-button-height);
+  padding: var(--space-1) var(--space-5);
+  background: var(--color-input);
+  border: 0;
+  box-shadow: var(--control-border);
+  color: var(--color-text-max);
+  font: var(--font-body);
+  letter-spacing: var(--tracking-body);
+}
+
+.deck-editor__input:focus-visible,
+.deck-collection__search:focus-visible {
+  outline: 0;
+  box-shadow:
+    var(--focus-ring-gap),
+    inset 0 0 0 var(--space-unit) var(--color-accent);
+}
+
+.deck-editor__refusal {
+  margin: 0;
+  color: var(--color-alert);
+  font: var(--font-body-small);
+  letter-spacing: var(--tracking-body-small);
+}
+
+.deck-editor__refusal:empty {
+  display: none;
+}
+
+.deck-editor__status {
+  min-height: 1lh;
+  margin: 0;
+  color: var(--color-muted);
+  font: var(--font-body-small);
+  letter-spacing: var(--tracking-body-small);
+}
+
+.deck-editor__delete {
+  display: flex;
+}
+
+.deck-editor__delete[hidden] {
+  display: none;
+}
+
+.deck-editor__deck {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+/* ---- Slots: four columns of three, each a card with its stat bars over it ---- */
+
+.deck-slots__list {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.deck-slots__slot {
+  display: flex;
+  align-items: flex-start;
+  min-width: 0;
+}
+
+.deck-slot {
+  display: block;
+  width: 100%;
+  padding: 0;
+  background: none;
+  border: 0;
+  color: var(--color-text-max);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.deck-slot--empty {
+  aspect-ratio: 2 / 3;
+  box-shadow: none;
+  outline: 1px dashed var(--color-dim);
+  outline-offset: -1px;
+  cursor: default;
+}
+
+.deck-slot__filled {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  width: 100%;
+  min-width: 0;
+}
+
+.deck-slot__moves {
+  color: var(--color-text);
+  font: var(--font-card-meta);
+  letter-spacing: var(--tracking-card-meta);
+}
+
+.deck-slot__moves:empty {
+  display: none;
+}
+
+.deck-slot__filled[data-dragging] .deck-slot {
+  opacity: 0.3;
+}
+
+.deck-slot__actions {
+  flex-direction: column;
+  gap: var(--space-3);
+  position: absolute;
+  inset: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 2 / 3;
+  background: color-mix(in srgb, var(--color-panel-sunken) 72%, transparent);
+}
+
+.deck-slot__actions[hidden] {
+  display: none;
+}
+
+button.deck-slot:hover {
+  box-shadow: inset 0 0 0 1px var(--color-accent);
+}
+
+button.deck-slot:focus-visible {
+  outline: 0;
+  box-shadow:
+    var(--focus-ring-gap),
+    inset 0 0 0 var(--space-unit) var(--color-accent);
+}
+
+/* ---- Collection: the recommendations, the tools, then the tiles (deck-entry.css) ---- */
+
+.deck-collection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.deck-collection__heading {
+  margin: 0;
+  color: var(--color-accent);
+  font: var(--font-kicker);
+  letter-spacing: var(--tracking-kicker);
+  text-transform: uppercase;
+}
+
+.deck-collection__empty {
+  margin: 0;
+  color: var(--color-text);
+  font: var(--font-body);
+}
+
+.deck-editor__side {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-7);
+  min-width: 0;
+}
+
+.deck-editor__legend {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin-top: auto;
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--color-line);
+  color: var(--color-muted);
+  font: var(--font-body-small);
+  letter-spacing: var(--tracking-body-small);
+}
+
+.deck-editor__legend-heading {
+  margin: 0;
+  color: var(--color-accent);
+  font: var(--font-kicker);
+  letter-spacing: var(--tracking-kicker);
+  text-transform: uppercase;
+}
+
+.deck-editor__legend-line {
+  margin: 0;
+}
+
+.deck-editor__legend-stats {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0;
+}
+
+.deck-editor__legend-stat {
+  display: flex;
+  gap: var(--space-4);
+}
+
+.deck-editor__legend-stat dt {
+  flex: none;
+  min-width: 60px;
+  color: var(--color-text);
+}
+
+.deck-editor__legend-stat dd {
+  margin: 0;
+}
+
+.deck-recommendations {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.deck-recommendations[hidden],
+.deck-collection__empty[hidden],
+.deck-collection__more[hidden] {
+  display: none;
+}
+
+.deck-collection__tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.deck-collection__search {
+  flex: 1 1 220px;
+  max-width: 360px;
+}
+
+.deck-collection__trumps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.deck-collection__tools .sort {
+  margin-left: auto;
+}
+
+.deck-collection__more {
+  display: flex;
+  justify-content: center;
+}
+
+/* ---- The delete dialog ---- */
+
+.delete-deck__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.delete-deck__text {
+  margin: 0;
+  color: var(--color-text);
+  font: var(--font-body);
+}
+
+.delete-deck__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+
+@media (min-width: 1180px) {
+  .deck-editor__deck {
+    display: grid;
+    grid-template-columns: minmax(0, 3fr) minmax(240px, 1fr);
+    align-items: start;
+  }
+}
+
+@media (max-width: 719px) {
+  .deck-slots__list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .deck-collection__tools .sort {
+    flex-basis: 100%;
+    margin-left: 0;
+  }
+}

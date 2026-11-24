@@ -16,6 +16,8 @@ abort "Vite build failed: see log/test.log" unless ViteRuby.commands.build
 # (SteamApiStubs, which restores this on unstub); an unstubbed call raises.
 # Set here, before the parallel workers fork.
 Steam::WebApi.adapter = [ :test, Faraday::Adapter::Test::Stubs.new ]
+# Nor does a test reach Discord: the membership check answers from stubs unless one is given.
+Accounts::DiscordClient.adapter = [ :test, Faraday::Adapter::Test::Stubs.new ]
 # Nor does a card's art fetch (ShareImageArt stubs it).
 CardShareImage::Art.adapter = [ :test, Faraday::Adapter::Test::Stubs.new ]
 
@@ -33,6 +35,13 @@ module ActiveSupport
 
     # The draw pool is held per process and outlives the transaction each test rolls back.
     setup { Game::DrawPool.reset! }
+
+    # A test that commits for real leaves the pending wanted refreshes of its events, which no job clears here.
+    # Cleared before its teardown, which may delete the players they name.
+    def before_teardown
+      super
+      Game::Market::PendingWantedRefresh.delete_all unless use_transactional_tests
+    end
 
     # Add more helper methods to be used by all tests here...
   end

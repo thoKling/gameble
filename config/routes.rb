@@ -31,15 +31,22 @@ Rails.application.routes.draw do
     post "settings/steam" => "steam_links#create", as: :settings_steam
     # The public roadmap, every milestone and story staff chose to show.
     get "roadmap" => "roadmaps#show", as: :roadmap
+    # The trades tab: the sub-tab the player last used, between friends or the market.
+    get "exchanges" => "exchanges#show", as: :exchanges
+    post "exchanges/tab" => "exchange_tabs#create", as: :exchanges_tab
     get "market" => "markets#show", as: :market
     # Where a player gives spare copies to the Brotherhood for PiCoins.
     get "market/entrust" => "market/entrustments#new", as: :new_market_entrustment
     get "market/entrust/cards/:slug" => "market/entrustments#new", as: :new_market_card_entrustment
     get "market/entrust/matching" => "market/entrustments#matching", as: :market_entrustment_matches
     post "market/entrust" => "market/entrustments#create", as: :market_entrustments
+    # The entrusting screen's second step: what to do with each wanted copy set apart, the copies named in the address.
+    get "market/entrust/wanted" => "market/wanted_choices#new", as: :new_market_wanted_choice
+    post "market/entrust/wanted" => "market/wanted_choices#create", as: :market_wanted_choices
     get "market/sell" => "market/sales#new", as: :new_market_sale
     get "market/sell/cards/:slug" => "market/sales#new", as: :new_market_card_sale
     post "market/sell" => "market/sales#create", as: :market_sales
+    post "market/sell/order" => "market/sales#sell", as: :market_order_sale
     # One listing, read by its token.
     get "market/listings/:token" => "market/listings#show", as: :market_listing
     post "market/listings/:token/bids" => "market/bids#create", as: :market_listing_bids
@@ -48,6 +55,15 @@ Rails.application.routes.draw do
     get "market/my-sales" => "market/my_sales#show", as: :market_my_sales
     # The auctions a player bid on.
     get "market/my-bids" => "market/my_bids#show", as: :market_my_bids
+    # A buy order on every edition of one card, and a player's open orders.
+    get "market/order/cards/:slug" => "market/orders#new", as: :new_market_card_order
+    post "market/order/cards/:slug" => "market/orders#create", as: :market_card_orders
+    get "market/my-orders" => "market/my_orders#show", as: :market_my_orders
+    post "market/orders/:token/cancellation" => "market/order_cancellations#create", as: :market_order_cancellation
+    # The Brotherhood's shop, selling the Archives' copies at a fixed price, and the purchase of one edition.
+    get "market/shop" => "market/shops#show", as: :market_shop
+    get "market/shop/cards/:slug/seasons/:number" => "market/archive_purchases#new", as: :new_market_archive_purchase, constraints: { number: /\d+/ }
+    post "market/shop/cards/:slug/seasons/:number" => "market/archive_purchases#create", as: :market_archive_purchase, constraints: { number: /\d+/ }
     # The Brotherhood's Exchange: the economy's public charts.
     get "market/exchange" => "market/exchanges#show", as: :market_exchange
     # One published chart, cached by version, embedded by the exchange page.
@@ -69,6 +85,8 @@ Rails.application.routes.draw do
     resource :rarity_legend, path: "rarity-legend", only: :show
     # What is new for the player, the lines of the header's bell, in a frame.
     resource :bell, only: :show
+    # Bell lines read on one device leave the bell on every other device.
+    post "bell/read" => "bell_reads#create", as: :bell_read
 
     # The collection, reached from the hub's menu: its entry, the player's
     # sets; the grid of every card of the season; every set behind a search.
@@ -76,20 +94,48 @@ Rails.application.routes.draw do
     get "library/in-progress" => "library#in_progress", as: :library_in_progress
     get "library/cards" => "library#cards", as: :library_cards
     get "library/sets" => "library#sets", as: :library_sets
+    # The Brotherhood's collection, open without an account; seasons=current narrows it to the published season.
+    get "inventory" => "grand_inventories#show", as: :grand_inventory
     # The sets a player gathers themselves, by token; the editor's games
     # arrive page by page in a frame, searched and filtered.
     get "library/custom-sets/games" => "custom_sets#games", as: :custom_set_games
     resources :custom_sets, path: "library/custom-sets", only: %i[create show update destroy], param: :token,
       constraints: { token: /[1-9A-HJ-NP-Za-km-z]{24}/ }
+    # The Duels screen: the player's decks.
+    get "duels" => "duels#show", as: :duels
+    # What a player writes about a feature staff asked them to test.
+    resource :feedback, only: %i[new create]
+    # Takes an edition out of every deck of the player, from the trade, sale and entrust screens.
+    post "duels/decks/removals" => "deck_removals#create", as: :deck_removals
+    # A player's decks, by token: a new deck's editor writes nothing until its first change; each change saves at once.
+    resources :decks, path: "duels/decks", only: %i[new create show update destroy], param: :token,
+      constraints: { token: /[1-9A-HJ-NP-Za-km-z]{24}/ }
+    post "duels/decks/:token/cards" => "deck_cards#create", as: :deck_cards, constraints: { token: /[1-9A-HJ-NP-Za-km-z]{24}/ }
+    delete "duels/decks/:token/cards" => "deck_cards#destroy", constraints: { token: /[1-9A-HJ-NP-Za-km-z]{24}/ }
+    # A challenge to a friend, and a duel by its token: its screen, the acceptance and each call and answer.
+    post "duels/challenges" => "duel_moves#challenge", as: :duel_challenges
+    post "duels/practice" => "duel_moves#practice", as: :duel_practice
+    get "duels/:token" => "duels#play", as: :duel, constraints: { token: /[1-9A-HJ-NP-Za-km-z]{24}/ }
+    post "duels/:token/acceptance" => "duel_moves#accept", as: :duel_acceptance, constraints: { token: /[1-9A-HJ-NP-Za-km-z]{24}/ }
+    post "duels/:token/refusal" => "duel_moves#decline", as: :duel_refusal, constraints: { token: /[1-9A-HJ-NP-Za-km-z]{24}/ }
+    post "duels/:token/cancellation" => "duel_moves#cancel", as: :duel_cancellation, constraints: { token: /[1-9A-HJ-NP-Za-km-z]{24}/ }
+    post "duels/:token/forfeit" => "duel_moves#forfeit", as: :duel_forfeit, constraints: { token: /[1-9A-HJ-NP-Za-km-z]{24}/ }
+    post "duels/:token/calls" => "duel_moves#announce", as: :duel_calls, constraints: { token: /[1-9A-HJ-NP-Za-km-z]{24}/ }
+    post "duels/:token/answers" => "duel_moves#answer", as: :duel_answers, constraints: { token: /[1-9A-HJ-NP-Za-km-z]{24}/ }
     # A player's goals, each named by its set: a kind and key, or a custom
     # set's token, never a position.
     post "library/goals" => "goals#create", as: :library_goals
     delete "library/goals" => "goals#destroy"
+    # The next goal, custom set or deck slot, by its number: the purchase confirmation, then the purchase.
+    get "slots/:capacity/:slot" => "slot_purchases#new", as: :new_slot_purchase, constraints: { capacity: /goals|custom-sets|decks/, slot: /\d+/ }
+    post "slots/:capacity/:slot" => "slot_purchases#create", as: :slot_purchase, constraints: { capacity: /goals|custom-sets|decks/, slot: /\d+/ }
     # One set's album, by kind and key, never by id.
     get "library/:kind/:key" => "library#set", as: :library_set, constraints: { kind: Catalog::SetKind::PATTERN }
+    get "inventory/:kind/:key" => "brotherhood_sets#show", as: :brotherhood_set, constraints: { kind: Catalog::SetKind::PATTERN }
     # The collection's watermark: the page posts the latest gain it showed
     # as new.
     post "library/seen" => "collection_seen#create", as: :library_seen
+    get "inventory/pioneers" => "pioneer_rankings#show", as: :pioneer_ranking
 
     # A player's public profile, by their token (24 base58 characters, as
     # has_secure_token makes them, never an id): their sets, and one of
@@ -101,6 +147,8 @@ Rails.application.routes.draw do
       constraints: { token: /[1-9A-HJ-NP-Za-km-z]{24}/ }
     # Inviting a player from their profile, or accepting their invitation.
     post "brothers/:token/invitation" => "brother_invitations#create", as: :brother_invitation,
+      constraints: { token: /[1-9A-HJ-NP-Za-km-z]{24}/ }
+    post "brothers/:token/visit" => "profile_visits#create", as: :profile_visit,
       constraints: { token: /[1-9A-HJ-NP-Za-km-z]{24}/ }
     get "brothers/:token/summary" => "public_profiles#summary", as: :brother_summary,
       constraints: { token: /[1-9A-HJ-NP-Za-km-z]{24}/ }
@@ -156,6 +204,8 @@ Rails.application.routes.draw do
     patch "personalization/back" => "card_backs#update", as: :personalization_back
     # The profile visibility row of the settings.
     patch "settings/visibility" => "settings#visibility", as: :settings_visibility
+    # The rarity aura row of the settings.
+    patch "settings/rarity-aura" => "settings#rarity_aura", as: :settings_rarity_aura
     # The name row of the settings, for a player whose name does not come from Steam.
     patch "settings/name" => "settings#name", as: :settings_name
     # The Steam library sync row of the settings, for a player with a Steam identity.
@@ -213,8 +263,11 @@ Rails.application.routes.draw do
     end
     post "trades/:token/seen" => "trade_seens#create", as: :trade_seen,
       constraints: { token: /[1-9A-HJ-NP-Za-km-z]{24}/ }
+    post "links/:link/opened" => "external_link_opens#create", as: :link_open
     # The phone's Me tab opens the player's own profile.
     get "me" => "own_profiles#show", as: :me
+    # Every card the player holds, each chosen for the showcase or taken out in one tap.
+    get "me/showcase" => "showcase_editors#show", as: :edit_showcase
     # The notes of the running release on their own, which the app opens as a native sheet over the hub.
     get "me/sheets/release-note" => "release_note_sheets#show", as: :release_note_sheet
     # One of the profile's choice sheets on its own, which the app opens as a native sheet.
@@ -226,95 +279,14 @@ Rails.application.routes.draw do
     get "credits" => "pages#credits", as: :credits
     # The rules of the game, readable signed out.
     get "how-it-works" => "pages#how_it_works", as: :how_it_works
+    # Every release note players were shown, newest first, as the hub's dialog draws them.
+    get "release-notes" => "release_notes#index", as: :release_notes
 
     # Staff only: moderators and administrators.
     get "back-office" => "back_office/dashboard#show", as: :back_office
 
     # The back-office pages, staff only; each policy says which staff role.
-    scope "back-office", module: :back_office, as: :back_office do
-      # The Steam import runs, administrators only.
-      resources :import_runs, path: "import-runs", only: %i[index show create] do
-        post :resume, on: :member
-        post :rescore, on: :member
-        post :abandon, on: :member
-        post :promote, on: :member
-        post :discard, on: :member
-      end
-
-      resources :seasons, only: %i[index show], param: :number, constraints: { number: /\d+/ } do
-        post :publish, on: :collection
-      end
-
-      # The landing's roadmap, administrators only: every milestone and its
-      # stories in one form, saved at once, with a live preview of the landing;
-      # Claude fills the English lines left empty.
-      resource :roadmap, only: :show do
-        post :preview
-        post :translate
-      end
-      post "roadmap" => "roadmaps#update", as: :save_roadmap
-
-      # The themes of the catalog and the Steam tags the draft's cards carry,
-      # administrators only: each tag is attached to a theme, made a theme or
-      # dismissed; a theme is renamed by its token.
-      resources :themes, param: :token, only: %i[index create update],
-        constraints: { token: /[1-9A-HJ-NP-Za-km-z]{24}/ } do
-        post :attach, on: :collection
-        post :dismiss, on: :collection
-      end
-
-      # The announcements shown to every player on a red banner, administrators
-      # only: written in both languages, at most one shown at a time.
-      resources :announcements, param: :token, only: %i[index create update],
-        constraints: { token: /[1-9A-HJ-NP-Za-km-z]{24}/ } do
-        post :publish, on: :member
-        post :withdraw, on: :member
-      end
-
-      # The notes of each production release, administrators only: written in
-      # both languages from the release's commits, which Claude can condense and
-      # translate, shown once to every player when production runs that release.
-      resources :release_notes, path: "release-notes", param: :token, only: %i[index create edit],
-        constraints: { token: /[1-9A-HJ-NP-Za-km-z]{24}/ } do
-        post :preview, on: :collection
-        post :translate, on: :collection
-        post :save, on: :member
-        post :state, on: :member
-        post :condense, on: :member
-      end
-
-      # The market, staff only: its state and, for administrators, the opening
-      # form with both legal confirmations and the announcement that follows, the
-      # closing form with its announcement, and the economy settings form; beside
-      # them the economy's health, read from the nightly snapshots, and the
-      # accounts that open or trade like an alt account, read from the nightly signals.
-      resource :market, only: :show
-      resource :market_health, path: "market/health", controller: "market_health", only: :show
-      resource :market_signals, path: "market/signals", only: :show
-      resource :market_opening, path: "market/opening", only: :create
-      resource :market_closing, path: "market/closing", only: :create
-      resource :market_settings, path: "market/settings", only: :create
-      # The public charts' publication switches, administrators only.
-      post "market/charts/:kind/publish" => "chart_publications#publish", as: :publish_chart,
-        constraints: { kind: /reactor|rarity_prices|edition_sales/ }
-      post "market/charts/:kind/unpublish" => "chart_publications#unpublish", as: :unpublish_chart,
-        constraints: { kind: /reactor|rarity_prices|edition_sales/ }
-
-      # The card preview, both renderers side by side, administrators only.
-      resources :cards, only: :index
-
-      # Moderation, moderators and administrators: the queue of reported
-      # players, every player to search, the banned players, each by token,
-      # and the history of every ban, lifted ban, dismissal and erasure.
-      resources :players, only: %i[index destroy], param: :token,
-        constraints: { token: /[1-9A-HJ-NP-Za-km-z]{24}/ }
-      resources :reports, only: :index
-      post "reports/:token/dismiss" => "reports#dismiss", as: :dismiss_reports,
-        constraints: { token: /[1-9A-HJ-NP-Za-km-z]{24}/ }
-      resources :bans, only: %i[index create destroy], param: :token,
-        constraints: { token: /[1-9A-HJ-NP-Za-km-z]{24}/ }
-      get "history" => "history#index", as: :history
-    end
+    draw :back_office
   end
 
   # The job queue, administrators only: Mission Control Jobs behind

@@ -15,10 +15,10 @@ class WantedCardNoticeJobTest < ActiveJob::TestCase
     @wanting = accounts_players(:moderator)
     @card = catalog_card_seasons(:common_card_one)
     @settings = open_market!
-    Game::Market::Mint.credit(player_id: @seller.id, amount: 1_000, settings_id: @settings.id)
+    Game::Market::Ledger.post(Game::Market::Mint.credit(player_id: @seller.id, amount: 1_000, settings_id: @settings.id))
     hold(@seller, @card.id, 2)
     insert_set([ @card.id, *unheld_cards(2) ], { complete: 3 }, key: "roguelike", params: { "theme" => "roguelike" })
-    Game::AddGoal.new.call(player: @wanting, kind: "theme", key: "roguelike").value!
+    perform_enqueued_jobs(only: Game::Market::RefreshWantedJob) { Game::AddGoal.new.call(player: @wanting, kind: "theme", key: "roguelike").value! }
     @phone = Accounts::RegisterPushDevice.new.call(player: @wanting, platform: "apple", token: "wanting-phone", locale: "en").value!
   end
 
@@ -40,6 +40,14 @@ class WantedCardNoticeJobTest < ActiveJob::TestCase
     assert_match(/, missing from your goals, is on the market\.\z/, attributes["body"])
     assert_equal "A card you want is on sale", attributes["title"]
     assert_equal @phone.to_global_id.to_s, device["_aj_globalid"]
+  end
+
+  test "the listings of a Confier validation each enqueue the wanted notice" do
+    lines = [ { card_season_id: @card.id, copies: 2, choice: "auction", starting_price: @settings.minimum_price_common, duration_hours: 24 } ]
+
+    applied = Game::Market::ApplyWantedChoices.new.call(player: @seller, lines:, settings_token: @settings.token).value!
+
+    applied.listed.each { assert_enqueued_with(job: WantedCardNoticeJob, args: [ it.listing.id ]) }
   end
 
   test "a second wanted card within the hour stays in the bell without a push" do

@@ -1,0 +1,18 @@
+<%# locals: (frame:, loading:, target: nil) %>
+<dialog id="<%= frame %>-dialog" class="modal purchase-dialog" aria-labelledby="<%= frame %>-title"
+        data-controller="dialog" data-purchase-dialog-target="dialog" data-action="click->dialog#closeOnScrim close->purchase-dialog#closed">
+  <%= render PanelComponent.new(brackets: true, class: "modal__panel") do %>
+    <span class="modal__handle" aria-hidden="true"></span>
+    <%= turbo_frame_tag frame, target:, data: { purchase_dialog_target: "frame" } %>
+  <% end %>
+  <template data-purchase-dialog-target="loading">
+    <p class="purchase-confirmation__loading" role="status"><%= loading %></p>
+  </template>
+  <template data-purchase-dialog-target="failed">
+    <p class="purchase-confirmation__refusal" role="alert"><%= t("purchase_confirmation.failed") %></p>
+    <div class="market-dialog__actions">
+      <button type="button" class="button button--secondary" data-action="dialog#close"><%= t("purchase_confirmation.cancel") %></button>
+      <button type="button" class="button" data-action="purchase-dialog#retry"><%= t("purchase_confirmation.retry") %></button>
+    </div>
+  </template>
+</dialog>

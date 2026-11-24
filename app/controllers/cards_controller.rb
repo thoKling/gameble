@@ -2,6 +2,7 @@ class CardsController < ApplicationController
   include PublicRead
   include CardDetailLoading
   include CollectionGridLoading
+  include GrandInventoryGrid
   include CustomSetFaces
 
   Browse = Data.define(:position, :total, :previous, :next, :back)
@@ -17,7 +18,7 @@ class CardsController < ApplicationController
     @reserved = Game::ReservedCopies.call(current_player, card_ids: [ @detail.card_id ])[@detail.card_id] if @copies
     @share_url = share_url
     @share_image_token = CardShareImage.current_token(card_season_id: @detail.card_season_id, view: @detail.view, locale: I18n.locale)
-    named = pack_browse || grid_browse || trade_browse || custom_set_browse || named_set_browse
+    named = pack_browse || grid_browse || inventory_browse || trade_browse || custom_set_browse || named_set_browse
     profile = profile_browse || me_browse unless named
     @public = current_player.nil? && named.nil? && profile.nil?
     @live_strip = LiveStream.strip_items if @public
@@ -25,9 +26,12 @@ class CardsController < ApplicationController
     @goals = goal_marks.goals_for(@detail.card_id) unless @public
     @showcase = showcase_state
     market = market_state
+    @market_open = market.open?
     @entrustment = Game::Market::CardEntrustment.call(current_player, card_id: @detail.card_id, state: market) unless @public
+    @wanted = Game::Market::WantedCopies.call(current_player, card_id: @detail.card_id) if @entrustment&.free&.positive?
     @trade_holders = trade_holders unless @public || @copies
     @pioneer = pioneer_line
+    @duel_profile = Game::DuelProfiles.call([ @detail.card_season_id ])[@detail.card_season_id] unless @public
     load_prices(market)
     load_edition_sales unless @public
     @set_url = set_url
@@ -143,6 +147,23 @@ class CardsController < ApplicationController
       neighbours(ids, index, back:) { { grid: context } }
     end
 
+    def inventory_browse
+      source = params[:inventory]
+      return unless source.is_a?(ActionController::Parameters)
+
+      inventory = Game::GrandInventory.new(seasons: inventory_scope(source))
+      return if inventory.season.nil?
+
+      ids = inventory_cards(inventory, inventory_filters(inventory, source), source).pluck(:id)
+      index = ids.index(@detail.card_season_id)
+      return if index.nil?
+
+      context = inventory_context(inventory, source)
+      page = (index / GRID_SIZE) + 1
+      back = Back.new(label: t("grand_inventories.show.back"), path: grand_inventory_path(**context, page: (page if page > 1)))
+      neighbours(ids, index, back:) { { inventory: context } }
+    end
+
     def grid_page_path(context, page)
       query = { **context.except(:seen, :brother), page: (page if page > 1) }.compact_blank
       grid_another? ? brother_collection_path(grid_owner.token, query) : library_cards_path(query)
@@ -161,7 +182,18 @@ class CardsController < ApplicationController
       key = params[:set_key]
       return unless kind.is_a?(String) && key.is_a?(String) && Catalog::SetKind::ALL.include?(kind)
 
-      set_browse(@detail.sets.find { it.kind == kind && it.key == key }, owner: album_owner)
+      set = @detail.sets.find { it.kind == kind && it.key == key }
+      params[:from] == "inventory" ? inventory_set_browse(set) : set_browse(set, owner: album_owner)
+    end
+
+    def inventory_set_browse(set)
+      seasons = "current" if params[:seasons] == "current"
+      browse = set_browse(set, scope: { from: "inventory", seasons: })
+      return if browse.nil?
+
+      page = ((browse.position - 1) / SetAlbumLoading::ALBUM_SIZE) + 1
+      path = brotherhood_set_path(kind: set.kind, key: set.key, seasons:, page: (page if page > 1))
+      browse.with(back: Back.new(label: t("brotherhood_sets.show.back"), path:))
     end
 
     def album_owner
@@ -213,13 +245,13 @@ class CardsController < ApplicationController
       @editions.find { |_, season_number, _| season_number == @detail.view.season_number } || @editions.first
     end
 
-    def set_browse(set, owner: nil)
+    def set_browse(set, owner: nil, scope: {})
       return if set.nil?
 
       place = Catalog::SetNeighbours.call(card_season_id: @detail.card_season_id, kind: set.kind, key: set.key, locale: I18n.locale)
       return if place.nil?
 
-      context = { set_kind: set.kind, set_key: set.key, brother: owner&.token }.compact
+      context = { set_kind: set.kind, set_key: set.key, brother: owner&.token, **scope }.compact
       path = ->(slug) { slug && helpers.card_detail_path(slug, @detail.view.season_number, context) }
       back = Back.new(label: t("cards.show.grid"), path: album_page_path(set, place.position, owner:)) if album_back?(owner)
       Browse.new(position: place.position, total: place.total, previous: path.(place.previous), next: path.(place.next), back:)

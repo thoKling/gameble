@@ -2,11 +2,13 @@ module Market
   class EntrustmentsController < ApplicationController
     include PublicRead
     include CopyGrid
+    include DeckHoldingLoading
+    include SetApart
 
     SELECTION_SEPARATOR = ",".freeze
     SELECTION_PAIR = /\A(?<ref>[^:,=\s]+:\d+)=(?<copies>\d+)\z/
 
-    throttle_player to: 10, only: :create, path: -> { new_market_entrustment_path }, alert: "market.entrustments.create.throttled"
+    throttle_player to: 30, only: :create, path: -> { new_market_entrustment_path }, alert: "market.entrustments.create.throttled"
 
     def new
       authorize %i[market entrustment], :new?
@@ -23,18 +25,33 @@ module Market
       @settings = Game::Market::CurrentSettings.call
       @card_slug = asked_card_slug(params[:card])
       copies = listed? ? Game::Market::EntrustableCopies.call(current_player, settings: @settings, card_slug: @card_slug, filter: asked_filter, cards: false) : []
-      render json: copies.map { { ref: it.ref, title: it.title, rarity: it.rarity, season: it.season_number, free: it.free, owned: it.owned, value: it.value } }
+      render json: copies.map { helpers.entrust_copy_data(it, wanted: wanted_by_ref[it.ref]) }
     end
 
     def create
       authorize %i[market entrustment], :create?
-      ids = Game::Market::EntrustableCopies.resolve(ticked.keys)
-      lines = most_valuable_first(ticked.filter_map { |ref, copies| [ ref, ids[ref], copies ] if ids.key?(ref) })
-      result = Game::Market::EntrustCards.new.call(player: current_player, lines:, settings_token: params[:settings].to_s)
+      return answer_quick_entrustment(entrust(ticked)) if request.format.json?
+
+      set_apart, rest = split_wanted(ticked)
+      return entrust_then_choose(set_apart, rest) if set_apart.any?
+
+      result = entrust(ticked)
       result.success? ? show_entrusted(result.value!) : show_refusal(result.failure)
     end
 
     private
+      def entrust(posted)
+        ids = Game::Market::EntrustableCopies.resolve(posted.keys)
+        lines = most_valuable_first(posted.filter_map { |ref, copies| [ ref, ids[ref], copies ] if ids.key?(ref) })
+        Game::Market::EntrustCards.new.call(player: current_player, lines:, settings_token: params[:settings].to_s)
+      end
+
+      def answer_quick_entrustment(result)
+        return head(:created) if result.success?
+
+        render json: { error: { message: Game::Market::EntrustCards.failure_message(result.failure) } }, status: :unprocessable_content
+      end
+
       def show_entrusted(entrusted)
         @entrusted = entrusted
         @stayed_names = Game::Market::CardNames.call(entrusted.stayed.first(MarketEntrustmentsHelper::RESULT_LINES).map(&:card_season_id))
@@ -62,14 +79,16 @@ module Market
         @card_slug = card_slug
         @filter = asked_filter
         @cap_left = listed? ? Game::Market::CapLeft.call(current_player.id, settings: @settings) : 0
+        @wanted = wanted_by_ref
         load_grid
+        load_deck_holding
         @ticked_copies = keep_ticks ? ticked_copies : []
         @ticked_copies = [ [ @copies.first, 1 ] ] if lone_card_edition?
         @ticked = @ticked_copies.to_h { |copy, count| [ copy.ref, count ] }
       end
 
       # A card's page with a single free edition opens with it ticked.
-      def lone_card_edition? = @card_slug.present? && ticked.empty? && @copies.one?
+      def lone_card_edition? = @card_slug.present? && ticked.empty? && @copies.one? && @copies.first.free.positive?
 
       def load_grid
         count = listed? ? Game::Market::EntrustableCopies.count(current_player, card_slug: @card_slug, filter: @filter) : 0

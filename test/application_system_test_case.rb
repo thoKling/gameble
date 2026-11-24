@@ -1,5 +1,6 @@
 require "test_helper"
 require_relative "support/chromedriver_stale_nodes"
+require_relative "support/chromedriver_storage_reset"
 
 # CI's runner is slower than a development machine: a page re-rendered with
 # sixty cards, or a redirect after a form, can take more than Capybara's
@@ -40,6 +41,22 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
 
   def eventually(message, &condition)
     page.document.synchronize { raise Capybara::ExpectationNotMet, message unless condition.call }
+  end
+
+  # A dialog rises into place as it opens: a click during the rise can land
+  # where its button no longer is.
+  def wait_for_dialog_to_finish_opening(selector)
+    eventually("#{selector} should be done opening") do
+      evaluate_script("document.querySelector(#{selector.to_json}).getAnimations({ subtree: true }).every((animation) => animation.playState !== 'running')")
+    end
+  end
+
+  def choose_sort(label)
+    eventually("the sort menu opens") do
+      find(".sort summary").click unless page.has_css?(".sort[open]", wait: 0)
+      page.has_css?(".sort[open] .sort__menu", wait: 0.5)
+    end
+    click_on label
   end
 
   # Each test starts without cookies. Capybara's reset clears them, then

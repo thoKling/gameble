@@ -22,39 +22,38 @@ import {
   type OpeningRefusal,
   type Reserve,
 } from "./booster"
-import { animate, blast, settle, stageFlash, stageShake } from "./booster_effects"
+import {
+  BLAST_AT,
+  OPENED_AT,
+  breakCapsule,
+  holdAll,
+  lightFuse,
+  quakeFrames,
+  quakeTiming,
+  releaseAll,
+} from "./booster_capsule_timeline"
+import { flashBlast, glitchScreen, shakeScreen, slamCard } from "./booster_blast"
+import { CHARGE_TAPS, chargeCapsule } from "./booster_capsule_charge"
+import {
+  CARD_LANDS_AFTER_LEAVING,
+  ROW_REST,
+  cardFlight,
+  darkenRow,
+  flightRank,
+  flightTurn,
+  leavesAfterBlast,
+  lightRow,
+} from "./booster_deal_flight"
+import { animate, settle } from "./booster_effects"
 import type { BoosterStageHost } from "./booster_host"
+import { dockKeyframes, fadeKeyframes, sinkKeyframes } from "./booster_keyframes"
 import {
-  armKeyframes,
-  bodyKeyframes,
-  capBottomKeyframes,
-  capTopKeyframes,
-  dockKeyframes,
-  fadeKeyframes,
-  sinkKeyframes,
-} from "./booster_keyframes"
-import {
-  ARM_MS,
-  BODY_MS,
-  CAPS_MS,
-  DEAL_LAND_AT,
-  DEAL_MS,
-  DEAL_STAGGER,
   DOCK,
-  FLASH_MS,
-  HEAD_DELAY,
-  LAND_SHAKE_MS,
-  PHONE_DEAL_STAGGER,
-  RAYS_FADE_MS,
   RM_CANISTER_FADE,
   RM_CARD_FADE,
   RM_FADE_STAGGER,
-  SHAKE_MS,
   SINK,
   SINK_STAGGER,
-  dealKeyframes,
-  dealOrder,
-  dealRotation,
   pileDepth,
   pileOrder,
   pilePose,
@@ -62,6 +61,7 @@ import {
   pose,
 } from "./booster_motion"
 import { csrfToken, newKey, rememberPack } from "./booster_page"
+import { Sparks, type SparkPoint } from "./booster_sparks"
 import { dispatchGameble } from "./events"
 import { motionReduced } from "./motion"
 import { sendOpening, type OpeningAnswer, type OpeningResult } from "./opening"
@@ -85,8 +85,12 @@ export class OpeningSequence {
   private deal = 0
   private skipped: Promise<void> = new Promise(() => {})
   private skipNow = (): void => {}
+  private fuse: Animation[] = []
+  private readonly sparks: Sparks
 
-  constructor(private readonly host: OpeningSequenceHost) {}
+  constructor(private readonly host: OpeningSequenceHost) {
+    this.sparks = new Sparks(() => host.sparks())
+  }
 
   async open(): Promise<void> {
     const { host } = this
@@ -113,7 +117,7 @@ export class OpeningSequence {
     host.apply((s) => touchMarked(arming(s, null), touchedAt))
     const reduced = this.arm()
     const awaited = heldFor(host.current()) ? true : host.awaitConfirmation(host.current().reserve)
-    const [landed] = await Promise.all([awaited, this.pause(reduced ? 0 : ARM_MS)])
+    const [landed] = await Promise.all([awaited, this.untilBlast(reduced)])
     if (host.timers().disposed) return
     const entry = heldEntry(host.current(), newKey())
     if (!entry) {
@@ -136,7 +140,7 @@ export class OpeningSequence {
     rememberPack(null)
     host.apply((s) => touchMarked(arming(s, key), touchedAt))
     const reduced = this.arm()
-    const [result] = await Promise.all([request, this.pause(reduced ? 0 : ARM_MS)])
+    const [result] = await Promise.all([request, this.untilBlast(reduced)])
     await this.answered(result)
   }
 
@@ -152,8 +156,20 @@ export class OpeningSequence {
 
   private arm(): boolean {
     const reduced = motionReduced()
-    if (!reduced) animate(this.host.canister()?.move, armKeyframes(), { duration: ARM_MS, fill: "forwards" })
+    const wrap = this.host.canister()?.wrap
+    this.fuse = reduced ? [] : [...lightFuse(wrap), ...chargeCapsule(wrap, this.host.scanlines())]
+    if (!reduced) {
+      CHARGE_TAPS.forEach(([delay, level]) =>
+        this.laterInThisDeal(delay, () => dispatchGameble("gameble:capsule-charging", { level })),
+      )
+    }
     return reduced
+  }
+
+  // The fuse burns to the break; with no answer yet, the capsule holds there.
+  private async untilBlast(reduced: boolean): Promise<void> {
+    await this.pause(reduced ? 0 : BLAST_AT)
+    if (!this.skipping) holdAll(this.fuse)
   }
 
   private async answered(result: OpeningResult): Promise<void> {
@@ -189,6 +205,7 @@ export class OpeningSequence {
   }
 
   private finishAnimations(): void {
+    this.sparks.clear()
     for (const animation of this.host.root.getAnimations?.({ subtree: true }) ?? []) {
       if (Number.isFinite(animation.effect?.getComputedTiming().endTime)) animation.finish()
     }
@@ -196,7 +213,8 @@ export class OpeningSequence {
 
   private refuse(result: OpeningRefusal): void {
     const { host } = this
-    settle(host.canister()?.move)
+    this.fuse.forEach((animation) => animation.cancel())
+    this.fuse = []
     const message = host.apply((s) => openingRefused(s, result, host.failedMessage)).reason ?? host.failedMessage
     host.announce(message)
     const refused = result.kind === "refused"
@@ -214,6 +232,7 @@ export class OpeningSequence {
     const count = host.current().answer?.cards.length ?? 0
     const alreadyDocked = nextCapsuleWaiting(host.current())
     host.apply(retracting)
+    darkenRow(host.dealFx())
     if (!motionReduced()) {
       for (let index = 0; index < count; index++) {
         const travel = host.part(index, "travel")
@@ -243,53 +262,63 @@ export class OpeningSequence {
     const { host } = this
     const parts = host.canister()
     host.apply(ejecting)
-    animate(parts?.capTop, capTopKeyframes(), {
-      duration: CAPS_MS,
-      easing: "cubic-bezier(.12,.8,.3,1)",
-      fill: "forwards",
-    })
-    animate(parts?.capBottom, capBottomKeyframes(), {
-      duration: CAPS_MS,
-      easing: "cubic-bezier(.12,.8,.3,1)",
-      fill: "forwards",
-    })
-    animate(parts?.body, bodyKeyframes(), { duration: BODY_MS, easing: "cubic-bezier(.5,0,1,.6)", fill: "forwards" })
-    animate(parts?.rays, fadeKeyframes(1, 0), { duration: RAYS_FADE_MS, fill: "forwards" })
-    blast(host.fx(), parts?.button)
-    stageFlash(host.flash(), "warm", 0.35, FLASH_MS)
-    stageShake(host.shake(), 5, SHAKE_MS)
-    await this.pause(HEAD_DELAY)
-    host.apply(resultHeadShown)
-
-    const origin = host.canister()?.button?.getBoundingClientRect()
+    releaseAll(this.fuse)
+    breakCapsule(parts?.fx)
+    animate(host.shake(), quakeFrames(), quakeTiming)
     const phone = host.phoneLayout()
-    const stagger = phone ? PHONE_DEAL_STAGGER : DEAL_STAGGER
+    const origin = parts?.button?.getBoundingClientRect()
+    this.blast(origin, phone)
+    host.apply(resultHeadShown)
     host.apply(cardsDealt)
-    let end = 0
-    ;(phone ? pileOrder(count) : dealOrder(count)).forEach((index, position) => {
-      const delay = position * stagger
-      this.tapWhenDealt(index, delay)
+
+    const order = phone ? pileOrder(count) : Array.from({ length: count }, (_, index) => index)
+    const row: DOMRect[] = []
+    order.forEach((index, position) => {
+      const rank = phone ? position : flightRank(index, count)
       const slot = host.slot(index)
       const travel = host.part(index, "travel")
-      if (!slot || !travel || !origin) return
-      const rect = slot.querySelector(".booster-card__frame")?.getBoundingClientRect() ?? slot.getBoundingClientRect()
-      const dx = origin.left + origin.width / 2 - (rect.left + rect.width / 2)
-      const dy = origin.top + origin.height / 2 - (rect.top + rect.height / 2)
-      const rest = phone ? pilePose(pileDepth(index, host.current().stored)) : undefined
-      animate(travel, dealKeyframes(dx, dy, dealRotation(index, count), rest), {
-        duration: DEAL_MS,
-        delay,
-        fill: "backwards",
-        easing: "linear",
+      const rect = slot ? (slot.querySelector(".booster-card__frame") ?? slot).getBoundingClientRect() : null
+      this.setDown(index, leavesAfterBlast(rank) + CARD_LANDS_AFTER_LEAVING, rect, phone)
+      if (!rect || !travel || !origin) return
+      row.push(rect)
+      const { keyframes, options } = cardFlight({
+        dx: origin.left + origin.width / 2 - (rect.left + rect.width / 2),
+        dy: origin.top + origin.height / 2 - (rect.top + rect.height / 2),
+        rank,
+        turn: flightTurn(index, count),
+        height: rect.height,
+        rest: phone ? pilePose(pileDepth(index, host.current().stored)) : ROW_REST,
+        phone,
       })
-      this.laterInThisDeal(delay + DEAL_MS * DEAL_LAND_AT, () => stageShake(host.shake(), 1.5, LAND_SHAKE_MS))
-      end = Math.max(end, delay + DEAL_MS)
+      animate(travel, keyframes, options)
     })
-    await this.pause(end)
+    if (!phone) lightRow(host.dealFx(), row)
+    await this.pause(OPENED_AT - BLAST_AT)
   }
 
-  private tapWhenDealt(index: number, delay: number): void {
-    this.laterInThisDeal(delay, () => dispatchGameble("gameble:card-dealt", { index }))
+  private blast(origin: DOMRect | undefined, phone: boolean): void {
+    const { host } = this
+    dispatchGameble("gameble:capsule-burst", null)
+    flashBlast(host.flash())
+    shakeScreen(host.shake(), phone)
+    glitchScreen(host.shake(), host.scanlines())
+    const centre = origin && this.onSparks(origin.left + origin.width / 2, origin.top + origin.height / 2)
+    if (centre) this.sparks.burst(centre, phone ? 70 : 110)
+  }
+
+  // The card lands: a tap, a knock on the stage and a puff of dust under it.
+  private setDown(index: number, delay: number, frame: DOMRect | null, phone: boolean): void {
+    this.laterInThisDeal(delay, () => {
+      dispatchGameble("gameble:card-dealt", { index })
+      slamCard(this.host.shake(), phone)
+      const floor = frame && this.onSparks(frame.left + frame.width / 2, frame.bottom)
+      if (floor && frame) this.sparks.dust(floor, frame.width / 2 - 10)
+    })
+  }
+
+  private onSparks(x: number, y: number): SparkPoint | null {
+    const box = this.sparks.origin()
+    return box ? { x: x - box.left, y: y - box.top } : null
   }
 
   private laterInThisDeal(delay: number, action: () => void): void {
@@ -305,7 +334,7 @@ export class OpeningSequence {
     host.apply(resultHeadShown)
     host.apply(cardsDealt)
     for (let index = 0; index < count; index++) {
-      this.tapWhenDealt(index, index * RM_FADE_STAGGER)
+      this.laterInThisDeal(index * RM_FADE_STAGGER, () => dispatchGameble("gameble:card-dealt", { index }))
       animate(host.part(index, "travel"), fadeKeyframes(0, 1), {
         duration: RM_CARD_FADE,
         delay: index * RM_FADE_STAGGER,

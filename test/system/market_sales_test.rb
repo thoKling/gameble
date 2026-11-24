@@ -34,7 +34,7 @@ class MarketSalesSystemTest < ApplicationSystemTestCase
 
   def reserved(card) = Game::Holding.find_by!(player_id: @seller.id, card_season_id: card.id).reserved
 
-  test "the market tabs swap in place: no visit, the desk stays, the address and title follow" do
+  test "the market tabs swap in place: no visit, the desk stays, the address and title follow; on a phone a counter line opens its tab and brings it into view, even when that tab is already open" do
     listing!(seller: @seller, card_season: @common, hours: 5)
     sign_in_through_the_site(@seller)
     visit market_path(locale: :en)
@@ -42,15 +42,15 @@ class MarketSalesSystemTest < ApplicationSystemTestCase
     page.execute_script("window.marketVisits = 0; addEventListener('turbo:visit', () => window.marketVisits++)")
 
     within(".market-screen__chips") { click_on "MY SALES" }
-    assert_selector ".market-screen__chip--current", text: "MY SALES"
+    assert_selector ".tabs__tab--current", text: "MY SALES"
     assert_selector ".market-row", count: 1
     assert_current_path market_my_sales_path(locale: :en)
     assert_title "My sales"
-    assert_selector ".market-desk h1", text: "Market"
+    assert_selector ".market-desk h1", text: "Market", visible: :all
     assert_no_selector ".top-bar__phone-back"
 
     within(".market-screen__chips") { click_on "MY BIDS" }
-    assert_selector ".market-screen__chip--current", text: "MY BIDS"
+    assert_selector ".tabs__tab--current", text: "MY BIDS"
     assert_current_path market_my_bids_path(locale: :en)
 
     within(".market-screen__chips") { click_on "LISTINGS" }
@@ -58,17 +58,13 @@ class MarketSalesSystemTest < ApplicationSystemTestCase
     assert_current_path market_path(locale: :en)
     assert_title "Market"
     assert_equal 0, page.evaluate_script("window.marketVisits")
-  end
 
-  test "a counter line opens its tab and brings it into view, even when that tab is already open" do
-    listing!(seller: @seller, card_season: @common, hours: 5)
-    sign_in_through_the_site(@seller)
     resize_to(390, 844)
     visit market_path(locale: :en)
     assert_selector ".listing-tile", count: 1
 
     find(".market-mine__item", text: "sale in progress").click
-    assert_selector ".market-screen__chip--current", text: "MY SALES"
+    assert_selector ".tabs__tab--current", text: "MY SALES"
     assert_current_path market_my_sales_path(locale: :en)
     assert_chips_in_view
 
@@ -101,8 +97,7 @@ class MarketSalesSystemTest < ApplicationSystemTestCase
     assert_equal "cancelled", first.reload.status
     assert_equal 0, reserved(@common)
     assert_selector ".market-row__chip", text: "CANCELLED"
-    assert_equal "a", page.evaluate_script("document.activeElement.tagName").downcase
-    assert_equal second.token, page.evaluate_script("document.activeElement.dataset.rowToken")
+    assert_selector "a[data-row-token='#{second.token}']:focus"
   end
 
   test "a seller relists an unsold copy with the amounts prefilled and lands on the new Annonce" do

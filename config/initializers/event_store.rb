@@ -15,6 +15,7 @@ Rails.configuration.to_prepare do
   # A deleted account's game is released within the deletion.
   event_store.subscribe(Game::Handlers::PlayerDeleted, to: [ Accounts::PlayerDeleted ])
   event_store.subscribe(Game::Handlers::PlayerBanned, to: [ Accounts::PlayerBanned ])
+  event_store.subscribe(Game::Handlers::PlayerUnbanned, to: [ Accounts::PlayerUnbanned ])
   event_store.subscribe(Game::Handlers::VisibilityChanged, to: [ Accounts::VisibilityChanged ])
   # A player who turns the Steam library sync off has the set and its games erased within the change.
   event_store.subscribe(Game::Handlers::SteamLibrarySyncChanged, to: [ Accounts::SteamLibrarySyncChanged ])
@@ -29,17 +30,23 @@ Rails.configuration.to_prepare do
   event_store.subscribe(Game::Handlers::PackOpenedFeed, to: [ Game::PackOpened ])
   event_store.subscribe(Game::Handlers::CardRepostedFeed, to: [ Game::CardReposted ])
   event_store.subscribe(Game::Handlers::WeeklyVerdictFeed, to: [ Game::WeeklyVerdictReached ])
+  # Each Monday's duel stats run tells the feed which cards' standing moved most.
+  event_store.subscribe(Game::Handlers::DuelStatsFeed, to: [ Game::DuelStatsComputed ])
   event_store.subscribe(Game::Handlers::TradeAccepted, to: [ Game::TradeAccepted ])
   event_store.subscribe(Game::Handlers::GoalsReached, to: Game::Handlers::GoalsReached::EVENTS)
+  # Each player an event names has their wanted rows rebuilt by a job once it commits, never within the request.
+  event_store.subscribe(Game::Market::Handlers::WantedRefresh, to: Game::Market::Handlers::WantedRefresh::EVENTS)
   event_store.subscribe(Game::Handlers::SetTierFeed, to: Game::Handlers::SetTierFeed::EVENTS)
   event_store.subscribe(Game::Handlers::Achievements, to: Game::Handlers::Achievements::EVENTS.keys)
   event_store.subscribe(Game::Handlers::CardBacks, to: Game::Handlers::CardBacks::EVENTS.keys)
-  event_store.subscribe(Game::Handlers::SaleFeed, to: [ Game::Market::AuctionSold ])
+  event_store.subscribe(Game::Handlers::SaleFeed, to: [ Game::Market::AuctionSold, Game::Market::OrderServed, Game::Market::WantedChoicesApplied ])
   event_store.subscribe(Game::Market::Handlers::OutbidNotices, to: [ Game::Market::BidPlaced ])
   event_store.subscribe(Game::Market::Handlers::OutcomeNotices, to: [ Game::Market::AuctionSold, Game::Market::AuctionUnsold ])
   event_store.subscribe(Game::Market::Handlers::RemovalNotices, to: [ Game::Market::LeadVoided, Game::Market::ListingWithdrawn ])
   # A card listed on the market is noticed by the players whose goals miss it, before PlayerStream refreshes their bell.
-  event_store.subscribe(Game::Market::Handlers::WantedNotices, to: [ Game::Market::CardListed ])
+  event_store.subscribe(Game::Market::Handlers::WantedNotices, to: [ Game::Market::CardListed, Game::Market::WantedChoicesApplied ])
+  # An order's owner hears of its serving or expiry, and a listing above it is forgotten once the listing or the order ends.
+  event_store.subscribe(Game::Market::Handlers::OrderNotices, to: Game::Market::Handlers::OrderNotices::EVENTS)
   event_store.subscribe(LiveStream, to: LiveStream::EVENTS)
   event_store.subscribe(ReactionStream, to: ReactionStream::EVENTS)
   event_store.subscribe(Game::Handlers::PlayerActivity, to: Game::Handlers::PlayerActivity::EVENTS.keys)
@@ -48,11 +55,17 @@ Rails.configuration.to_prepare do
 
   event_store.subscribe(PlayerStream, to: PlayerStream::EVENTS)
   event_store.subscribe(ListingStream, to: ListingStream::EVENTS)
+  event_store.subscribe(DuelStream, to: DuelStream::EVENTS)
   event_store.subscribe(PushNotices, to: PushNotices::EVENTS)
+  # Every market line of the bell that is not a wanted card also reaches the player's phone.
+  event_store.subscribe(MarketPushNotice, to: MarketPushNotice::EVENTS)
   # A player whose standard reserve has filled up again hears of it once, on their phone.
   event_store.subscribe(ReserveFullNotice, to: ReserveFullNotice::EVENTS)
   # A player hears on their phone of a card their goals miss going on sale, at most once an hour.
   event_store.subscribe(WantedCardNotice, to: WantedCardNotice::EVENTS)
+
+  # What happens in the game is counted for Sentry once its transaction commits; no player is named.
+  event_store.subscribe(Game::Handlers::Metrics, to: Game::Handlers::Metrics::EVENTS)
 
   Rails.configuration.event_store = event_store
 end

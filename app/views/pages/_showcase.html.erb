@@ -2,7 +2,7 @@
   <% tier = Catalog::Rarity::TIERS.key(card.rarity.to_sym) %>
   <% line = [ t("catalog.rarity.#{card.rarity}"), (SetLabel.genre(card.genre) if card.genre), card.number_label ].compact %>
   <section class="hub-showcase" aria-labelledby="hub-showcase-name">
-    <p class="hub-showcase__kicker"><span class="hub-showcase__light" aria-hidden="true"></span><%= chosen ? t("pages.home.showcase.chosen_kicker") : t("pages.home.showcase.kicker") %></p>
+    <p class="hub-showcase__kicker"><span class="hub-showcase__light" aria-hidden="true"></span><%= t("pages.home.showcase.kicker") %></p>
     <div class="hub-showcase__stage">
       <% if card_top_rarity?(card.rarity) %>
         <div class="card-float">

@@ -19,7 +19,7 @@ class Game::ProfileActivityTest < ActiveSupport::TestCase
     Game::FirstDiscovery.find_by!(card_season_id: catalog_card_seasons(card_name).id).update!(player_id: player.id)
   end
 
-  test "the capsules opened, the cards first discovered and the trades concluded, either side, in one query" do
+  test "the capsules opened, the cards first discovered and the trades concluded, in one query" do
     2.times { create_pack(@player, opened_at: 1.hour.ago) }
     create_pack(@player)
     create_pack(@other, opened_at: 1.hour.ago)

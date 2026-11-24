@@ -7,9 +7,12 @@
 <% pioneer = local_assigns.fetch(:pioneer, nil) %>
 <% goals = local_assigns.fetch(:goals, []) %>
 <% entrustment = local_assigns.fetch(:entrustment, nil) %>
+<% wanted = local_assigns.fetch(:wanted, nil) || [] %>
 <% price = local_assigns.fetch(:price, nil) %>
 <% edition_prices = local_assigns.fetch(:edition_prices, {}) %>
 <% trade_holders = local_assigns.fetch(:trade_holders, nil) || [] %>
+<% market_open = local_assigns.fetch(:market_open, false) %>
+<% orderable = market_open && copies.blank? %>
 <% goal_numbers = goals.map(&:position) %>
 <% repostable = share_url && editions.any? { |_, season_number, _| season_number == detail.view.season_number } %>
 <% view = detail.view %>
@@ -37,10 +40,10 @@
             <% if owned && card_top_rarity?(view.rarity) %>
               <div class="card-float">
                 <%= card_rays(view.rarity) %>
-                <%= render CardComponent.new(card: view, size: :l, goals: goal_numbers) %>
+                <%= render CardComponent.new(card: view, size: :l, goals: goal_numbers, loader: true) %>
               </div>
             <% else %>
-              <%= render CardComponent.new(card: view, size: :l, owned:, goals: goal_numbers) %>
+              <%= render CardComponent.new(card: view, size: :l, owned:, goals: goal_numbers, loader: true) %>
             <% end %>
             <span class="card-detail__shadow" aria-hidden="true"></span>
           </div>
@@ -56,127 +59,132 @@
             <% position << t("card_details.swipe") if browse.total > 1 %>
             <p class="card-detail__position"><%= position.join(" · ") %></p>
           <% end %>
-          <% if detail.short_description %>
-            <p class="card-detail__description"><%= detail.short_description %></p>
-          <% end %>
-          <dl class="card-detail__facts">
-            <% if detail.publisher %>
-              <div class="card-detail__fact">
-                <dt><%= t("card_details.facts.publisher") %></dt>
-                <dd><%= detail.publisher %></dd>
-              </div>
+          <%= turbo_frame_tag "card-facts", class: "card-detail__facts-frame", target: "_top" do %>
+            <% if detail.short_description %>
+              <p class="card-detail__description"><%= detail.short_description %></p>
             <% end %>
-            <div class="card-detail__fact">
-              <dt><%= t("card_details.facts.rarity") %></dt>
-              <dd class="card-detail__rarity card-detail__rarity--<%= view.rarity %>">
-                <%= pixel_icon("rarity-#{tier}", class: "card-detail__rarity-icon") %>
-                <%= strings.rarity_name(view.rarity) %>
-              </dd>
-            </div>
-            <% if view.genre %>
+            <dl class="card-detail__facts">
+              <% if detail.publisher %>
+                <div class="card-detail__fact">
+                  <dt><%= t("card_details.facts.publisher") %></dt>
+                  <dd><%= detail.publisher %></dd>
+                </div>
+              <% end %>
               <div class="card-detail__fact">
-                <dt><%= t("card_details.facts.genre") %></dt>
-                <dd><%= SetLabel.genre(view.genre) %></dd>
-              </div>
-            <% end %>
-            <div class="card-detail__fact">
-              <dt><%= t("card_details.facts.year") %></dt>
-              <dd><%= view.year %></dd>
-            </div>
-            <div class="card-detail__fact">
-              <dt><%= t("card_details.facts.season") %></dt>
-              <dd><%= t("card_details.season_number", number: view.season_number) %></dd>
-            </div>
-            <% if price %>
-              <div class="card-detail__fact card-detail__fact--price">
-                <dt><%= t("card_details.facts.average_price", number: view.season_number) %></dt>
-                <dd>
-                  <%= render AveragePriceComponent.new(price:) %>
-                  <% if (basis = average_price_basis(price)) %>
-                    <span class="average-price__basis"><%= basis %></span>
-                  <% end %>
+                <dt><%= t("card_details.facts.rarity") %></dt>
+                <dd class="card-detail__rarity card-detail__rarity--<%= view.rarity %>">
+                  <%= pixel_icon("rarity-#{tier}", class: "card-detail__rarity-icon") %>
+                  <%= strings.rarity_name(view.rarity) %>
                 </dd>
               </div>
-            <% end %>
-            <% if pioneer %>
+              <% if view.genre %>
+                <div class="card-detail__fact">
+                  <dt><%= t("card_details.facts.genre") %></dt>
+                  <dd><%= SetLabel.genre(view.genre) %></dd>
+                </div>
+              <% end %>
               <div class="card-detail__fact">
-                <dt><%= t("card_details.facts.pioneer") %></dt>
-                <dd class="card-detail__pioneer">
-                  <%= render PlayerNameComponent.new(player: pioneer.player, viewer: current_player) %>
-                  <span class="card-detail__pioneer-date"><%= card_detail_pioneer_date(pioneer.discovered_on) %></span>
-                </dd>
-              </div>
-            <% end %>
-            <% if detail.sets.any? %>
-              <div class="card-detail__fact">
-                <dt><%= t("card_details.facts.sets") %></dt>
-                <dd>
-                  <ul class="card-detail__sets">
-                    <% detail.sets.each do |set| %>
-                      <li><%= set_url ? link_to(SetLabel.for(set), set_url.call(set)) : SetLabel.for(set) %></li>
-                    <% end %>
-                  </ul>
-                </dd>
-              </div>
-            <% end %>
-            <% if goals.any? %>
-              <div class="card-detail__fact card-detail__fact--goals">
-                <dt><%= t("card_details.facts.goals") %></dt>
-                <dd>
-                  <ul class="card-detail__goals">
-                    <% goals.each do |goal| %>
-                      <li><%= link_to goal_album_path(goal), class: "card-detail__goal goal-tone--#{goal.position}", aria: { label: goal_name(goal) } do %><%= goal_bookmark(goal.position, size: :small) %><%= goal_set_name(goal) %><% end %></li>
-                    <% end %>
-                  </ul>
-                </dd>
-              </div>
-            <% end %>
-            <% if signed_in %>
-              <div class="card-detail__fact">
-                <dt><%= t("card_details.facts.copies") %></dt>
-                <dd class="card-detail__copies"><%= copies ? card_detail_copies(copies, local_assigns[:reserved]) : t("card_details.no_copies") %></dd>
+                <dt><%= t("card_details.facts.year") %></dt>
+                <dd><%= view.year %></dd>
               </div>
               <div class="card-detail__fact">
-                <dt><%= t("card_details.facts.editions") %></dt>
-                <% if editions.any? %>
-                  <% lines = card_detail_edition_entries(editions, strings, edition_prices) %>
-                  <% shown, folded = lines.first(3), lines.drop(3) %>
+                <dt><%= t("card_details.facts.season") %></dt>
+                <dd><%= t("card_details.season_number", number: view.season_number) %></dd>
+              </div>
+              <% if price %>
+                <div class="card-detail__fact card-detail__fact--price">
+                  <dt><%= t("card_details.facts.average_price", number: view.season_number) %></dt>
                   <dd>
-                    <ul class="card-detail__editions">
-                      <% shown.each do |line| %>
-                        <li><%= render "cards/edition_line", line: %></li>
-                      <% end %>
-                    </ul>
-                    <% if folded.any? %>
-                      <details class="card-detail__editions-fold">
-                        <summary class="card-detail__editions-more"><%= edition_prices.any? ? t("card_details.more_editions", count: folded.size) : t("card_details.editions_more", count: folded.size) %></summary>
-                        <ul class="card-detail__editions">
-                          <% folded.each do |line| %>
-                            <li><%= render "cards/edition_line", line: %></li>
-                          <% end %>
-                        </ul>
-                      </details>
+                    <%= render AveragePriceComponent.new(price:) %>
+                    <% if (basis = average_price_basis(price)) %>
+                      <span class="average-price__basis"><%= basis %></span>
                     <% end %>
                   </dd>
-                <% else %>
-                  <dd><%= t("card_details.no_editions") %></dd>
-                <% end %>
-              </div>
+                </div>
+              <% end %>
+              <% if pioneer %>
+                <div class="card-detail__fact">
+                  <dt><%= t("card_details.facts.pioneer") %></dt>
+                  <dd class="card-detail__pioneer">
+                    <%= render PlayerNameComponent.new(player: pioneer.player, viewer: current_player) %>
+                    <span class="card-detail__pioneer-date"><%= card_detail_pioneer_date(pioneer.discovered_on) %></span>
+                  </dd>
+                </div>
+              <% end %>
+              <% if detail.sets.any? %>
+                <div class="card-detail__fact">
+                  <dt><%= t("card_details.facts.sets") %></dt>
+                  <dd>
+                    <ul class="card-detail__sets">
+                      <% detail.sets.each do |set| %>
+                        <li><%= set_url ? link_to(SetLabel.for(set), set_url.call(set)) : SetLabel.for(set) %></li>
+                      <% end %>
+                    </ul>
+                  </dd>
+                </div>
+              <% end %>
+              <% if goals.any? %>
+                <div class="card-detail__fact card-detail__fact--goals">
+                  <dt><%= t("card_details.facts.goals") %></dt>
+                  <dd>
+                    <ul class="card-detail__goals">
+                      <% goals.each do |goal| %>
+                        <li><%= link_to goal_album_path(goal), class: "card-detail__goal goal-tone--#{goal.position}", aria: { label: goal_name(goal) } do %><%= goal_bookmark(goal.position, size: :small) %><%= goal_set_name(goal) %><% end %></li>
+                      <% end %>
+                    </ul>
+                  </dd>
+                </div>
+              <% end %>
+              <% if signed_in %>
+                <div class="card-detail__fact">
+                  <dt><%= t("card_details.facts.copies") %></dt>
+                  <dd class="card-detail__copies"><%= copies ? card_detail_copies(copies, local_assigns[:reserved]) : t("card_details.no_copies") %></dd>
+                </div>
+                <div class="card-detail__fact">
+                  <dt><%= t("card_details.facts.editions") %></dt>
+                  <% if editions.any? %>
+                    <% lines = card_detail_edition_entries(editions, strings, edition_prices) %>
+                    <% shown, folded = lines.first(3), lines.drop(3) %>
+                    <dd>
+                      <ul class="card-detail__editions">
+                        <% shown.each do |line| %>
+                          <li><%= render "cards/edition_line", line: %></li>
+                        <% end %>
+                      </ul>
+                      <% if folded.any? %>
+                        <details class="card-detail__editions-fold">
+                          <summary class="card-detail__editions-more"><%= edition_prices.any? ? t("card_details.more_editions", count: folded.size) : t("card_details.editions_more", count: folded.size) %></summary>
+                          <ul class="card-detail__editions">
+                            <% folded.each do |line| %>
+                              <li><%= render "cards/edition_line", line: %></li>
+                            <% end %>
+                          </ul>
+                        </details>
+                      <% end %>
+                    </dd>
+                  <% else %>
+                    <dd><%= t("card_details.no_editions") %></dd>
+                  <% end %>
+                </div>
+              <% end %>
+              <% if detail.steam_reviews %>
+                <div class="card-detail__fact">
+                  <dt><%= t("card_details.facts.steam_reviews") %></dt>
+                  <dd><%= card_detail_steam_reviews(detail.steam_reviews) %></dd>
+                </div>
+              <% end %>
+            </dl>
+            <% if (duel_profile = local_assigns[:duel_profile]) %>
+              <%= render "cards/duel_profile", profile: duel_profile, rarity: view.rarity %>
             <% end %>
-            <% if detail.steam_reviews %>
-              <div class="card-detail__fact">
-                <dt><%= t("card_details.facts.steam_reviews") %></dt>
-                <dd><%= card_detail_steam_reviews(detail.steam_reviews) %></dd>
-              </div>
-            <% end %>
-          </dl>
-          <%= render "cards/edition_sales", chart: local_assigns[:edition_sales], src: local_assigns[:edition_sales_src] %>
+            <%= render "cards/edition_sales", chart: local_assigns[:edition_sales], src: local_assigns[:edition_sales_src] %>
+          <% end %>
         </div>
       </div>
     </div>
   <% end %>
   <% if trade_holders.any? %>
-    <%= render "cards/trade_section", holders: trade_holders, view:, strings: %>
+    <%= render "cards/trade_section", holders: trade_holders, view:, strings:, secondary: orderable %>
   <% end %>
   <div class="card-detail__actions">
     <% if repostable || showcase %>
@@ -200,7 +208,7 @@
           <% if showcase.action == :full %>
             <p class="card-detail__showcase-full">
               <%= t("showcases.full") %>
-              <%= link_to t("showcases.open"), me_path(card: view.id, edition: view.season_number, anchor: "showcase"), class: "card-detail__showcase-open", data: { turbo_prefetch: false } %>
+              <%= link_to t("showcases.open"), edit_showcase_path, class: "card-detail__showcase-open", data: { turbo_prefetch: false } %>
             </p>
           <% end %>
         <% end %>
@@ -215,6 +223,7 @@
           <%= render ButtonComponent.new(variant: :secondary, disabled: true) do %><%= t("card_details.list.button") %><% end %>
           <p class="card-detail__market-note"><%= t("card_details.entrust.reserved", count: entrustment.reserved) %></p>
         <% else %>
+          <% if wanted.any? %><%= render "cards/wanted_line", copies: wanted, card_season_id: detail.card_season_id %><% end %>
           <%= render ButtonComponent.new(variant: :secondary, href: new_market_card_entrustment_path(slug: view.id)) do %><%= t("card_details.entrust.button") %><% end %>
           <%= render ButtonComponent.new(variant: :secondary, href: new_market_card_sale_path(slug: view.id)) do %><%= t("card_details.list.button") %><% end %>
         <% end %>
@@ -223,6 +232,9 @@
     <% end %>
     <%= render "cards/action_group", key: :links do %>
     <div class="card-detail__card-links">
+      <% if orderable %>
+        <%= render ButtonComponent.new(href: (new_market_card_order_path(slug: view.id, from: "card") if signed_in), disabled: !signed_in) do %><%= t("card_details.order.button") %><% end %>
+      <% end %>
       <% if share_url %>
         <button type="button" class="button button--secondary card-detail__share-button" aria-haspopup="dialog"
           data-controller="dialog-opener" data-dialog-opener-dialog-value="share-sheet"

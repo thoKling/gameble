@@ -107,9 +107,14 @@ describe("selecting every edition the filters keep", () => {
 
 describe("the filters' count", () => {
   it("counts the rarities and doubles, and a search alone still filters", () => {
-    expect(filterCount({ rarities: ["rare", "epic"], doubles: true })).toBe(3)
-    expect(filtering({ query: " x ", rarities: [], doubles: false })).toBe(true)
-    expect(filtering({ query: "  ", rarities: [], doubles: false })).toBe(false)
+    expect(filterCount({ rarities: ["rare", "epic"], doubles: true, triples: false })).toBe(3)
+    expect(filtering({ query: " x ", rarities: [], doubles: false, triples: false })).toBe(true)
+    expect(filtering({ query: "  ", rarities: [], doubles: false, triples: false })).toBe(false)
+  })
+
+  it("counts the wanted chip where the grid offers it", () => {
+    expect(filterCount({ rarities: ["rare"], doubles: false, triples: false, wanted: true })).toBe(2)
+    expect(filtering({ query: "", rarities: [], doubles: false, triples: false, wanted: true })).toBe(true)
   })
 })
 
@@ -205,5 +210,24 @@ describe("preview", () => {
     expect(result.received).toBe(15_000)
     expect(result.capUsed).toBe(15_000)
     expect(result.capLeft).toBe(35_000)
+  })
+})
+
+describe("wanted copies set apart", () => {
+  it("sets apart one copy per seeker, never more than ticked, and walks the cap with the rest", () => {
+    const pyre = copy("rare", { ref: "pyre:1", seekers: 2 })
+    const result = preview(start([pyre, copy("common")], 6_000, { "pyre:1": 3, "common:1": 2 }))
+    expect(result.setApart.map((line) => [line.copy.ref, line.setApart])).toEqual([["pyre:1", 2]])
+    expect(result.setApartCount).toBe(2)
+    expect(result.lines.map((line) => [line.copy.ref, line.entrusted, line.stayed])).toEqual([
+      ["pyre:1", 1, 0],
+      ["common:1", 1, 1],
+    ])
+    expect(result.count).toBe(2)
+  })
+
+  it("can validate with only copies set apart, a full cap included", () => {
+    const result = preview(start([copy("rare", { seekers: 5 })], 0, { "rare:1": 2 }))
+    expect([result.lines.length, result.setApartCount, result.canValidate]).toEqual([0, 2, true])
   })
 })

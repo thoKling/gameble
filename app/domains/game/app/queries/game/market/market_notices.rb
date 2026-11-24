@@ -6,11 +6,15 @@ module Game
       Line = Data.define(:kind, :token, :card, :other, :amount, :noticed_at)
 
       def self.call(player:, locale: I18n.locale)
-        lines(Notice.where(player_id: player.id).order(noticed_at: :desc, id: :desc).limit(LIMIT).to_a, locale)
+        lines(Notice.where(player_id: player.id, order_id: nil).where.not(kind: "wanted").order(noticed_at: :desc, id: :desc).limit(LIMIT).to_a, locale)
       end
 
       def self.outbid(player:, listing_ids:, locale: I18n.locale)
         lines(Notice.where(player_id: player.id, listing_id: listing_ids, kind: "outbid").order(:id).to_a, locale)
+      end
+
+      def self.of_kinds(player_id:, listing_ids:, kinds:, locale: I18n.locale)
+        lines(Notice.where(player_id:, listing_id: listing_ids, kind: kinds).order(:id).to_a, locale)
       end
 
       def self.lines(notices, locale)

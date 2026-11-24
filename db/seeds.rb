@@ -63,7 +63,7 @@ if Rails.env.development? && Catalog::PublishedSeason.call.nil?
 
   season_number = Catalog::DraftSeasonNumber.call
   Catalog::PromoteStagedBatch.new.call(batch_token: seed_batch, season_number:).value!
-  Catalog::PublishSeason.new.call(number: season_number).value!
+  Catalog::PublishSeason.new.call(number: season_number, name_en: "Spring", name_fr: "Printemps").value!
   puts "Seeded and published season #{season_number} with #{card_count} cards."
 end
 
@@ -86,6 +86,12 @@ if Rails.env.development? && Catalog::PublishedSeason.call
   end
   Game::BackfillFortunesJob.perform_now
   puts "Seeded #{players.size} fake players who opened #{opened} packs."
+end
+
+# Development only: every card's duel profile, computed once from the fake players' pulls; the Monday run keeps it current.
+if Rails.env.development? && Catalog::PublishedSeason.call && Game::DuelStat.none?
+  Game::ComputeDuelStatsJob.perform_now("first")
+  puts "Computed #{Game::DuelStat.count} duel profiles."
 end
 
 # Development only: Dev Player, the first fake player, is the administrator, and opens the market with its announcement; once the
@@ -129,6 +135,22 @@ if Rails.env.development? && Game::Market::MarketState.call.open?
       duration_hours: durations[index % durations.size], settings_token: settings.token).success?
   end
   puts "Listed #{listed} copies on the market."
+end
+
+# Development only: two fake players each place a buy order, at the lowest minimum, on a published card they hold in no edition.
+# A player who already has an open order, or cannot pay, is skipped.
+if Rails.env.development? && Game::Market::MarketState.call.open?
+  settings = Game::Market::CurrentSettings.call
+  lowest = Game::Market::SettingsRules::RARITIES.map { settings.minimum_price(it) }.min
+  placed = DevSignInsController::FAKE_PLAYER_COUNT.times.to_a.drop(1).first(2).count do |number|
+    player = Accounts::SignIn.new.call(steam_id: DevSignInsController.steam_id(number), persona_name: DevSignInsController.persona_name(number)).value!
+    next false if Game::Market::Order.where(player_id: player.id, status: "open").exists?
+
+    held = Catalog::CardSeason.where(id: Game::Holding.where(player_id: player.id).where("quantity > 0").select(:card_season_id)).select(:card_id)
+    card_id = Catalog::PublishedCardIds.within(Catalog::Card.where.not(id: held).limit(50).pluck(:id)).first
+    card_id && Game::Market::PlaceOrder.new.call(player:, card_id:, price: lowest, settings_token: settings.token).success?
+  end
+  puts "Placed #{placed} buy orders on the market."
 end
 
 # Development only: ninety days of market history, so the economy's charts draw. The market's first opening moves back to the

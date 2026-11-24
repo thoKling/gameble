@@ -11,6 +11,7 @@ class Market::EntrustmentsControllerTest < ActionDispatch::IntegrationTest
   include CountingRateLimit
 
   STREAM = { "Accept" => "text/vnd.turbo-stream.html, text/html, application/xhtml+xml" }.freeze
+  JSON_ANSWER = { "Accept" => "application/json" }.freeze
 
   setup do
     @player = accounts_players(:player)
@@ -58,7 +59,7 @@ class Market::EntrustmentsControllerTest < ActionDispatch::IntegrationTest
 
     assert_select "form#entrust[data-layout=wide]"
     assert_select "form#entrust .market-entrust__layout[data-controller=entrust-recap]"
-    assert_select ".entrust-bar[role=group] a[data-bottom-sheet-opens=entrust-recap-sheet]", "Entrust ▸"
+    assert_select ".entrust-bar[role=group] a[data-bottom-sheet-opens=entrust-recap-sheet]", "Entrust"
     assert_select ".entrust-bar [data-entrust-recap-target=barTotal] .picoin-amount__figure", "0"
     assert_select "dialog#entrust-recap-sheet .modal__title", "Entrust"
     assert_select "dialog#entrust-recap-sheet [data-entrust-recap-target=sheetBody]"
@@ -116,8 +117,8 @@ class Market::EntrustmentsControllerTest < ActionDispatch::IntegrationTest
     get new_market_entrustment_path(locale: :fr)
 
     assert_select ".copy-filters input[type=search][form=entrust-filter]"
-    assert_select ".copy-filters .filter-chip", 6
-    assert_select ".copy-filters .filter-chip__text", "Doublons"
+    assert_select ".copy-filters .filter-chip", 7
+    assert_select ".copy-filters .filter-chip__text", "2+"
     assert_select ".copy-filters input[data-copy-filters-target=doubles][checked]"
     assert_select ".copy-filters dialog, .copy-filters .bottom-sheet", false
     assert_select "form#entrust-filter[method=get][data-turbo-frame=entrust-results]"
@@ -198,6 +199,42 @@ class Market::EntrustmentsControllerTest < ActionDispatch::IntegrationTest
     assert_equal 70, Game::Market::Wallet.find_by!(player_id: @player.id).available
   end
 
+  test "a quick entrust asked in JSON entrusts the copy and answers created" do
+    settings = open_market!
+    hold(@player, @common.id, 2)
+    sign_in(@player)
+
+    post market_entrustments_path(locale: :en), params: { settings: settings.token, selection: selection({ ref(@common) => "1" }) }, headers: JSON_ANSWER
+
+    assert_response :created
+    assert_equal 1, Game::Holding.find_by(player_id: @player.id, card_season_id: @common.id).quantity
+  end
+
+  test "a quick entrust refused in JSON answers the refusal's message and moves nothing" do
+    drawn = open_market!
+    open_market!(entrustment_common: 15)
+    hold(@player, @common.id, 1)
+    sign_in(@player)
+
+    post market_entrustments_path(locale: :en), params: { settings: drawn.token, selection: selection({ ref(@common) => "1" }) }, headers: JSON_ANSWER
+
+    assert_response :unprocessable_content
+    assert_match(/amounts changed/, response.parsed_body.dig("error", "message"))
+    assert_equal 0, Game::Market::LedgerEntry.count
+  end
+
+  test "a throttled quick entrust answers its message in JSON" do
+    settings = open_market!
+    sign_in(@player)
+
+    with_counting_rate_limit(Market::EntrustmentsController) do
+      31.times { post market_entrustments_path(locale: :en), params: { settings: settings.token, selection: "" }, headers: JSON_ANSWER }
+    end
+
+    assert_response :too_many_requests
+    assert_predicate response.parsed_body.dig("error", "message"), :present?
+  end
+
   test "a closed market answers market_closed and the page keeps the ticks" do
     close_market!
     hold(@player, @common.id, 2)
@@ -249,12 +286,12 @@ class Market::EntrustmentsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".market-entrust__notice", /Aucune carte à confier\./
   end
 
-  test "the eleventh validation of a minute is throttled" do
+  test "the thirty-first validation of a minute is throttled" do
     settings = open_market!
     sign_in(@player)
 
     with_counting_rate_limit(Market::EntrustmentsController) do
-      11.times { post market_entrustments_path(locale: :en), params: { settings: settings.token, selection: "" } }
+      31.times { post market_entrustments_path(locale: :en), params: { settings: settings.token, selection: "" } }
     end
 
     assert_redirected_to new_market_entrustment_path(locale: :en)
@@ -264,7 +301,7 @@ class Market::EntrustmentsControllerTest < ActionDispatch::IntegrationTest
     settings = open_market!
     hold(@player, @common.id, 1)
     hold(@player, @rare.id, 1)
-    Game::Market::Mint.credit(player_id: @player.id, amount: 11_950, settings_id: settings.id)
+    Game::Market::Ledger.post(Game::Market::Mint.credit(player_id: @player.id, amount: 11_950, settings_id: settings.id))
     sign_in(@player)
 
     post market_entrustments_path(locale: :en), params: { settings: settings.token, selection: selection({ ref(@common) => "1", ref(@rare) => "1" }) }
@@ -296,7 +333,7 @@ class Market::EntrustmentsControllerTest < ActionDispatch::IntegrationTest
     legendary = catalog_card_seasons(:legendary_card_one)
     hold(@player, legendary.id, 1)
     hold(@player, @common.id, 1)
-    Game::Market::Mint.credit(player_id: @player.id, amount: 11_500, settings_id: settings.id)
+    Game::Market::Ledger.post(Game::Market::Mint.credit(player_id: @player.id, amount: 11_500, settings_id: settings.id))
     sign_in(@player)
 
     post market_entrustments_path(locale: :en), params: { settings: settings.token, selection: selection({ ref(legendary) => "1", ref(@common) => "1" }) }
@@ -314,7 +351,7 @@ class Market::EntrustmentsControllerTest < ActionDispatch::IntegrationTest
   test "when nothing fits the page answers 422 with the renewal line and keeps the ticks" do
     settings = open_market!
     hold(@player, @common.id, 1)
-    Game::Market::Mint.credit(player_id: @player.id, amount: 12_000, settings_id: settings.id)
+    Game::Market::Ledger.post(Game::Market::Mint.credit(player_id: @player.id, amount: 12_000, settings_id: settings.id))
     sign_in(@player)
 
     assert_no_difference -> { Game::Market::LedgerEntry.count } do
@@ -345,7 +382,7 @@ class Market::EntrustmentsControllerTest < ActionDispatch::IntegrationTest
   test "the cap left drawn is the daily cap less what was minted today" do
     settings = open_market!
     hold(@player, @common.id, 1)
-    Game::Market::Mint.credit(player_id: @player.id, amount: 11_500, settings_id: settings.id)
+    Game::Market::Ledger.post(Game::Market::Mint.credit(player_id: @player.id, amount: 11_500, settings_id: settings.id))
     sign_in(@player)
 
     get new_market_entrustment_path(locale: :en)
@@ -642,7 +679,7 @@ class Market::EntrustmentsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     rows = response.parsed_body
     assert_equal 61, rows.size
-    assert_equal({ "ref" => ref(@rare), "title" => "Blue Depths", "rarity" => "rare", "season" => 1, "free" => 2, "owned" => 3, "value" => 50 }, rows.first)
+    assert_equal({ "ref" => ref(@rare), "title" => "Blue Depths", "rarity" => "rare", "season" => 1, "free" => 2, "owned" => 3, "value" => 50, "seekers" => 0 }, rows.first)
     assert_not_includes rows.map { it["ref"] }, ref(@common)
 
     get market_entrustment_matches_path(locale: :en, filter: { query: "", rarities: [ "rare" ] })

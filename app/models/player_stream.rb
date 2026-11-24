@@ -8,11 +8,18 @@ module PlayerStream
   SEEN_EVENTS = [ Game::TradeSeen ].freeze
   BALANCE_EVENTS = [
     Game::Market::CardsEntrusted, Game::Market::CardListed, Game::Market::AuctionSold, Game::Market::AuctionUnsold, Game::Market::ListingWithdrawn,
-    Game::Market::BidPlaced
+    Game::Market::BidPlaced, Game::Market::OrderPlaced, Game::Market::OrderCancelled, Game::Market::OrderExpired, Game::Market::OrderWithdrawn,
+    Game::Market::OrderServed, Game::Market::WantedChoicesApplied, Game::Market::ArchivePurchased, Game::SlotBought
   ].freeze
   MARKET_EVENTS = [ Game::Market::LeadVoided, Game::Market::ListingCancelled ].freeze
+  DUEL_KINDS = {
+    Game::DuelChallengeSent => "sent", Game::DuelChallengeAccepted => "accepted", Game::DuelChallengeLapsed => "lapsed",
+    Game::DuelChallengeRefused => "refused", Game::DuelChallengeCancelled => "cancelled", Game::DuelFinished => "finished"
+  }.freeze
+  DUEL_EVENTS = DUEL_KINDS.keys.freeze
   EVENTS = (TRADE_EVENTS + SEEN_EVENTS + INVITATION_EVENTS + FRIENDSHIP_EVENTS +
-    [ Game::AchievementUnlocked, Game::AchievementClaimed, Game::CardBackUnlocked, Game::DailyBonusCollected ] + BALANCE_EVENTS + MARKET_EVENTS).freeze
+    [ Game::AchievementUnlocked, Game::AchievementClaimed, Game::CardBackUnlocked, Game::DailyBonusCollected ] + BALANCE_EVENTS + MARKET_EVENTS +
+    DUEL_EVENTS).freeze
   CUT_OFF_EVENTS = [ Accounts::PlayerDeleted, Accounts::PlayerBanned ].freeze
   PRIVACY_EVENTS = [ Accounts::VisibilityChanged ].freeze
 
@@ -47,6 +54,8 @@ module PlayerStream
         [ data[:proposer_id], data[:recipient_id] ].map { trades_notice(it) }
       when *SEEN_EVENTS
         [ trades_notice(data[:player_id]) ]
+      when *DUEL_EVENTS
+        duel_notices(event)
       when Game::InvitationAccepted
         [ friends_notice(data[:sender_id]).merge(friend_id: data[:recipient_id]), friends_notice(data[:recipient_id]) ]
       when Game::InvitationSent, Game::InvitationCancelled
@@ -77,6 +86,13 @@ module PlayerStream
         balance_notices([ data[:leader_id] ]) + market_notices([ data[:seller_id] ])
       when Game::Market::ListingCancelled
         market_notices(bidders_of(data))
+      when Game::Market::OrderServed
+        balance_notices(data.values_at(:buyer_id, :seller_id)) + market_notices([ data[:buyer_id] ])
+      when Game::Market::OrderExpired
+        [ balance_notice(data[:player_id]) ] + market_notices([ data[:player_id] ])
+      when Game::Market::WantedChoicesApplied
+        buyer_ids = Game::Market::WantedChoicesApplied.buyer_ids(data)
+        balance_notices([ data[:seller_id] ] + buyer_ids) + market_notices(buyer_ids + Game::Market::WantedNoticePlayers.call(data[:listing_ids]))
       when *BALANCE_EVENTS
         [ balance_notice(data[:player_id]) ]
       when *CUT_OFF_EVENTS
@@ -89,6 +105,13 @@ module PlayerStream
     end
 
     private
+
+    def duel_notices(event)
+      data = event.data
+      { "challenger" => data[:challenger_id], "opponent" => data[:opponent_id] }.filter_map do |role, player_id|
+        { player_id:, topic: "duels", duel_id: data[:duel_id], kind: DUEL_KINDS.fetch(event.class), role: } if player_id
+      end
+    end
 
     def trades_notice(player_id) = { player_id:, topic: "trades" }
 
