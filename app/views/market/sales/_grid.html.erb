@@ -3,7 +3,7 @@
   <%= tag.section class: "sale-grid", aria: { label: t("market.sales.new.choose") },
         data: { controller: "listing-grid next-page", action: "focusout->next-page#focusLeft" } do %>
     <%= render "market/sales/refusal", slots: %i[grid] %>
-    <p id="sale-results-status" class="copy-grid__count" role="status"><%= copy_matches(@pagy.count) %></p>
+    <p id="sale-results-status" class="copy-grid__count" role="status"><%= @filter.wanted? ? t("market.copy_filters.wanted_matches", count: @pagy.count, number: number_with_delimiter(@pagy.count)) : copy_matches(@pagy.count) %></p>
     <% if @copies.empty? %>
       <p class="sale-grid__empty">
         <%= t("market.copy_filters.no_match") %>
@@ -12,6 +12,9 @@
     <% end %>
     <ul id="sale-cells" class="sale-grid__list" role="listbox" aria-label="<%= t("market.sales.new.choose") %>" data-action="keydown->listing-grid#keydown">
       <%= render partial: "market/sales/cell", collection: @copies, as: :copy %>
+    </ul>
+    <ul id="sale-decked" class="sale-grid__decked">
+      <%= render partial: "market/sales/decked", collection: @copies.select { @decks_by_ref.key?(it.ref) }, as: :copy %>
     </ul>
     <%= render "market/copy_pages", pagy: @pagy, id: "sale-pages" %>
   <% end %>

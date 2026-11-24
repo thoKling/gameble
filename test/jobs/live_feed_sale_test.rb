@@ -1,10 +1,14 @@
 require "test_helper"
 require_relative "../support/market"
+require_relative "../support/market_auctions"
 require_relative "../support/market_feed"
+require_relative "../support/market_orders"
 
 class LiveFeedSaleTest < ActiveSupport::TestCase
   include ActionCable::TestHelper
+  include MarketAuctions
   include MarketFeed
+  include MarketOrders
   include MarketSettings
 
   setup do
@@ -28,8 +32,28 @@ class LiveFeedSaleTest < ActiveSupport::TestCase
     assert_equal [ { listing_id: 12 } ], LiveStream.notices(event)
   end
 
+  test "an order served and the wanted table's sales name their orders in notices" do
+    served = Game::Market::OrderServed.new(data: { order_id: 3, buyer_id: 1, seller_id: 2, card_season_id: 4, price: 100 })
+    sales = [ 5, 6 ].map { { order_id: it, buyer_id: 1, card_season_id: 4, price: 100 } }
+    applied = Game::Market::WantedChoicesApplied.with(seller_id: 2, sales:, listing_ids: [ 7 ], entrusted: [])
+
+    assert_equal [ { order_id: 3 } ], LiveStream.notices(served)
+    assert_equal [ { order_id: 5 }, { order_id: 6 } ], LiveStream.notices(applied)
+  end
+
+  test "a direct sale to an order is prepended to the feed" do
+    fund!(@buyer, 400)
+    order = order!(@buyer, @legendary, 400)
+    Game::FeedEntry.record_sale(order_id: order.id, buyer_id: @buyer.id, card_season_id: @legendary.id, price: 400,
+      settings: Game::Market::CurrentSettings.call, at: Time.current)
+
+    LiveFeedJob.perform_now([ { order_id: order.id } ])
+
+    assert_equal "Sam", template(received(:en), "prepend", "feed-entries").at_css(".feed__sentence .player-name").text
+  end
+
   test "a sale is prepended to the feed in each locale and never queued for the ticker" do
-    listing = sale_entry!(@buyer, @legendary, 40_000)
+    listing = sale_entry!(@buyer, @legendary, 400)
 
     LiveFeedJob.perform_now([ { listing_id: listing.id } ])
 
@@ -41,7 +65,7 @@ class LiveFeedSaleTest < ActiveSupport::TestCase
   end
 
   test "a public buyer's name links in the broadcast" do
-    listing = sale_entry!(@buyer, @legendary, 40_000)
+    listing = sale_entry!(@buyer, @legendary, 400)
 
     LiveFeedJob.perform_now([ { listing_id: listing.id } ])
 
@@ -50,7 +74,7 @@ class LiveFeedSaleTest < ActiveSupport::TestCase
 
   test "a private buyer's name has no link in the broadcast" do
     @buyer.update!(visibility: "private")
-    listing = sale_entry!(@buyer, @legendary, 40_000)
+    listing = sale_entry!(@buyer, @legendary, 400)
 
     LiveFeedJob.perform_now([ { listing_id: listing.id } ])
 
@@ -60,7 +84,7 @@ class LiveFeedSaleTest < ActiveSupport::TestCase
   end
 
   test "a sale below the threshold broadcasts nothing" do
-    listing = sale_entry!(@buyer, catalog_card_seasons(:common_card_one), 2_000)
+    listing = sale_entry!(@buyer, catalog_card_seasons(:common_card_one), 20)
 
     assert_no_broadcasts(LiveStream.feed_streamables(:en).join(":")) { LiveFeedJob.perform_now([ { listing_id: listing.id } ]) }
   end

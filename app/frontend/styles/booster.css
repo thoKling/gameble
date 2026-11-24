@@ -2,7 +2,7 @@
  * The booster screen: the `booster` root controller, its canister, its
  * dealt cards and their effects. Timings live in app/frontend/lib/booster.ts;
  * the controllers animate transform and opacity through WAAPI. Here only
- * the steady states and the loops (breath, sweep, rays, sheen), all
+ * the steady states and the loops (rays, sheen), all
  * transform-only and stopped under reduced motion.
  *
  * The card stack (.booster-card) keeps every grouping property (opacity
@@ -18,12 +18,13 @@
  * tray, the actions under the stage, the card zoom). The server renders
  * every layout's parts; the stylesheet shows the current layout's.
  *
- * This file is the screen at its base: layout, panel and stage. The canister
- * and the dealt cards are in booster-canister.css, the effects and the result
- * banner in booster-effects.css, the set celebration and the loops in
- * booster-celebration.css, then the narrower layouts in booster-layouts.css
- * and booster-layouts-tray.css: each file overrides the ones before it, so
- * the order of the six is part of the cascade.
+ * This file is the screen at its base: layout, panel and stage. The dealt
+ * cards are in booster-canister.css, the capsule in booster-capsule.css and
+ * booster-capsule-parts.css (animated from booster_capsule_timeline.ts), what
+ * its blast adds around it in booster-blast.css, the effects and the result banner in booster-effects.css, the set celebration
+ * and the loops in booster-celebration.css, then the narrower layouts in
+ * booster-layouts.css and booster-layouts-tray.css: each file overrides the
+ * ones before it, so the order of the nine is part of the cascade.
  */
 
 /* The server's fallback, without JavaScript or until the root controller
@@ -54,32 +55,34 @@
   display: contents;
 }
 
-/* The state word of the current status, among every status's. */
-.booster__state-word > [data-status] {
-  display: none;
-}
-
-.booster[data-status="sealed"] .booster__state-word > [data-status="sealed"],
-.booster[data-status="arming"] .booster__state-word > [data-status="arming"],
-.booster[data-status="ejecting"] .booster__state-word > [data-status="ejecting"],
-.booster[data-status="inventory"] .booster__state-word > [data-status="inventory"],
-.booster[data-status="legendarySignal"] .booster__state-word > [data-status="legendarySignal"],
-.booster[data-status="complete"] .booster__state-word > [data-status="complete"],
-.booster[data-status="waiting"] .booster__state-word > [data-status="waiting"] {
-  display: inline;
-}
-
 /* ---- Layout: info column, stage ---- */
 
-/* Rays, rings and a lifted card may reach past the screen's sides: clipped
-   there, so the page never scrolls sideways (overflow-x: clip makes no
-   scroll container, and sits far above the cards' 3D stack). */
 .booster {
-  display: grid;
-  grid-template-columns: 300px minmax(0, 1fr);
-  gap: 40px;
-  align-items: start;
   overflow-x: clip;
+}
+
+/* Until the script has chosen the layout the markup is the desktop's, so the screen stays blank rather than flash it. */
+.booster:not([data-layout]) {
+  visibility: hidden;
+}
+
+/* The tab's panel: the information column (its daily capsule at the foot) beside the stage. */
+.booster__body {
+  display: grid;
+  grid-template: minmax(0, 1fr) auto / 320px minmax(0, 1fr);
+  gap: var(--space-5) var(--space-8);
+}
+
+.booster__body > .booster__info {
+  grid-area: 1 / 1;
+}
+
+.booster__body > .booster-daily {
+  grid-area: 2 / 1;
+}
+
+.booster__body > .booster__stage {
+  grid-area: 1 / 2 / 3 / 3;
 }
 
 .booster__info {
@@ -87,18 +90,8 @@
   z-index: 3;
   display: flex;
   flex-direction: column;
-  gap: var(--space-7);
+  gap: var(--space-5);
   min-width: 0;
-}
-
-.booster__hazard,
-.booster__result-stripe {
-  height: var(--hazard-stripe-height);
-  background: repeating-linear-gradient(
-    var(--hazard-stripe-angle),
-    var(--color-accent) 0 var(--hazard-stripe-band),
-    var(--color-panel-sunken) var(--hazard-stripe-band) calc(2 * var(--hazard-stripe-band))
-  );
 }
 
 .booster__kicker {
@@ -110,92 +103,48 @@
 }
 
 .booster__title {
-  margin: var(--space-2) 0 0;
-  color: var(--color-text-max);
-  font: var(--font-hero);
-  letter-spacing: var(--tracking-hero);
-  text-transform: uppercase;
-}
-
-/* The bracketed panel: cards per booster, reserve, state. */
-.booster__panel {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin: 0;
-  font: var(--font-label);
-  letter-spacing: 1px;
-  text-transform: uppercase;
-}
-
-.booster__row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-4);
-}
-
-.booster__row dt {
-  color: var(--color-muted);
-}
-
-.booster__row dd {
-  margin: 0;
-}
-
-.booster__value {
-  color: var(--color-text-max);
-}
-
-.booster__value--reserve {
-  color: var(--color-lime);
-}
-
-.booster__row--state {
-  padding-top: 10px;
-  box-shadow: 0 calc(-1 * var(--space-unit)) 0 0 var(--color-line-soft);
-}
-
-.booster__state {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
+  margin: var(--space-1) 0 0;
   color: var(--color-text-bright);
+  font: var(--font-screen-title);
+  letter-spacing: var(--tracking-screen-title);
+  text-transform: uppercase;
 }
 
-/* The status light: 8px, steady. */
-.booster__light {
-  flex: none;
-  width: 8px;
-  height: 8px;
-  background: var(--color-accent);
+/* The reserve: its count large, then "+1 dans …" or "Réserve pleine", then ten pips. */
+.booster__figure {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  margin: 0 0 var(--space-3);
 }
 
-.booster__state[data-tone="alert"] {
-  color: var(--color-alert);
+.booster__count {
+  color: var(--color-lime);
+  font: var(--font-count-large);
+  letter-spacing: var(--tracking-count-large);
+  font-variant-numeric: tabular-nums;
 }
 
-.booster__state[data-tone="alert"] .booster__light {
-  background: var(--color-alert);
-}
-
-.booster__state[data-tone="gold"] {
+.booster[data-reserve="special"] .booster__count {
   color: var(--color-gold);
 }
 
-.booster__state[data-tone="gold"] .booster__light {
-  background: var(--color-gold);
+.booster__unit,
+.booster__source {
+  color: var(--color-muted);
+  font: var(--font-label);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
 }
 
-.booster__state[data-tone="done"] {
+.booster__source {
+  margin: 0 0 var(--space-3);
+}
+
+.booster__source-name {
   color: var(--color-lime);
 }
 
-.booster__state[data-tone="done"] .booster__light {
-  background: var(--color-lime);
-}
-
-/* The reserve: "+1 dans …" or "Réserve pleine", then ten pips. */
 .booster__reserve-head {
   display: flex;
   align-items: baseline;
@@ -305,7 +254,6 @@
 }
 
 .booster__shake > .booster__zone,
-.booster__shake > .booster__result,
 .booster__shake > .booster__deal-area {
   grid-area: 1 / 1;
 }
@@ -335,12 +283,23 @@
    the stage's dim, both in the same stacking context. */
 .booster__zone {
   position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  display: grid;
+  grid-template: "above" 1fr "capsule" auto "under" 1fr / minmax(0, 1fr);
+  justify-items: center;
   gap: var(--space-7);
   padding: var(--space-8) 0;
+}
+
+.booster__zone > :is(.booster__empty, .booster-canister__wrap) {
+  grid-area: capsule;
+}
+
+.booster__canister-notes {
+  display: flex;
+  flex-direction: column;
+  grid-area: under;
+  align-items: center;
+  gap: inherit;
 }
 
 .booster__canister-hint {
@@ -378,32 +337,6 @@
   letter-spacing: var(--tracking-body-large);
 }
 
-/* "Résultat du booster" between two hazard stripes, once dealt. */
-.booster__result {
-  z-index: 4;
-  align-self: start;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-5);
-  padding-top: var(--space-6);
-  color: var(--color-accent);
-  font: var(--font-menu);
-  letter-spacing: 3px;
-  text-transform: uppercase;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 200ms var(--ease-out);
-}
-
-.booster__result[data-shown] {
-  opacity: 1;
-}
-
-.booster__result-stripe {
-  width: 80px;
-}
-
 .booster__deal-area {
   display: flex;
   flex-direction: column;
@@ -416,21 +349,15 @@
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: var(--space-7) var(--space-deal-gap-max);
+  gap: var(--space-8) var(--space-deal-gap-max);
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.booster__hint {
-  margin: 0;
-  color: var(--color-muted);
-  font: var(--font-body);
-  letter-spacing: var(--tracking-body);
-  text-align: center;
-}
-
-/* The flash: one short warm flash at the opening, gold at a Légendaire's impact. */
+/* The flash: one short warm flash over the window at the opening; the
+   instant a Légendaire lands face up, the stage alone goes white and slowly
+   clears on it. */
 .booster__flash {
   position: fixed;
   inset: 0;
@@ -440,36 +367,17 @@
   pointer-events: none;
 }
 
-.booster__flash[data-tone="gold"] {
-  background: color-mix(in srgb, var(--color-text-max) 65%, var(--color-gold));
+.booster__flash[data-tone="white"] {
+  position: absolute;
+  background: var(--color-text-max);
 }
 
 /* ---- Reserve tabs: standard and special capsules ---- */
-.booster-reserves {
-  display: flex;
-  grid-column: 1 / -1;
-  gap: var(--space-3);
-}
-
-.booster-reserves__tab {
-  min-height: 44px;
-  padding: 0 var(--space-6);
-  border: var(--control-border);
-  background: var(--color-panel-sunken);
-  color: var(--color-muted);
-  font: var(--font-kicker);
-  letter-spacing: var(--tracking-kicker);
-  cursor: pointer;
-}
-
-.booster-reserves__tab[aria-selected="true"] {
-  color: var(--color-accent);
-  box-shadow: inset 0 calc(-1 * var(--space-unit)) 0 var(--color-accent);
-}
-
 .booster[data-reserve="special"] .booster-reserves__tab[aria-selected="true"] {
-  color: var(--color-lime);
-  box-shadow: inset 0 calc(-1 * var(--space-unit)) 0 var(--color-lime);
+  box-shadow:
+    inset 0 3px 0 var(--color-lime),
+    inset var(--space-unit) 0 0 var(--color-line),
+    inset calc(-1 * var(--space-unit)) 0 0 var(--color-line);
 }
 
 .booster-reserves__tab:disabled {
@@ -477,16 +385,14 @@
   cursor: not-allowed;
 }
 
-.booster-reserves__tab:focus-visible {
-  box-shadow: var(--focus-ring-gap), var(--control-border);
-}
-
-.booster__row[hidden],
+.booster__source[hidden],
 .booster__origin[hidden] {
   display: none;
 }
 
 .booster__origin {
+  grid-area: above;
+  align-self: end;
   margin: 0;
   color: var(--color-lime);
   font: var(--font-kicker);

@@ -43,6 +43,16 @@ namespace :game do
     puts "game:backfill_achievements: done; any failure went to the error tracker, and a rerun grants only what is missing"
   end
 
+  desc "Runs Game::ComputeDuelStatsJob now when no card has a duel profile yet; idempotent"
+  task compute_first_duel_stats: :environment do
+    if Game::DuelStat.none?
+      Game::ComputeDuelStatsJob.perform_now("first")
+      puts "game:compute_first_duel_stats: #{Game::DuelStat.count} duel profile(s) computed"
+    else
+      puts "game:compute_first_duel_stats: the duel profiles already exist; the weekly run keeps them current"
+    end
+  end
+
   desc "Creates the first, closed market settings version if there is none; idempotent"
   task create_first_market_settings: :environment do
     Game::Market::CreateFirstSettings.new.call.value!
@@ -67,5 +77,12 @@ namespace :game do
     end
 
     puts "game:drop_friends_and_trades: no deleted or banned player has friends, invitations or open trades left"
+  end
+
+  desc "Runs Game::BackfillExchangesTabs now: the friends tab kept for players with an accepted friend trade closed in the last 30 days and no stored tab; idempotent"
+  task backfill_exchanges_tabs: :environment do
+    players = Game::BackfillExchangesTabs.new.call.value!
+
+    puts "game:backfill_exchanges_tabs: #{players} player(s) now open the exchanges on the friends tab"
   end
 end

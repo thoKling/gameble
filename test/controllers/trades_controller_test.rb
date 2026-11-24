@@ -90,12 +90,12 @@ class TradesControllerTest < ActionDispatch::IntegrationTest
     end
 
     assert_response :success
-    assert_select "[data-controller=trade-seen][data-trade-seen-url-value=?]", trade_seen_path(token: trade.token, locale: :en)
+    assert_select "[data-controller=beacon][data-beacon-url-value=?]", trade_seen_path(token: trade.token, locale: :en)
 
     Game::MarkTradeSeen.new.call(player: @alice, trade_token: trade.token)
     get trade_path(token: trade.token, locale: :en)
 
-    assert_select "[data-controller=trade-seen]", 0
+    assert_select "[data-controller=beacon]", 0
   end
 
   test "no beacon on an open trade or on the board of the player who answered" do
@@ -103,11 +103,11 @@ class TradesControllerTest < ActionDispatch::IntegrationTest
     sign_in @alice
 
     get trade_path(token: waiting.token, locale: :en)
-    assert_select "[data-controller=trade-seen]", 0
+    assert_select "[data-controller=beacon]", 0
 
     Game::DeclineTrade.new.call(player: @alice, trade_id: waiting.id, revision: revision(waiting)[:revision])
     get trade_path(token: waiting.token, locale: :en)
-    assert_select "[data-controller=trade-seen]", 0
+    assert_select "[data-controller=beacon]", 0
   end
 
   test "the board of a trade waiting for the player: its line, expiry, reserved copies and three actions" do
@@ -205,8 +205,8 @@ class TradesControllerTest < ActionDispatch::IntegrationTest
     sign_in @alice
     get home_path(locale: :fr)
     assert_select ".hub-menu a.menu-item[href='/fr/trades'] #menu-trades-badge .menu-item__badge--alert", "1"
-    assert_select ".hub-menu a.menu-item[href='/fr/trades'] #menu-trades-badge .visually-hidden", "1 échange en attente de vous"
-    assert_select ".tab-bar a.tab-bar__tab[href='/fr/trades'] .tab-bar__badge--alert", "1"
+    assert_select ".hub-menu a.menu-item[href='/fr/trades'] #menu-trades-badge .visually-hidden", ", 1 échange à voir"
+    assert_select ".tab-bar a.tab-bar__tab[href='/fr/exchanges'] .tab-bar__badge--alert", "1"
 
     post accept_trade_path(token: trade.token, locale: :fr), params: revision(trade)
     assert_redirected_to trade_path(token: trade.token, locale: :fr)
@@ -233,7 +233,7 @@ class TradesControllerTest < ActionDispatch::IntegrationTest
 
     get home_path(locale: :fr)
     assert_select ".hub-menu a.menu-item[href='/fr/trades'] #menu-trades-badge .menu-item__badge", 0
-    assert_select ".tab-bar__badge", 0
+    assert_select ".tab-bar__badge--alert", 0
   end
 
   test "an acceptance refused shows the reason on the board and in a toast; nothing moves" do
@@ -1045,7 +1045,7 @@ class TradesControllerTest < ActionDispatch::IntegrationTest
     assert_select ".trade-row__name", /Joueur sans nom/
     assert_select ".trade-row .trade-chip--muted", text: "Clos", count: 2
     assert_select ".trade-row__when", /annulé/
-    assert_select ".tab-bar__badge", 0
+    assert_select ".tab-bar__badge--alert", 0
     assert_equal 0, holding(@alice, @soldier).reserved
 
     [ yours, theirs ].each do |trade|

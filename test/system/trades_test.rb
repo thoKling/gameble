@@ -43,6 +43,7 @@ class TradesTest < ApplicationSystemTestCase
   test "on a desktop a player answers two trades and the badge falls" do
     from_lea = propose(@lea, @hugo, offer: { @depths => 1 }, request: { @portal => 2 })
     propose(@max, @hugo, offer: { @depths => 1 }, request: { @portal => 1 })
+    Game::KeepExchangesTab.new.call(player: @hugo, tab: "friends").value!
     sign_in @hugo
 
     assert_selector ".hub-menu a.menu-item .menu-item__badge--alert", text: "2"
@@ -146,6 +147,7 @@ class TradesTest < ApplicationSystemTestCase
     end
 
     click_on "Send the counter-proposal"
+    assert_selector ".trade-board", text: "Waiting for Lea's answer."
     assert_selector ".toast", text: /Lea has 7 days to answer/
     trade.reload
     assert_equal @hugo.id, trade.proposer_id
@@ -318,6 +320,7 @@ class TradesTest < ApplicationSystemTestCase
     pick_toggle("Green Hills").click
     place_picks
     click_on "Send the counter-proposal"
+    assert_selector ".trade-board", text: "Waiting for Hugo's answer."
     assert_selector ".toast", text: /Hugo has 7 days to answer/
     assert_empty draft_entries
 

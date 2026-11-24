@@ -18,11 +18,21 @@ class Game::AchievementBoardTest < ActiveSupport::TestCase
 
   def tile(key, player = @player) = Game::AchievementBoard.call(player).find { it.key == key }
 
-  test "a tile per achievement, in catalogue order, each with its threshold" do
+  test "a tile per offered achievement, in catalogue order, each with its threshold" do
     tiles = Game::AchievementBoard.call(@player)
 
-    assert_equal Game::Achievements::CATALOGUE.map(&:key), tiles.map(&:key)
-    assert_equal Game::Achievements::CATALOGUE.map(&:threshold), tiles.map(&:threshold)
+    assert_equal Game::Achievements.offered.map(&:key), tiles.map(&:key)
+    assert_equal Game::Achievements.offered.map(&:threshold), tiles.map(&:threshold)
+  end
+
+  test "the board, its summary and the earned count leave the duel achievements out" do
+    unlock(:first_booster, :competitive_advantage_observed)
+    duel_keys = Game::Achievements::CATALOGUE.select(&:duel?).map(&:key)
+
+    assert_not_empty duel_keys
+    assert_empty Game::AchievementBoard.call(@player).map(&:key) & duel_keys
+    assert_equal({ earned: 1, total: Game::Achievements::CATALOGUE.size - duel_keys.size }, Game::AchievementBoard.summary(@player))
+    assert_equal 1, Game::EarnedAchievements.call(@player).count
   end
 
   test "a visitor gets every tile unearned at zero, and a summary of nothing earned" do
@@ -49,7 +59,7 @@ class Game::AchievementBoardTest < ActiveSupport::TestCase
   end
 
   test "an earned tile's progress is its threshold, and the board reads only the metrics of unearned achievements" do
-    unlock(*(Game::Achievements::CATALOGUE.map(&:key) - %i[boosters_10]))
+    unlock(*(Game::Achievements.offered.map(&:key) - %i[boosters_10]))
     opened_packs(3)
     asked = []
     original = Game::AchievementProgress.method(:call)
@@ -68,9 +78,7 @@ class Game::AchievementBoardTest < ActiveSupport::TestCase
   end
 
   test "only an achievement with a threshold above one is countable" do
-    assert_equal %i[boosters_10 boosters_100 boosters_500 three_complete_sets luck_is_a_marketing_concept leave_request_denied
-      streamlined_opening_procedure diligence_beyond_the_call_of_duty diversified_portfolio market_concentration
-      a_strictly_professional_relationship competitive_tender quarterly_targets_met insider_trading],
+    assert_equal Game::Achievements.offered.select { it.threshold > 1 }.map(&:key),
       Game::AchievementBoard.call(@player).select(&:countable?).map(&:key)
   end
 
@@ -81,5 +89,5 @@ class Game::AchievementBoardTest < ActiveSupport::TestCase
     assert_equal 1, Game::AchievementBoard.call(@player).count(&:earned)
   end
 
-  def total_achievements = Game::Achievements::CATALOGUE.size
+  def total_achievements = Game::Achievements.offered.size
 end

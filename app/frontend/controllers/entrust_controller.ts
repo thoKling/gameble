@@ -35,6 +35,7 @@ function copyFrom(element: HTMLElement): Copy {
     free: Number(data.free),
     owned: Number(data.owned),
     value: Number(data.value),
+    seekers: Number(data.seekers ?? 0),
   }
 }
 
@@ -46,6 +47,7 @@ function describe(tick: HTMLElement, { copy, copies }: TickView): void {
   writeData(tick, "free", String(copy.free))
   writeData(tick, "owned", String(copy.owned))
   writeData(tick, "value", String(copy.value))
+  writeData(tick, "seekers", String(copy.seekers ?? 0))
   writeData(tick, "copies", String(copies))
 }
 
@@ -94,7 +96,12 @@ export default class EntrustController extends Controller<HTMLElement> {
 
   // Esc here closes an overlay and nothing else: it never clears the ticks nor leaves the screen.
   private readonly guardEscape = (event: KeyboardEvent): void => {
-    if (event.key !== "Escape" || !this.state || document.querySelector("dialog[open]")) return
+    if (
+      event.key !== "Escape" ||
+      !this.state ||
+      document.querySelector("dialog[open], [popover]:not([popover=manual]):popover-open")
+    )
+      return
     if (Object.keys(this.state.ticked).length === 0) return
     event.preventDefault()
     event.stopPropagation()
@@ -276,9 +283,7 @@ export default class EntrustController extends Controller<HTMLElement> {
     const state = this.state
     if (!state) return
     const strings = this.stringsValue
-    const picking = Object.keys(state.ticked).length > 0
-    this.element.toggleAttribute("data-pending-edit", picking)
-    if (picking) this.result()?.dismiss()
+    if (Object.keys(state.ticked).length > 0) this.result()?.dismiss()
     this.element.dataset.layout = state.layout
     this.placeRecap(state.layout)
     this.renderTicks(ticksOf(state))

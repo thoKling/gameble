@@ -47,9 +47,21 @@ module GoalsHelper
     t("public_profiles.show.goals.row", **goal_row_words(need))
   end
 
-  def goal_free_slot(goals)
+  GOAL_ORDER_NAMES = 2
+
+  def goal_orders_line(need, cards)
+    links = cards.first(GOAL_ORDER_NAMES).map do |card|
+      link_to card.title, new_market_card_order_path(slug: card.id),
+        aria: { label: t("library.entry.goals.to_order_label", card: card.title, number: need.position, set: goal_set_name(need)) }
+    end
+    more = cards.size - links.size
+    links << t("library.entry.goals.to_order_more", count: more) if more.positive?
+    tag.p(safe_join([ t("library.entry.goals.to_order", count: cards.size), safe_join(links, " · ") ], " "), class: "goal-orders")
+  end
+
+  def goal_free_slot(goals, slots)
     taken = goals.map(&:position)
-    Game::Goal::POSITIONS.find { !taken.include?(it) }
+    (1..slots).find { !taken.include?(it) }
   end
 
   private

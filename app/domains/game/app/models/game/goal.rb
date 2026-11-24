@@ -2,14 +2,15 @@ module Game
   class Goal < ApplicationRecord
     self.table_name = "game_goals"
 
-    POSITIONS = (1..5)
-
     belongs_to :custom_set, class_name: "Game::CustomSet", optional: true
 
     def self.drop_reached(player_ids)
       players = Accounts::Player.where(id: where(player_id: player_ids).select(:player_id))
       reached = players.flat_map { |player| GoalNeeds.call(player).select(&:complete?).map(&:goal_id) }
-      where(id: reached).delete_all if reached.any?
+      return if reached.none?
+
+      PlayerState.count_goals_completed(where(id: reached).group(:player_id).count)
+      where(id: reached).delete_all
     end
 
     def self.drop_unpublished(season_id)

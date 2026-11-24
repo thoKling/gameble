@@ -1,13 +1,3 @@
-.market-sale {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-5);
-  width: 100%;
-  max-width: 1120px;
-  margin: 0 auto;
-  padding: var(--space-6) var(--space-gutter-phone);
-}
-
 .market-sale__header,
 .market-sale__form {
   display: flex;
@@ -15,22 +5,6 @@
   gap: var(--space-3);
 }
 
-.market-sale__kicker {
-  margin: 0;
-  color: var(--color-accent);
-  font: var(--font-kicker);
-  letter-spacing: var(--tracking-kicker);
-  text-transform: uppercase;
-}
-
-.market-sale__title {
-  margin: 0;
-  color: var(--color-gold);
-  font: var(--font-screen-title);
-  letter-spacing: var(--tracking-screen-title);
-}
-
-.market-sale__intro,
 .market-sale__notice p,
 .market-sale__card-only,
 .market-sale__relisting {
@@ -75,10 +49,42 @@
   gap: var(--space-5);
 }
 
-[data-layout="wide"] .market-sale__layout {
+[data-layout="wide"] .sale-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+[data-layout="wide"] .sale-fields {
+  flex-direction: row;
+  align-items: flex-end;
+  gap: var(--space-6);
+}
+
+[data-layout="wide"] .sale-summary {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(300px, 380px);
-  align-items: start;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-2) var(--space-6);
+}
+
+[data-layout="wide"] .sale-lines {
+  flex-flow: row wrap;
+  gap: var(--space-2) var(--space-6);
+}
+
+[data-layout="wide"] .sale-line {
+  padding: 0;
+  border: 0;
+}
+
+[data-layout="wide"] .sale-summary__rules {
+  grid-column: 1;
+}
+
+[data-layout="wide"] .sale-summary__submit {
+  grid-column: 2;
+  grid-row: 1 / span 2;
 }
 
 .market-sale__main,
@@ -183,7 +189,7 @@
   box-shadow: var(--panel-border);
 }
 
-[data-chosen="false"] .sale-form {
+[data-layout="phone"] [data-chosen="false"] .sale-form {
   opacity: 0.6;
 }
 
@@ -353,4 +359,52 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
+}
+
+.sale-cell[aria-disabled="true"] {
+  cursor: not-allowed;
+}
+
+.sale-cell__reserved {
+  align-self: flex-start;
+}
+
+.sale-cell__decks {
+  color: var(--color-muted);
+  font: var(--font-body-small);
+  overflow-wrap: anywhere;
+}
+
+.sale-grid__decked {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sale-grid__decked:not(:has(li)) {
+  display: none;
+}
+
+.sale-decked {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  background: var(--color-panel);
+  box-shadow: var(--control-border);
+}
+
+.sale-decked__title {
+  color: var(--color-text);
+  font: var(--font-body);
+}
+
+.sale-decked__holding {
+  flex-direction: row;
+  flex-wrap: wrap;
 }

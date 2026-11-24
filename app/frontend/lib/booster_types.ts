@@ -14,6 +14,10 @@ export type HeldCapsules = Readonly<Record<Reserve, HeldCapsule | null>>
 
 export const NO_HELD: HeldCapsules = { standard: null, special: null }
 
+export type MarketPlace = "entrust" | "sell"
+
+export type MarketMove = Readonly<{ place: MarketPlace; amount: number; sent: boolean }>
+
 export type BoosterBank = {
   available: number
   special: number
@@ -46,7 +50,7 @@ export type OpeningOutcome = { kind: "opened" } | { kind: "refused"; code: strin
 
 export type TierCounts = Record<Rarity, number>
 
-export type Focus = "open" | "home" | "card" | { slot: number }
+export type Focus = "open" | "home" | "card" | { card: number } | { slot: number }
 
 export type FocusTarget = "open" | "home" | { card: number } | { slot: number }
 
@@ -101,6 +105,7 @@ export type BoosterState = Readonly<{
   goalsReached: readonly string[]
   lockDepth: number
   focus: Focus | null
+  marketMoves: Readonly<Record<string, MarketMove>>
 }>
 
 export type BoosterStart = {
@@ -118,21 +123,15 @@ export type BoosterStart = {
 
 export type OpeningRefusal = Exclude<OpeningResult, { kind: "opened" }>
 
-export type Activation = "reveal" | "store" | "leave" | "none"
+export type Activation = "reveal" | "store" | "zoom" | "none"
 
 export type OpenVariant = "open" | "next" | "empty" | "skip"
-
-export type StatusTone = "alert" | "gold" | "done" | "rest"
-
-export type Hint = { kind: "remaining" | "done"; count: number } | { kind: "tap" | "swipe" }
 
 export type Controls = Readonly<{
   open: OpenVariant
   openDisabled: boolean
   busy: boolean
   revealAllDisabled: boolean
-  tone: StatusTone
-  hint: Hint | null
   storedCount: number
   top: number | null
   plate: number | null

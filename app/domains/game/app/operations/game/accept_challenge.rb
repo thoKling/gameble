@@ -1,0 +1,46 @@
+module Game
+  class AcceptChallenge < Operation
+    include DuelSteps
+
+    def call(player:, token:, deck_token:, move_number:)
+      player = step require_player(player)
+      move_number = step whole_number(move_number)
+      duel = step seated_duel(player, token)
+
+      transaction do
+        duel, seats = lock_duel(duel)
+        step invited(duel, seats, player, move_number)
+        step not_seated(player)
+        step own_deck(player, deck_token)
+        step friends_to_duel(player, seats[:challenger].player_id)
+        acceptor_deck = step ready_deck(player.id, deck_token)
+        challenger_deck = ready_deck(seats[:challenger].player_id, seats[:challenger].deck_token)
+        step(challenger_deck.success? ? start(player, duel, seats, [ challenger_deck.value!, acceptor_deck ], deck_token) : lapse(player, duel, seats))
+      end
+      step duel.started? ? Success(duel) : Failure(:deck_not_ready)
+    end
+
+    private
+
+    def invited(duel, seats, player, move_number)
+      seat = seats[:opponent]
+      turn = duel.state == "challenged" && duel.move_number == move_number && seat.player_id == player.id && seat.status == "invited"
+      turn ? Success() : Failure(:not_your_move)
+    end
+
+    def own_deck(player, deck_token)
+      deck_token.is_a?(String) && Deck.exists?(player_id: player.id, token: deck_token) ? Success() : Failure(:deck_not_found)
+    end
+
+    def start(player, duel, seats, decks, deck_token)
+      cards = DuelRules::ROLES.zip(decks).to_h { |role, deck| [ role, DuelSnapshot.call(deck) ] }
+      duel.update!(state: "active", rules_version: DuelRules::VERSION, started_at: Time.current,
+        first_caller: DuelRules::ROLES.sample(random: SecureRandom).to_s,
+        move_number: next_move(duel), move_deadline_at: schedule(duel, next_move(duel), DuelClock::CALL),
+        **cards.to_h { |role, deck| [ :"#{role}_cards", deck.map(&:to_snapshot) ] },
+        **cards.to_h { |role, deck| [ :"#{role}_draw_order", deck.map(&:card_season_id).shuffle(random: SecureRandom) ] })
+      seats[:opponent].update!(status: "seated", deck_token:)
+      duel_published(DuelChallengeAccepted, player, duel, seats)
+    end
+  end
+end

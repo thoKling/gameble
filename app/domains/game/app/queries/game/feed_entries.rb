@@ -66,16 +66,22 @@ module Game
     private_class_method :listed
 
     def self.priced(items)
-      listing_ids = items.filter_map { it.entry.listing_id }
-      return items if listing_ids.empty?
-
-      prices = Market::Listing.where(id: listing_ids).pluck(:id, :final_price).to_h
-      items.map { it.entry.listing_id ? it.with(price: prices[it.entry.listing_id]) : it }
+      listing_prices = prices(Market::Listing, :final_price, items.filter_map { it.entry.listing_id })
+      order_prices = prices(Market::Order, :price, items.filter_map { it.entry.order_id })
+      items.map do |item|
+        if item.entry.listing_id then item.with(price: listing_prices[item.entry.listing_id])
+        elsif item.entry.order_id then item.with(price: order_prices[item.entry.order_id])
+        else item
+        end
+      end
     end
+
+    def self.prices(model, column, ids) = ids.empty? ? {} : model.where(id: ids).pluck(:id, column).to_h
+    private_class_method :prices
 
     def self.titled(items)
       titles = ActiveProfileTitle.for_players(items.flat_map { [ it.player, it.partner ] }.compact.uniq)
-      priced(items).map { it.with(player_title: titles[it.player.id], partner_title: (titles[it.partner.id] if it.partner)) }
+      priced(items).map { it.with(player_title: (titles[it.player.id] if it.player), partner_title: (titles[it.partner.id] if it.partner)) }
     end
     private_class_method :titled
 
@@ -91,7 +97,7 @@ module Game
         missing = entries.flat_map { [ it.player_id, it.partner_id ] }.compact.uniq - players.keys
         players.merge!(Accounts::Player.where(id: missing).index_by(&:id)) if missing.any?
         entries.each do |entry|
-          next unless shown[[ entry.player_id, entry.kind == "sale" ]] && (entry.partner_id.nil? || shown[[ entry.partner_id, false ]])
+          next unless owner_shown?(entry, shown) && (entry.partner_id.nil? || shown[[ entry.partner_id, false ]])
 
           found << Entry.new(entry:, player: players[entry.player_id], partner: players[entry.partner_id], filler:)
         end
@@ -102,5 +108,12 @@ module Game
       found.first(limit)
     end
     private_class_method :visible
+
+    def self.owner_shown?(entry, shown)
+      return entry.kind == "duel_stats" if entry.player_id.nil?
+
+      shown[[ entry.player_id, entry.kind == "sale" ]]
+    end
+    private_class_method :owner_shown?
   end
 end

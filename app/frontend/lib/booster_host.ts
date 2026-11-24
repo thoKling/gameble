@@ -15,6 +15,9 @@ export type BoosterStageHost = Readonly<{
   shake: () => HTMLElement | null
   fx: () => HTMLElement | null
   flash: () => HTMLElement | null
+  sparks: () => HTMLCanvasElement | null
+  scanlines: () => HTMLElement | null
+  dealFx: () => HTMLElement | null
   canister: () => CanisterParts | null
   phoneLayout: () => boolean
 }>

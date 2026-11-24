@@ -2,6 +2,7 @@
 id: SPEC-gameble
 companions:
   - catalog-and-rarity.md
+  - brotherhood-titles.md
   - achievements.md
   - brotherhood-tone.md
   - later-roadmap.md
@@ -17,6 +18,7 @@ sources:
   - ../brief-gameble/addendum.md
   - ../forge-market-economy/forge-market-economy.md
   - ../forge-decks-and-matches/forge-decks-and-matches.md
+  - ../forge-market-volume/forge-market-volume.md
 ---
 
 > **Canonical contract.** This SPEC and the files in `companions:` are the complete, preservation-validated contract for what to build, test, and validate. Source documents listed in frontmatter are for traceability — consult them only if you need narrative rationale or prose color this contract intentionally omits.
@@ -54,7 +56,7 @@ gameble is an open-source passion project, and the game its author wants to play
     - No pack promises a rarity. The only guarantee: a new player gets a Rare or better by their 10th pack, with no visible sign.
     - Pack credit is computed server-side. Opening without a banked pack is refused, whatever the client does.
     - Packs accrue while the player is away, up to a cap of 10 standard packs.
-    - Every pack that is not a standard pack (today the daily bonus, the weekly goal reward and the duel capsule of CAP-42) waits in a special reserve with no cap, counted as one total apart from the standard reserve; the hub shows both counts, and the pack screen switches between the two reserves. A special pack shows its origin, by name and colour, wherever it is opened; within a reserve the oldest pack opens first, whatever its origin (author, 2026-10-28).
+    - Every pack that is not a standard pack (today the daily bonus and the weekly goal reward; the duel capsule is withheld during the duels alpha, CAP-42) waits in a special reserve with no cap, counted as one total apart from the standard reserve; the hub shows both counts, and the pack screen switches between the two reserves. A special pack shows its origin, by name and colour, wherever it is opened; within a reserve the oldest pack opens first, whatever its origin (author, 2026-10-28).
     - Draws pick a rarity tier first, then a card within it.
     - Opened cards are added to the player's collection, each copy carrying its minted rarity and season.
 - **CAP-5**
@@ -133,7 +135,7 @@ gameble is an open-source passion project, and the game its author wants to play
 - **CAP-13**
   - **intent:** A live Brotherhood feed shows what other players are doing, so the platform feels inhabited.
   - **success:**
-    - The feed shows notable pulls, first discoveries of a card, trades, reposts (CAP-19), set completions and set tiers reached.
+    - The feed shows notable pulls, first discoveries of a card, trades, reposts (CAP-19), set completions and set tiers reached, promotions to a grade 3 job title or higher, and the Direction's seat nominations (CAP-22, `brotherhood-titles.md`).
     - The feed is readable without an account.
     - With few players, it falls back to lower-rarity events and is never empty while any activity exists.
     - A signed-in player has a Friends tab showing only their friends' pulls, trades and reposts; a private friend's never show (CAP-8).
@@ -160,7 +162,7 @@ gameble is an open-source passion project, and the game its author wants to play
   - **intent:** A player earns achievements that mark their progress and their memorable moments, in the Brotherhood's voice.
   - **success:**
     - An achievement is granted once, when its condition is met, and shows as earned on the achievements screen.
-    - Conditions read cumulative progress, one capsule's contents, streaks of openings or days, the collection with the games' metadata (studio, release year), and community actions (discoveries, reposts, repeated trades with one player) and duels (CAP-41). The catalog is in `achievements.md`.
+    - Conditions read cumulative progress, one capsule's contents, streaks of openings or days, the collection with the games' metadata (studio, release year), and community actions (discoveries, reposts, repeated trades with one player); duel achievements are withheld during the duels alpha (CAP-42). The catalog is in `achievements.md`.
     - Every achievement shows a title in the Brotherhood's tone and a short condition, in French and English (`brotherhood-tone.md`); no flavor text (author, 2026-10-31).
     - The ten launch achievements (first pack, first Épique, first Légendaire, first complete set, first trade, 10, 100 and 500 packs opened, three complete sets, first repost) are renamed in that tone; their conditions are unchanged and no player loses one they earned (author, 2026-10-30).
     - A new achievement is granted at its release to every player whose recorded history already meets it; one with no recorded history counts from its release.
@@ -190,10 +192,14 @@ gameble is an open-source passion project, and the game its author wants to play
   - **intent:** A player can see which of their friends are around.
   - **success:** Friends see each other's status: online, current activity, or last seen. A private friend (CAP-8) shows "profil privé" instead, and never counts among those online. The friends menu item shows how many friends are online.
 - **CAP-22**
-  - **intent:** A player shows their collecting through a profile title and dresses their menus with a rare theme.
+  - **intent:** A player wears a job title that marks the place their long-term investment and feats have earned them in the Brotherhood's hierarchy, and dresses their menus with a rare theme.
   - **success:**
-    - Each tier of a set and its completion unlock a profile title built from a template that needs no grammatical agreement: the tier's rank for a tier ("Adepte · Roguelike"), "Complétiste" for completion ("Complétiste · Dark Souls"). Bronze, silver and gold reached in an earlier season give the titles Apprenti, Adepte and Maître, the same titles as the Apprenti, Adepte and Maître tiers: a set has one title per rank, earned by either (author, 2026-10-19). A title is earned once per set and rank, whatever the seasons; it shows the latest season it was earned in.
-    - The player picks one active title; it shows on their profile, in the feed and in trades.
+    - Five services (Archives, Bourse, Échanges, Exploration, Stratégie) each measure one activity and give five grades; grades 2 to 5 and a seat per service carry a job title, from "Cartographe junior" to "Responsable de l'Exploration" and "Direction de l'Exploration" (`brotherhood-titles.md`, author, 2026-11-23).
+    - A grade needs a percentile of the service's activity among active members and a floor of days of service; the top grade also needs the service's feat. Thresholds float with the population and a grade never drops.
+    - The player wears the post of their highest grade, changing service only when another grade strictly passes it; an inactive member's title is hidden until they return. Set tiers no longer give titles.
+    - At each season publication, each service's number one over the season that ended, from grade 3, takes the service's seat on the Comité de direction until the next publication.
+    - Staff wear "Conservateur des Archives" (administrator) or "Officier" (moderator), or their post. Titles carry no grammatical agreement and the Brotherhood never addresses a player by one.
+    - The title shows alone on the profile, in the feed and in trades; the player may hide it. Clicking it opens the service star: percentile, post and figure per service, visible as the profile is (CAP-8). The player alone sees the next grade's conditions and their performance metrics.
     - Completing 3, 10 and 25 sets, of any kind, unlocks a menu theme each: an accent colour applied to the interface, with contrast checked. Only the player sees it.
 - **CAP-23**
   - **intent:** When a new season is published, a returning player receives the Brotherhood's seasonal allocation: the tiers they reached in the season that ended, the card backs and achievements they unlocked in it, and their tiers in the next season.
@@ -204,6 +210,7 @@ gameble is an open-source passion project, and the game its author wants to play
     - No sentence heads the screen: only its title names the season.
     - A player with no card from an earlier season, traded ones included, sees no allocation.
     - A tier shows no season mark and no count of seasons (author, 2026-10-19), and no season chip appears in the collection grid.
+    - A section names the Comité de direction for the new season (CAP-22, author, 2026-11-23).
 - **CAP-24**
   - **intent:** A signed-out visitor meets a landing that gives the Brotherhood's mission, says what gameble is and makes them want to play.
   - **success:**
@@ -226,15 +233,15 @@ gameble is an open-source passion project, and the game its author wants to play
 - **CAP-27**
   - **intent:** A player composes sets of their own from the cards they want and follows them like the game's sets.
   - **success:**
-    - A player creates, renames, edits and deletes custom sets: 3 to 50 games of the catalog each, owned or not, at most 10 per player (author, 2026-10-30).
+    - A player creates, renames, edits and deletes custom sets: 3 to 50 games of the catalog each, owned or not, 5 per player for free and up to 10 with slots bought with PiCoins (CAP-49); the one player who held 6 keeps the sixth for free.
     - A custom set shows owned / total distinct cards and opens as an album with an empty slot naming each missing game; a copy counts whatever edition it was minted in.
     - It has no tiers: it shows owned / total and a gauge up to complete, and earns no reward: no title, back, celebration, feed line or seasonal allocation. The Steam library set has no tiers either (author, 2026-10-30).
     - Only its author sees a custom set or its name (author, 2026-10-30).
-    - A player with a Steam identity has one Steam library set, created automatically, with no action of theirs (author, 2026-10-30): the catalog games they own on Steam, with no size cap, synced with their library once a day. It is a special set, apart from the 10 custom sets: it cannot be an active goal (CAP-28) and never feeds trade suggestions (CAP-11). It grants no card. When Steam does not share the library (game details not public), the screen says so (author, 2026-10-30).
+    - A player with a Steam identity has one Steam library set, created automatically, with no action of theirs (author, 2026-10-30): the catalog games they own on Steam, with no size cap, synced with their library once a day. It is a special set, apart from the custom sets and their limit: it cannot be an active goal (CAP-28) and never feeds trade suggestions (CAP-11). It grants no card. When Steam does not share the library (game details not public), the screen says so (author, 2026-10-30).
 - **CAP-28**
   - **intent:** A player picks a few sets to aim at, and the game keeps their progress and missing cards in front of them.
   - **success:**
-    - A player holds up to five active goals at once, among the game's sets and their own custom sets, the Steam library set excepted, and changes them freely (#64, author, 2026-10-30). A goal keeps its place until removed: goals are not reordered; a goal whose set becomes complete leaves the goals by itself, freeing its place (author, 2026-10-30).
+    - A player holds five active goals at once for free, up to 10 with slots bought with PiCoins (CAP-49), among the game's sets and their own custom sets, the Steam library set excepted, and changes them freely (#64, author, 2026-10-30). A goal keeps its place until removed: goals are not reordered; a goal whose set becomes complete leaves the goals by itself, freeing its place (author, 2026-10-30).
     - Each goal shows its progress, and every card of its set, owned or not, carries the goal's mark wherever the player's own cards show; another player never sees those marks (author, 2026-10-30).
     - The profile shows the player's goals on game sets, under its visibility (CAP-8); a goal on a custom set never shows there. The bridge shows no goals (author, 2026-10-30).
     - Goals never change draw odds nor guarantee a card: pack draws are the same with or without goals.
@@ -243,6 +250,7 @@ gameble is an open-source passion project, and the game its author wants to play
   - **success:**
     - Any unreserved copy can be entrusted, an only copy included, at the value of its minted rarity (`market-economy.md`). The PiCoins are minted by the 100-6-Tron.
     - The player selects several cards and validates one batch, with no per-card confirmation or warning. The recap flags only copies from Rare upward and never blocks.
+    - The recap sets wanted cards apart (CAP-45).
     - An entrusted card leaves the collection and is counted per card and edition in the Archives. It is never destroyed.
     - A batch beyond the daily cap entrusts what fits; the rest stays in the collection and the screen says so.
     - PiCoin amounts appear compact, with the balance split into available and committed.
@@ -254,6 +262,7 @@ gameble is an open-source passion project, and the game its author wants to play
     - The seller picks one of three durations.
     - A listed copy is reserved: it cannot be traded or entrusted while the listing runs.
     - The seller can cancel only while no bid stands, and gets the copy back.
+    - The listing form shows the best eligible buy order (CAP-47).
 - **CAP-31**
   - **intent:** A player bids by stating the most they accept to pay, and never pays more than needed to win.
   - **success:**
@@ -299,6 +308,7 @@ gameble is an open-source passion project, and the game its author wants to play
   - **intent:** Staff spot accounts used to funnel cards or PiCoins to a main account.
   - **success:**
     - The back-office lists accounts matching the signals of `market-economy.md`, with the facts behind each.
+    - The signals cover direct sales to buy orders (CAP-47) and Archive purchases of a copy an account tied to the buyer entrusted (CAP-48).
     - Detection places no limit on trades and no seniority gate. Staff decide, through the existing ban (CAP-15).
 - **CAP-38**
   - **intent:** A player or visitor sees whether PiCoins pile up and what each rarity costs in days of play.
@@ -318,7 +328,7 @@ gameble is an open-source passion project, and the game its author wants to play
 - **CAP-40**
   - **intent:** A player builds decks from their collection to duel with.
   - **success:**
-    - A player has up to 5 named decks of exactly 12 cards they own, a game at most once whatever its edition, with no rarity or theme constraint; a shorter deck is a draft and cannot duel.
+    - A player has 3 named decks for free, up to 5 with slots bought with PiCoins (CAP-49), each of exactly 12 cards they own, a game at most once whatever its edition, with no rarity or theme constraint; a shorter deck is a draft and cannot duel.
     - A card in one or more decks blocks one copy of its edition, which cannot be traded, listed or entrusted until the card leaves every deck; those screens name the decks.
     - The editor sorts and filters the collection by stat and trump, and shows each deck card's change since the previous week.
 - **CAP-41**
@@ -331,11 +341,11 @@ gameble is an open-source passion project, and the game its author wants to play
     - Decks and stat values are frozen at the duel's start.
     - 60 seconds to call and 45 to answer, 60 to reconnect; past them the game plays the move. No duel is won by forfeit.
 - **CAP-42**
-  - **intent:** Winning a duel gives a reason to come back without turning duels into a capsule farm.
+  - **intent:** A player sees how they fare at duels while the rules are tested, with nothing to farm.
   - **success:**
-    - The first win of the UTC day gives a duel capsule of 3 cards at the daily bonus odds (CAP-16), in the special reserve, only if the game played none of the winner's moves; a second the same day is refused, whatever the client does.
-    - Other wins, losses and draws give nothing material.
-    - The profile shows the player's wins, losses and draws.
+    - During the alpha a duel gives nothing material: no capsule, no achievement, no card back. The duel capsule, the duel achievements and the Duelliste back are built and withheld; they return with the duels beta (author, 2026-11-20).
+    - The player's own Duels screen shows their wins, losses and draws against players, counting only duels played under the rules in force; practice duels never count.
+    - The public profile shows no duel record during the alpha.
 - **CAP-43**
   - **intent:** Players compare their skill at duels against players who are not their friends (after release 1.4).
   - **success:**
@@ -344,16 +354,75 @@ gameble is an open-source passion project, and the game its author wants to play
     - The rating resets at each new catalog season; the profile keeps each season's final rank.
     - The ranking follows the Flukeometer's visibility rules and layout, on its own screen.
 
+- **CAP-44**
+  - **intent:** Sellers and buyers both see which cards another player is looking for, so the market carries those cards rather than the flow of duplicates.
+  - **success:**
+    - A card is wanted when it is missing from another player's current goals (CAP-28) or targeted by another player's eligible open buy order (CAP-46). Every player counts, not only friends, each once; banned and deleted players and the viewer's own goals and orders do not count.
+    - The same definition drives the buyer's "Voulue" tag and notices and the seller's count.
+    - A seller sees how many players want a card, never who.
+    - The market has a "your wanted cards" section listing the player's copies that others want.
+- **CAP-45**
+  - **intent:** A player entrusting cards sells the wanted ones in the same move instead of entrusting them by habit.
+  - **success:**
+    - The entrustment recap sets wanted cards apart ("x players want it"); the rest of the batch is entrusted at once.
+    - The notice opens a table, one line per wanted card: seekers, best order, average price (CAP-34) and entrustment value.
+    - Each line is prefilled with the likeliest choice: sell at the order's price, start an auction at a higher price with its duration, or entrust anyway. "Entrust them all anyway" is offered too.
+    - One validation applies the whole table.
+- **CAP-46**
+  - **intent:** A player states a firm price for a card they want, so a holder can sell it at once.
+  - **success:**
+    - An order targets a game across all its editions and is served only by copies whose rarity's minimum price it reaches; the form says which rarities the price reaches.
+    - The order's money is held from placement. Best price, then oldest, is served first. An order buys one copy, lasts 7 days and can be cancelled for free.
+    - Orders are placed from a missing card in a set or goal, from the market's empty search, and from a suggestion on the goal itself.
+    - The form first shows the game's open auctions, each linked to its listing (there is no buy-now); it proposes the Archives' offer (CAP-48) when the card is neither listed nor covered by the player's own order.
+    - A player holds one order per game. An order's reachable rarities are those of the minimums when it was placed.
+    - The form shows the best order already placed on the game by its price alone, counting only orders placed more than an hour ago and never one from an account tied to the player.
+    - An order never bids on an auction.
+    - A banned or deleted player's open orders are withdrawn at once: a banned owner's held PiCoins return, a deleted owner's are destroyed with the balance.
+- **CAP-47**
+  - **intent:** A holder of a wanted card sells it to an order at its price, or asks more at auction.
+  - **success:**
+    - A direct sale to an order is instant, pays no stamp and pays the commission; it consumes the order. It serves the best eligible order (best price, then oldest), never the seller's own, and is refused when that order changed after the seller's screen was drawn.
+    - A direct sale counts in the edition's average price (CAP-34) and follows the feed's rule for notable sales (CAP-13).
+    - Listing higher opens an ordinary auction with its stamp (CAP-30), and the order's owner is notified; the order stays open until a direct sale consumes it.
+    - Every listing form shows the best eligible order.
+- **CAP-48**
+  - **intent:** PiCoins buy a specific card from the Archives' stock, at a price that caps the market without undercutting players.
+  - **success:**
+    - The Brotherhood's shop lists the Archives' stock per card and edition; a player buys one copy, which keeps its minted rarity and season.
+    - Archive offers also appear in market search results next to player listings.
+    - An Archive offer is priced at a multiple of the entrustment value (`market-economy.md`), well above a player's usual offer and never below its rarity's player minimum price. A rarity whose Archive price is not set is absent from the shop. There is no daily purchase limit.
+    - An Archive purchase never makes a feed entry. Staff keep which account entrusted each Archive copy; players never see it.
+- **CAP-49**
+  - **intent:** A player spends PiCoins on more room for goals, custom sets and decks, nothing that changes what they draw or win.
+  - **success:**
+    - Free: 5 goals, 5 custom sets, 3 decks. Each slot beyond is bought with PiCoins, up to 10 goals, 10 custom sets and 5 decks.
+    - At a free limit the player is offered the next slot in context ("6th goal: X PiCoins"), never in the shop; buying it performs the action the limit blocked.
+    - A slot price follows `market-economy.md`.
+- **CAP-50**
+  - **intent:** A player tries a deck and a strategy alone, at any time, against a bot that is worth beating.
+  - **success:**
+    - From Duels, a player with a complete deck starts a practice duel against the bot under the live duel's rules, with 30 minutes per move; it counts for nothing.
+    - The bot reads both open decks and the shown card and plays for the margin, as a skilled player does.
+    - Each practice duel deals the bot a named archetype deck, changing from one practice duel to the next: coverage, single stat (one per stat), two stats, trump sort or random. The screen names it ("Le bot joue un deck Popularité").
+- **CAP-51**
+  - **intent:** The author learns from the alpha whether the duel is fun and which decks hold, to change the rules.
+  - **success:**
+    - Duels carry an ALPHA tag on the DUELS tab and menu item, and an ALPHA banner on the Duels screen and the duel screen says games are analysed to balance the rules; the Duels screen and every duel result offer "Envoyer un feedback".
+    - Each duel records the rules version it was played under, and a practice duel the bot's archetype.
+    - A back-office page reads, per rules version: duels finished, the first caller's win rate, the share decided on the margin, the share of automatic moves, the stats called and the win rate by deck recipe for live duels; practice duels have their own table, by the bot's archetype, and never count in the recipe win rates (author, 2026-11-20).
 ## Constraints
 
 - **No real money**, anywhere: no purchases, no ads, no cash-out. PiCoins are never purchasable or withdrawable, and nothing touching capsules, PiCoins or auctions is ever sold.
 - **Before the market opens (legal):** the terms of use forbid real-money trading of cards and PiCoins, and the draw odds are published.
-- **Duels move nothing between players:** no card or PiCoin changes hands in a duel and duels never mint PiCoins; the duel capsule (CAP-42) is their only material reward.
+- **An alpha, not a switch:** duels ship to every player labelled ALPHA; no feature is hidden behind a runtime switch (author, 2026-11-20).
+- **Duels move nothing between players:** no card or PiCoin changes hands in a duel and duels never mint PiCoins; during the alpha they give no material reward (CAP-42).
+- **Neutral PiCoin spending:** PiCoins buy cards that already exist (market, orders, Archives) and capacity slots (CAP-49), never capsules or new cards, a duel advantage, trade capacity or cosmetics, which stay earned through achievements.
 - **Friend trades stay free:** no stamp, commission, floor or levy, ever.
-- **Money integrity:** entrustment is the only way PiCoins are created; only the stamp, the commission and a deleted account's balance destroy them. Every PiCoin movement is kept in a permanent record that balances can be rebuilt from. PiCoin amounts are integers. The 100-6-Tron is the Mint in code, since "bank" means the capsule reserve.
-- **Market and personal data:** the export (CAP-14) includes a player's PiCoin history, listings and bids, and their decks and duel history. Deleting the account erases the name from the bid history and destroys its balance, and the money record stays without identity.
+- **Money integrity:** entrustment is the only way PiCoins are created; only the stamp, the commission, PiCoins spent on Archive cards and slots (CAP-48, CAP-49) and a deleted account's balance destroy them. Every PiCoin movement is kept in a permanent record that balances can be rebuilt from. PiCoin amounts are integers. The 100-6-Tron is the Mint in code, since "bank" means the capsule reserve.
+- **Market and personal data:** the export (CAP-14) includes a player's PiCoin history, listings and bids, buy orders and sales to orders, Archive purchases and bought slots, and their decks and duel history. Deleting the account erases the name from the bid history and destroys its balance, and the money record stays without identity.
 - **French and English UI**, both complete at launch. Card text is available in every UI language. The English copy is translated by AI from the French. All repo text (code, comments, docs) is in English.
-- **Launch scope:** CAP-20, CAP-22 and CAP-23 are built after the public launch; every other capability up to CAP-26 is live at launch. CAP-23 is live before the second season is published in production. Release 1.1.0 ships CAP-27, CAP-28 and the 2026-10-30 changes to CAP-6, CAP-9, CAP-17 and CAP-20; the trade suggestions of CAP-11 may follow in a later release. CAP-29 to CAP-38 are the market release, built after that (V2). Release 1.4 ships CAP-39 to CAP-42, with live duels between friends only; CAP-43 and deferred duels follow in a later release.
+- **Launch scope:** CAP-20, CAP-22 and CAP-23 are built after the public launch; every other capability up to CAP-26 is live at launch. CAP-23 is live before the second season is published in production. Release 1.1.0 ships CAP-27, CAP-28 and the 2026-10-30 changes to CAP-6, CAP-9, CAP-17 and CAP-20; the trade suggestions of CAP-11 may follow in a later release. CAP-29 to CAP-38 are the market release, built after that (V2). Release 1.4 ships CAP-39 to CAP-42, CAP-50 and CAP-51 as an open alpha: live duels between friends and the practice duel; deferred duels come with the beta, then CAP-43. CAP-44 to CAP-49 (market volume) come after; their release order is set when the work is sliced.
 - **Landing ship conditions:** CAP-24 and CAP-25 go live only once the lore text exists in French and English (`lore.md`), the pioneer (CAP-13) is built, the repository is public with a license file, the roadmap's milestones are created from the initiative's epics and curated by staff in the back-office, and the app uses JetBrains Mono.
 - **Steam profile data:** only the persona name is stored, as personal data covered by export, deletion and reports, and, for a player with a Steam identity, the catalog games of their library (CAP-27), covered by export and by account deletion.
 - **Player-facing words:** the interface says "capsule" for pack (French and English), "réserve" for bank and "mission hebdo" / "weekly mission" for the weekly goal, so "objectif" / "goal" names only a player's goals (CAP-28) (author, 2026-10-30), and keeps "carte" / "card" (in the lore, an archive card: `lore.md`). The spec, the code, the database, stored events and URLs keep pack, bank and weekly goal. The market's words are in `market-economy.md`; a player "confie" / "entrusts" a card (author, 2026-11-09). The interface never says "Top Trumps", a trademark; the spec's "Top Trump duel" is a working name.
@@ -378,7 +447,7 @@ gameble is an open-source passion project, and the game its author wants to play
 
 ## Non-goals
 
-- Battle modes other than the Top Trump duel (CAP-41): card or PiCoin stakes, captured cards, more than two players. Release 1.4 has no ranked or deferred duel. Knowledge questions and Daily Pixel are later (`later-roadmap.md`).
+- Battle modes other than the Top Trump duel (CAP-41): card or PiCoin stakes, captured cards, more than two players. Release 1.4 has no ranked or deferred duel; deferred duels come with the duels beta (author, 2026-11-20). Knowledge questions and Daily Pixel are later (`later-roadmap.md`).
 - A guide or tutorial.
 - Bulk pack opening.
 - Any input at opening that improves the odds (later).
@@ -401,6 +470,11 @@ gameble is an open-source passion project, and the game its author wants to play
 - Targeted capsules, or any odds shaped by a player's goals (#64).
 - Trade suggestions beyond friends (later, with privacy controls, `later-roadmap.md`).
 - Secret achievements (later, `later-roadmap.md`).
+- A market that absorbs every duplicate: unwanted Commons go to the Archives.
+- Orders that bid on auctions, or one order per edition.
+- Promoting the market to a main tab as a volume lever; the tab question belongs to the duel navigation work.
+- Capsules for PiCoins (past-season capsules are later, `later-roadmap.md`).
+- Seekers' names on a wanted card.
 - Custom sets seen by other players, and a Brotherhood sets page to publish and adopt them (later, `later-roadmap.md`).
 
 ## Success signal
@@ -409,7 +483,9 @@ The author plays gameble every day for a month alongside at least 10 active play
 
 For the market: 30 days after it opens, cards sell between players at every rarity, each balance matches the permanent money record, and the author can read from the back-office alone whether the prices hold their targets.
 
-For live duels (release 1.4): 30 days after release 1.4, at least 10 players have finished a live duel with no automatic move of theirs, and at least half of them duel again in a later week (author, 2026-11-14).
+For market volume: the market's weekly share of cards changing hands, sales / (sales + cards moved by friend trades), about 4% on 2026-11-19, is read four weeks after buy orders ship (CAP-46); the author sets no threshold and decides on that reading.
+
+For the duels alpha (release 1.4): the author reads the back-office page of CAP-51 and the duel feedback; if one deck recipe dominates live duels or practice, the rules change and the rules version is raised. No threshold is set; the author decides on that reading (author, 2026-11-20).
 
 ## Assumptions
 
@@ -426,7 +502,9 @@ For live duels (release 1.4): 30 days after release 1.4, at least 10 players hav
 - A market sale does not count for the weekly goal (CAP-12).
 - An oversized entrustment batch entrusts the most valuable copies first, skipping a copy that does not fit so a cheaper one can (CAP-29).
 - Rarity minimums below Légendaire start at the no-loss floor (`market-economy.md`).
-- The day of the first-win duel capsule is the UTC day the duel ends, as for the daily bonus (CAP-42, CAP-16).
+- Every player's goals feed the wanted count, private players' and goals on custom sets included, since only a count shows (CAP-44; author kept it against the abuse review, 2026-11-20).
+- An order whose price reaches no rarity's minimum is refused (CAP-46).
+- A bought slot is kept for good (CAP-49).
 
 ## Open Questions
 

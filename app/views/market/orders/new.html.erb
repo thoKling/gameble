@@ -1,0 +1,31 @@
+<% card = @detail.view %>
+<% back_label, back_path = order_back(@from, card) %>
+<% content_for :title, t(".heading_for", card: card.title) %>
+<% content_for :screen_title, t(".heading") %>
+<% content_for :back_button, true %>
+<% content_for :phone_back do %><%= phone_back_link back_label, back_path, data: order_back_data(@from) %><% end %>
+<%= tag.section class: "order-form page page--regular", aria: { labelledby: "order-form-heading" }, data: { controller: "purchase-dialog" } do %>
+  <% chain_line = flash[:order_chain] %>
+  <% if chain_line %>
+    <p id="order-chain-result" class="order-form__chain"><%= chain_line %></p>
+  <% end %>
+  <%= tag.h1 card.title, id: "order-form-heading", class: "order-form__title",
+        tabindex: (-1 if chain_line), autofocus: chain_line.present?, aria: { describedby: ("order-chain-result" if chain_line) } %>
+  <% if @goal %>
+    <p class="order-form__goal"><%= goal_bookmark(@goal.position, size: :small) %><span><%= t(".goal", set: goal_set_name(@goal)) %></span></p>
+  <% end %>
+  <% if @suspended %><%= render "market/suspended_banner" %><% end %>
+  <div class="order-form__columns">
+    <%= render "available", card:, listings: @listings, archive_offers: @archive_offers, buyable: @buyable %>
+    <%= render PanelComponent.new(tag: :section, class: "order-form__panel", aria: { labelledby: "order-form-yours" }) do %>
+      <h2 id="order-form-yours" class="order-form__kicker"><%= t(".yours") %></h2>
+      <p class="order-form__lead"><%= t(".all_editions", card: card.title) %></p>
+      <% if @running %>
+        <%= render "running", order: @running, card:, refused: @refusal_code.present? %>
+      <% else %>
+        <%= render "form", card: %>
+      <% end %>
+    <% end %>
+  </div>
+  <%= render "shell/purchase_dialog", frame: "archive-purchase", loading: t("market.shops.dialog.loading") if @buyable && @archive_offers.any? %>
+<% end %>

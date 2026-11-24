@@ -25,6 +25,8 @@ export type OpeningRevealingDetail = { revealing: boolean }
 
 export type CardDealtDetail = { index: number }
 
+export type CapsuleChargingDetail = { level: 1 | 2 | 3 }
+
 export type StreamUpdatedDetail = Record<string, never>
 
 export type SheetShownDetail = { shown: boolean }
@@ -39,6 +41,8 @@ export interface GamebleEventMap {
   "gameble:toast": ToastDetail
   "gameble:tier-revealed": TierRevealedDetail
   "gameble:capsule-touched": null
+  "gameble:capsule-charging": CapsuleChargingDetail
+  "gameble:capsule-burst": null
   "gameble:card-dealt": CardDealtDetail
   "gameble:bank-changed": BankChangedDetail
   "gameble:navigation-locked": NavigationLockedDetail
@@ -49,6 +53,7 @@ export interface GamebleEventMap {
   "gameble:bank-updated": StreamUpdatedDetail
   "gameble:market-updated": StreamUpdatedDetail
   "gameble:listing-updated": StreamUpdatedDetail
+  "gameble:duels-updated": StreamUpdatedDetail
   "gameble:sheet-shown": SheetShownDetail
   "gameble:touch-held": TouchHeldDetail
   "gameble:screen-shown": null

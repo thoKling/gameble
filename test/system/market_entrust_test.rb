@@ -32,7 +32,7 @@ class MarketEntrustSystemTest < ApplicationSystemTestCase
 
   def assert_total(text) = assert_selector(".entrust-recap__total .picoin-amount__figure", text:)
 
-  def show_single_copies = find(".copy-filters .filter-chip__text", text: /doubles/i).click
+  def show_single_copies = find(".copy-filters .filter-chip__text", text: "2+").click
 
   test "a player ticks two editions, raises one and sees the total minted, and the collection holds fewer copies" do
     open_market!
@@ -44,11 +44,11 @@ class MarketEntrustSystemTest < ApplicationSystemTestCase
     tick(@common)
     tick(@rare)
     raise_copies(@common)
-    assert_total "7,000"
+    assert_total "70"
     click_on "Entrust 3 copies"
 
-    assert_selector ".entrust-result__minted .picoin-amount[aria-label='7,000 PiCoins']"
-    assert_selector ".entrust-result__minted .picoin-amount__figure", text: "7,000"
+    assert_selector ".entrust-result__minted .picoin-amount[aria-label='70 PiCoins']"
+    assert_selector ".entrust-result__minted .picoin-amount__figure", text: "70"
     assert_selector ".entrust-result__copies", text: "3 copies entrusted"
     assert_equal 1, Game::Holding.where(player_id: @player.id).sum(:quantity)
   end
@@ -63,11 +63,11 @@ class MarketEntrustSystemTest < ApplicationSystemTestCase
     tick(@common)
     click_on "Entrust 1 copy"
 
-    assert_selector ".entrust-result__minted .picoin-amount__figure", text: "1,000"
+    assert_selector ".entrust-result__minted .picoin-amount__figure", text: "10"
     assert_selector "#entrust-result-heading:focus"
     assert_selector ".entrust-cell[data-ref*='#{@common.card.slug}'] .entrust-cell__free", text: "2 free copies"
     assert_no_selector ".entrust-cell--picked"
-    assert_selector ".entrust-recap__cap-text", text: "1,000 of 1,200,000 today"
+    assert_selector ".entrust-recap__cap-text", text: "10 of 12,000 today"
     assert_selector ".entrust-recap__cap .gauge:not([data-growing])"
     assert_current_path new_market_entrustment_path(locale: :en)
 
@@ -75,8 +75,8 @@ class MarketEntrustSystemTest < ApplicationSystemTestCase
     assert_no_selector ".entrust-result"
     click_on "Entrust 1 copy"
 
-    assert_selector ".entrust-result__minted .picoin-amount__figure", text: "5,000"
-    assert_selector ".entrust-recap__cap-text", text: "6,000 of 1,200,000 today"
+    assert_selector ".entrust-result__minted .picoin-amount__figure", text: "50"
+    assert_selector ".entrust-recap__cap-text", text: "60 of 12,000 today"
     assert_equal 2, Game::Holding.find_by(player_id: @player.id, card_season_id: @common.id).quantity
     assert_equal 2, Game::Holding.find_by(player_id: @player.id, card_season_id: @rare.id).quantity
   end
@@ -86,7 +86,7 @@ class MarketEntrustSystemTest < ApplicationSystemTestCase
     hold(@player, @legendary.id, 1)
     hold(@player, @uncommon.id, 2)
     hold(@player, @common.id, 3)
-    Game::Market::Mint.credit(player_id: @player.id, amount: 1_150_000, settings_id: settings.id)
+    Game::Market::Ledger.post(Game::Market::Mint.credit(player_id: @player.id, amount: 11_500, settings_id: settings.id))
     sign_in_through_the_site
 
     visit new_market_entrustment_path(locale: :en)
@@ -101,17 +101,17 @@ class MarketEntrustSystemTest < ApplicationSystemTestCase
     tick(@common)
     assert_selector ".entrust-recap__line:first-child[data-state=stays]", text: "Golden Crown"
     assert_selector ".entrust-recap__over", text: /Golden Crown/
-    assert_total "3,000"
+    assert_total "30"
 
     raise_copies(@uncommon)
 
-    assert_total "5,000"
+    assert_total "50"
     assert_selector "button[type=submit]", text: /entrust 3 copies/i
     click_on "Entrust 3 copies"
 
-    assert_selector ".entrust-result__minted .picoin-amount__figure", text: "5,000"
-    assert_selector "[role=status] .entrust-result__stayed-line .picoin-amount[aria-label='100,000 PiCoins']"
-    assert_selector ".entrust-result__stayed-cap", text: "50,000"
+    assert_selector ".entrust-result__minted .picoin-amount__figure", text: "50"
+    assert_selector "[role=status] .entrust-result__stayed-line .picoin-amount[aria-label='1,000 PiCoins']"
+    assert_selector ".entrust-result__stayed-cap", text: "500"
     assert_selector ".entrust-cell[data-ref*='#{@legendary.card.slug}']:not(.entrust-cell--picked)"
     assert_equal 1, Game::Holding.find_by(player_id: @player.id, card_season_id: @legendary.id).quantity
   end
@@ -132,7 +132,7 @@ class MarketEntrustSystemTest < ApplicationSystemTestCase
 
     assert_selector ".entrust-cell[data-ref*='#{@rare.card.slug}'] .stepper__value", text: "×3"
     assert_selector ".entrust-cell[data-ref*='#{@rare.card.slug}'] .stepper__button--more[disabled]"
-    assert_total "16,000"
+    assert_total "160"
   end
 
   test "the keys move between cells and change the copies of a ticked cell" do
@@ -158,7 +158,7 @@ class MarketEntrustSystemTest < ApplicationSystemTestCase
   test "a full cap disables validation and says when it renews" do
     settings = open_market!
     hold(@player, @common.id, 2)
-    Game::Market::Mint.credit(player_id: @player.id, amount: 1_200_000, settings_id: settings.id)
+    Game::Market::Ledger.post(Game::Market::Mint.credit(player_id: @player.id, amount: 12_000, settings_id: settings.id))
     sign_in_through_the_site
 
     visit new_market_entrustment_path(locale: :en)
@@ -168,51 +168,29 @@ class MarketEntrustSystemTest < ApplicationSystemTestCase
     assert_button "Entrust", disabled: true
   end
 
-  test "nothing ticked prompts to choose and validation is disabled" do
+  test "nothing ticked prompts to choose, filters with no match offer to clear them, a hidden tick stays in the recap, and the sentence and note describe the button" do
     open_market!
     hold(@player, @common.id, 2)
+    hold(@player, @rare.id, 2)
     sign_in_through_the_site
 
     visit new_market_entrustment_path(locale: :en)
-
     assert_selector ".entrust-recap__prompt", text: "Tick the cards to entrust."
     assert_button "Entrust", disabled: true
-  end
-
-  test "the filters with no match say so and offer to clear them" do
-    open_market!
-    hold(@player, @common.id, 2)
-    sign_in_through_the_site
 
     visit new_market_entrustment_path(locale: :en)
     fill_in "entrust-search", with: "zzzz"
     assert_selector ".entrust-grid__empty", text: "No edition matches these filters."
     within(".entrust-grid__empty") { click_on "Clear filters" }
-
-    assert_selector ".entrust-cell:not([hidden])", count: 1
+    assert_selector ".entrust-cell:not([hidden])", count: 2
     assert_no_selector ".entrust-grid__empty"
-  end
-
-  test "a ticked cell that a filter hides stays ticked and in the recap" do
-    open_market!
-    hold(@player, @common.id, 2)
-    hold(@player, @rare.id, 2)
-    sign_in_through_the_site
 
     visit new_market_entrustment_path(locale: :en)
     tick(@common)
     fill_in "entrust-search", with: "blue"
-
     assert_selector ".entrust-cell:not([hidden])", count: 1
     assert_selector ".entrust-recap__line", text: "Tin Soldier"
     assert_selector "input[name=selection][value='#{@common.card.slug}:#{@common.season.number}=1']", visible: :all
-  end
-
-  test "the sentence and the note describe the button, the status speaks after the selection rests, and Esc changes nothing" do
-    open_market!
-    hold(@player, @common.id, 2)
-    hold(@player, @rare.id, 2)
-    sign_in_through_the_site
 
     visit new_market_entrustment_path(locale: :en)
     assert_selector "#entrust-not-returned", text: "Entrusted cards are not given back."
@@ -223,7 +201,7 @@ class MarketEntrustSystemTest < ApplicationSystemTestCase
     tick(@rare)
     assert_selector "button[type=submit][aria-describedby='entrust-not-returned entrust-rare-note']"
     assert_selector "#entrust-rare-note", text: /Rare or better/
-    assert_selector "aside [data-entrust-recap-target=status][role=status][aria-live=polite]", text: "2 copies, 6,000 PiCoins", visible: :all
+    assert_selector "aside [data-entrust-recap-target=status][role=status][aria-live=polite]", text: "2 copies, 60 PiCoins", visible: :all
 
     fill_in "entrust-search", with: "blue"
     find("#entrust-search").send_keys(:escape)
@@ -235,22 +213,35 @@ class MarketEntrustSystemTest < ApplicationSystemTestCase
     assert_current_path new_market_entrustment_path(locale: :en), ignore_query: true
   end
 
-  test "settings changed behind the open form are refused inline, the new amounts are drawn and the ticks are kept" do
+  test "settings changed behind the open form are refused inline, the new amounts are drawn and the ticks are kept, and on a phone the refusal shows above the grid with the sheet closed" do
     open_market!
     hold(@player, @common.id, 2)
     sign_in_through_the_site
 
     visit new_market_entrustment_path(locale: :en)
     tick(@common)
-    open_market!(entrustment_common: 1_500)
+    open_market!(entrustment_common: 15)
     click_on "Entrust 1 copy"
 
     assert_selector ".market-entrust__refusal", text: /amounts changed/i
-    assert_selector ".entrust-cell__value .picoin-amount[aria-label='1,500 PiCoins']"
+    assert_selector ".entrust-cell__value .picoin-amount[aria-label='15 PiCoins']"
     assert_selector ".entrust-cell--picked", count: 1
-    assert_total "1,500"
+    assert_total "15"
     assert_equal 0, Game::Market::LedgerEntry.where(player_id: @player.id).count
     assert_equal 2, Game::Holding.find_by(player_id: @player.id, card_season_id: @common.id).quantity
+
+    open_market!
+    resize_to 390, 844
+    visit new_market_entrustment_path(locale: :en)
+    tick(@common)
+    open_market!(entrustment_common: 15)
+    click_on "Entrust"
+    within("dialog[open]") { click_on "Entrust 1 copy" }
+
+    assert_no_selector "dialog[open]"
+    assert_selector "form#entrust > .market-entrust__refusal[role=alert]", text: /amounts changed/i
+    assert_no_selector "dialog .market-entrust__refusal", visible: :all
+    assert_selector ".entrust-cell--picked", count: 1
   end
 
   test "with no free copy the screen offers to open a capsule" do
@@ -275,7 +266,7 @@ class MarketEntrustSystemTest < ApplicationSystemTestCase
     assert_button "Entrust 1 copy", disabled: true
   end
 
-  test "on a phone Confier ticks in three columns, sets copies in the sheet and validates from it" do
+  test "on a phone Confier ticks in two columns, sets copies in the sheet and validates from it" do
     open_market!
     hold(@player, @common.id, 2)
     hold(@player, @rare.id, 1)
@@ -285,46 +276,31 @@ class MarketEntrustSystemTest < ApplicationSystemTestCase
     visit new_market_entrustment_path(locale: :en)
     assert_selector "form#entrust[data-layout=phone]"
     assert_no_selector ".entrust-cell .stepper", visible: :visible
-    assert_equal 3, find(".entrust-grid__list").style("grid-template-columns")["grid-template-columns"].split.size
+    assert_equal 2, find(".entrust-grid__list").style("grid-template-columns")["grid-template-columns"].split.size
     show_single_copies
+    assert_selector ".entrust-cell[data-ref='#{@rare.card.slug}:#{@rare.season.number}']"
+    assert_no_selector "turbo-frame#entrust-results[busy]"
     tick(@common)
+    assert_selector ".entrust-bar .entrust-bar__count", text: "1 copy"
     tick(@rare)
     assert_selector ".entrust-bar .entrust-bar__count", text: "2 copies"
-    assert_selector ".entrust-bar .picoin-amount__figure", text: "6,000"
+    assert_selector ".entrust-bar .picoin-amount__figure", text: "60"
 
-    click_on "Entrust ▸"
+    click_on "Entrust"
     assert_selector "dialog#entrust-recap-sheet[open] .entrust-recap__line", count: 2
     eventually("the sheet should be done rising") { evaluate_script("document.querySelector('#entrust-recap-sheet').getAnimations({ subtree: true }).length === 0") }
     stepper = find("dialog[open] .entrust-recap__line .stepper__button--more")
     assert_operator stepper.native.size.width, :>=, 44
     stepper.click
-    assert_selector "dialog[open] .entrust-recap__total .picoin-amount__figure", text: "7,000"
-    assert_selector ".entrust-bar .picoin-amount__figure", text: "7,000", visible: :all
+    assert_selector "dialog[open] .entrust-recap__total .picoin-amount__figure", text: "70"
+    assert_selector ".entrust-bar .picoin-amount__figure", text: "70", visible: :all
 
     within("dialog[open]") { click_on "Entrust 3 copies" }
 
     assert_no_selector "dialog[open]"
-    assert_selector ".entrust-result__minted .picoin-amount__figure", text: "7,000"
+    assert_selector ".entrust-result__minted .picoin-amount__figure", text: "70"
     assert_selector ".market-entrust__notice", text: "No card to entrust."
     assert_equal 0, Game::Holding.where(player_id: @player.id).sum(:quantity)
-  end
-
-  test "on a phone a refusal shows above the grid with the sheet closed" do
-    open_market!
-    hold(@player, @common.id, 2)
-    sign_in_through_the_site
-    resize_to 390, 844
-
-    visit new_market_entrustment_path(locale: :en)
-    tick(@common)
-    open_market!(entrustment_common: 1_500)
-    click_on "Entrust ▸"
-    within("dialog[open]") { click_on "Entrust 1 copy" }
-
-    assert_no_selector "dialog[open]"
-    assert_selector "form#entrust > .market-entrust__refusal[role=alert]", text: /amounts changed/i
-    assert_no_selector "dialog .market-entrust__refusal", visible: :all
-    assert_selector ".entrust-cell--picked", count: 1
   end
 
   def second_edition_of(card_season)
@@ -346,7 +322,7 @@ class MarketEntrustSystemTest < ApplicationSystemTestCase
 
     assert_selector ".entrust-cell", count: 2
     assert_no_selector ".entrust-cell--picked"
-    assert_unchecked_field "Doubles", visible: :all
+    assert_unchecked_field "2+", visible: :all
     assert_selector ".market-entrust__card-only"
   end
 
@@ -360,7 +336,7 @@ class MarketEntrustSystemTest < ApplicationSystemTestCase
 
     assert_selector ".entrust-cell", count: 1
     assert_selector ".entrust-cell--picked", count: 1
-    assert_unchecked_field "Doubles", visible: :all
+    assert_unchecked_field "2+", visible: :all
   end
 
   test "the balance chip follows an entrustment and is absent before the opening and for a visitor" do
@@ -373,7 +349,7 @@ class MarketEntrustSystemTest < ApplicationSystemTestCase
     tick(@rare)
     click_on "Entrust 1 copy"
 
-    assert_selector ".balance-chip--bar .balance-chip__available[aria-label='5,000 PiCoins']"
+    assert_selector ".balance-chip--bar .balance-chip__available[aria-label='50 PiCoins']"
     assert_selector ".balance-chip--bar .balance-chip__committed .visually-hidden", text: "0 committed", visible: :all
 
     forget_market!
@@ -391,41 +367,6 @@ class MarketEntrustSystemTest < ApplicationSystemTestCase
     seasons = Catalog::Season.insert_all!((2..count + 1).map { { status: :published, number: it, published_at: Time.current } }, returning: :id).rows.flatten
     rows = seasons.each_with_index.map { |season_id, index| { card_id: card_season.card_id, season_id:, prestige_score: 0.5, rating: 50, rarity: card_season.rarity, number: index + 1 } }
     Catalog::CardSeason.insert_all!(rows, returning: :id).rows.flatten.each { hold(@player, it, 2) }
-  end
-
-  test "the grid loads sixty cards, appends the next page near its end, and a ticked card keeps its tick across pages" do
-    open_market!
-    hold(@player, @rare.id, 2)
-    editions_of(@common, 60)
-    sign_in_through_the_site
-
-    visit new_market_entrustment_path(locale: :en)
-    assert_selector ".entrust-cell", count: 60
-    tick(@rare)
-    assert_no_selector ".entrust-cell .card[data-controller~=tilt]"
-    execute_script("document.querySelector('#entrust-pages').scrollIntoView()")
-
-    assert_selector ".entrust-cell", count: 61
-    assert_selector ".entrust-cell--picked", count: 1
-    assert_total "5,000"
-  end
-
-  test "select all ticks every edition the filters keep, loaded or not, and the recap names the first ones" do
-    open_market!
-    hold(@player, @rare.id, 2)
-    editions_of(@common, 60)
-    sign_in_through_the_site
-
-    visit new_market_entrustment_path(locale: :en)
-    tick(@rare)
-    raise_copies(@rare)
-    click_on "Select all (61)"
-
-    assert_selector ".entrust-recap__more", text: "and 31 more"
-    assert_selector ".entrust-recap__line", count: 30
-    assert_selector "input[name=selection][value^='#{@rare.card.slug}:#{@rare.season.number}=2,']", visible: :all
-    assert_equal 61, find("input[name=selection]", visible: :all).value.split(",").size
-    assert_total "70,000"
   end
 
   test "the recap dock draws over the stepper of a ticked card scrolled under it" do

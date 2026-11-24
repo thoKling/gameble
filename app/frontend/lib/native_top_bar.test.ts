@@ -39,6 +39,7 @@ const state: TopBarState = {
   capsules: "10",
   friends: "",
   trades: "1",
+  duels: "",
   avatar: "data:image/png;base64,AA",
 }
 
@@ -52,6 +53,7 @@ describe("readCounts", () => {
         "#player-menu-badge .player-chip__badge": { textContent: "4" },
         "#player-menu-invitations-badge .menu-item__badge": { textContent: "2" },
         "#tab-trades-badge .tab-bar__badge": { textContent: " 5 " },
+        "#tab-duels-badge .tab-bar__badge": { textContent: "2" },
       }),
     )
 
@@ -63,6 +65,7 @@ describe("readCounts", () => {
       capsules: "1207",
       friends: "2",
       trades: "5",
+      duels: "2",
     })
   })
 
@@ -90,6 +93,7 @@ describe("readCounts", () => {
       capsules: "",
       friends: "",
       trades: "",
+      duels: "",
     })
   })
 })

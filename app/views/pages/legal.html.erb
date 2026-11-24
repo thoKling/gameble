@@ -3,8 +3,8 @@
 <% content_for :head, render("layouts/language_links", route: :legal_path) if Rails.configuration.x.search_indexing %>
 <% content_for :screen_title, t(".title") %>
 <% contact = legal_contact %>
-<article class="legal" aria-labelledby="legal-heading">
-  <h1 id="legal-heading" class="legal__title"><%= t(".title") %></h1>
+<article class="legal page page--reading" aria-labelledby="legal-heading">
+  <h1 id="legal-heading" class="visually-hidden"><%= t(".title") %></h1>
   <p class="legal__updated"><%= t(".updated") %></p>
 
   <%= render PanelComponent.new(tag: :section, class: "legal__section", aria: { labelledby: "legal-publisher" }) do %>
@@ -86,6 +86,7 @@
       <li class="legal__processor-host"><%= t(".privacy.services.host", name: @legal.host_name, address: @legal.host_address) %></li>
       <li><%= t(".privacy.services.steam") %></li>
       <li><%= t(".privacy.services.clerk") %></li>
+      <li><%= t(".privacy.services.discord") %></li>
       <li><%= t(".privacy.services.sentry") %></li>
       <li><%= t(".privacy.services.cloudflare") %></li>
       <li class="legal__backup_host"><%= t(".privacy.services.ovh") %></li>
@@ -124,7 +125,7 @@
   <%= render PanelComponent.new(tag: :section, class: "legal__section", aria: { labelledby: "legal-source" }) do %>
     <h2 id="legal-source" class="legal__heading"><%= t(".source.title") %></h2>
     <p><%= t(".source.text") %></p>
-    <%= external_link_to t(".source.link"), ExternalLinksHelper::SOURCE_CODE_URL, button: true, class: "button button--secondary button--small legal__source" %>
+    <%= source_code_link_to t(".source.link"), class: "button button--secondary button--small legal__source" %>
   <% end %>
 
   <%= render PanelComponent.new(tag: :section, class: "legal__section", aria: { labelledby: "legal-support" }) do %>

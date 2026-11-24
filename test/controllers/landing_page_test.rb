@@ -37,7 +37,7 @@ class LandingPageTest < ActionDispatch::IntegrationTest
     css_select(".landing-rarities li").map { it["data-tier"] }
   end
 
-  test "a visitor reads the landing in French: one h1, the nine modules, the five rarities with their odds" do
+  test "a visitor reads the landing in French: one h1, the nine modules, the five rarities with their odds, and the hero's lamp field hidden from assistive technology" do
     get home_path(locale: :fr)
 
     assert_response :success
@@ -50,6 +50,19 @@ class LandingPageTest < ActionDispatch::IntegrationTest
     assert_select ".landing-rarities li .landing-rarity__odds", text: "0,05 % par carte"
     assert_select ".landing-rarity__name", text: "Légendaire"
     assert_select "section.landing-concept > .landing-concept__all-cards a.button.button--link[href='/fr/library/cards']", "Voir toutes les cartes"
+    assert_response :success
+    assert_select ".landing-hero [data-controller=lamp-field][aria-hidden=true]", 1
+    assert_select "[data-controller=lamp-field] a, [data-controller=lamp-field] button, [data-controller=lamp-field] [tabindex]", 0
+    assert_select "[data-lamp-field-target=card]", 6
+    assert_select "[data-lamp-field-target=card] .card", 5
+    assert_select "[data-lamp-field-target=card] img.landing-lamp__back[alt='']", 1
+    assert_select "[data-lamp-field-target=veil]", 1
+    assert_select "[data-lamp-field-target=reticle]", 1
+    assert_select ".landing-lamp__readout", text: /Jeux retrouvés\s+0 \/ 6/
+    assert_select ".landing-lamp__tag", text: "Trouvé", count: 6
+    assert_select ".landing-lamp__mode", text: "· Balayage auto"
+    assert_select ".landing-lamp__mode", text: "· Balayage manuel"
+    assert_select ".landing-lamp__mode", text: "· Toutes révélées"
   end
 
   test "the Découvrez tile promises no name to anyone" do
@@ -112,24 +125,6 @@ class LandingPageTest < ActionDispatch::IntegrationTest
     assert_select ".landing-thumb--empty"
   end
 
-  test "the hero's lamp field is hidden from assistive technology: six slots over the samples, one a back, a veil, a reticle and the readout" do
-    get home_path(locale: :fr)
-
-    assert_response :success
-    assert_select ".landing-hero [data-controller=lamp-field][aria-hidden=true]", 1
-    assert_select "[data-controller=lamp-field] a, [data-controller=lamp-field] button, [data-controller=lamp-field] [tabindex]", 0
-    assert_select "[data-lamp-field-target=card]", 6
-    assert_select "[data-lamp-field-target=card] .card", 5
-    assert_select "[data-lamp-field-target=card] img.landing-lamp__back[alt='']", 1
-    assert_select "[data-lamp-field-target=veil]", 1
-    assert_select "[data-lamp-field-target=reticle]", 1
-    assert_select ".landing-lamp__readout", text: /Jeux retrouvés\s+0 \/ 6/
-    assert_select ".landing-lamp__tag", text: "Trouvé", count: 6
-    assert_select ".landing-lamp__mode", text: "· Balayage auto"
-    assert_select ".landing-lamp__mode", text: "· Balayage manuel"
-    assert_select ".landing-lamp__mode", text: "· Toutes révélées"
-  end
-
   test "the hero's lamp field shows only card backs without a published season" do
     Catalog::Season.update_all(status: "draft", published_at: nil)
 
@@ -177,18 +172,13 @@ class LandingPageTest < ActionDispatch::IntegrationTest
     assert_response :moved_permanently
   end
 
-  test "no inline style, no script without a nonce, no database id" do
+  test "no inline style, no script without a nonce, no database id; the hero and the boarding lead to the sign-in screen, the external links naming where they lead; the footer follows main" do
     get home_path(locale: :fr)
 
     assert_select "[style]", 0
     css_select("script:not([type='application/ld+json'])").each { |script| assert script["src"].present? || script["nonce"].present?, script.to_html }
     assert_no_match(/data:/, css_select("main, footer").map(&:to_html).join)
     Catalog::CardSeason.pluck(:id).each { |id| assert_no_match(/\b(card[-_]?season|id)[^>]*\b#{id}\b/, response.body) }
-  end
-
-  test "the hero and the boarding lead to the sign-in screen with their full name, the external links naming where they lead" do
-    get home_path(locale: :fr)
-
     assert_select "header a.button[href=?]", "/fr/sign-in?origin=%2Ffr", text: "Se connecter"
     hero = css_select("main a.landing-hero__embark[href='/fr/sign-in?origin=%2Ffr']").sole
     assert_equal "Embarquer sur le pont", hero.text.squish
@@ -206,12 +196,9 @@ class LandingPageTest < ActionDispatch::IntegrationTest
     assert_select "main a[href='#landing-open-source']", "Participer à l'écriture"
     assert_select "h2#landing-open-source[tabindex='-1']"
     assert_select "main .landing-live__links a.button--link[href='/fr/feed']", "Ouvrir le fil d'activité"
+    assert_select "main .landing-live__links a.button--link[href=?] + a.button--link[href=?]:last-child",
+      fortune_register_path(locale: :fr), grand_inventory_path(locale: :fr), "Voir le Grand Inventaire"
     assert_select "main .landing-live__links button", false
-  end
-
-  test "the footer follows the main landmark with how it works, the legal page, the donation page and the code" do
-    get home_path(locale: :fr)
-
     assert_select "body > footer.landing-footer" do
       assert_select "a[href='/fr/how-it-works']", "Comment ça marche"
       assert_select "a[href='/fr/legal']", "Mentions légales"
@@ -237,13 +224,6 @@ class LandingPageTest < ActionDispatch::IntegrationTest
     assert_equal [ "Récit a, Fait", "Récit b, En cours" ], items.first.css(".landing-roadmap__story").map { it.text.squish }
     assert_select ".landing-roadmap__stories", 1
     assert_select "ol.landing-roadmap__line[aria-label=?][data-controller=overflow-focus]", I18n.t("landings.show.roadmap.line_label", locale: :fr)
-    assert_select ".landing-legend__item", 3
-  end
-
-  test "module 06 keeps the legend and no line while no milestone is shown" do
-    get home_path(locale: :fr)
-
-    assert_select "ol.landing-roadmap__line", 0
     assert_select ".landing-legend__item", 3
   end
 
@@ -291,13 +271,36 @@ class LandingPageTest < ActionDispatch::IntegrationTest
     assert_select ".landing-goal__participants", "2 participants"
   end
 
-  test "an empty game shows zero figures and an empty gauge" do
+  test "module 04 names a named season in the reader's language, in HTML and in markdown" do
+    get home_path(locale: :en), headers: { "Accept" => "text/markdown" }
+    assert_includes response.body, "Season 1 · Grand catalogue"
+
+    catalog_seasons(:one).update_columns(name_en: "Winter", name_fr: "Hiver")
+
+    get home_path(locale: :en)
+    assert_select ".landing-season__name", "Season 1 · Winter"
+
+    get home_path(locale: :fr)
+    assert_select ".landing-season__name", "Saison 1 · Hiver"
+
+    get home_path(locale: :en), headers: { "Accept" => "text/markdown" }
+    assert_includes response.body, "Season 1 · Winter"
+
+    get home_path(locale: :fr), headers: { "Accept" => "text/markdown" }
+    assert_includes response.body, "Saison 1 · Hiver"
+  end
+
+  test "an empty game shows zero figures and an empty gauge, module 06 its legend and no line, the live module its no-activity line and an empty list" do
     get home_path(locale: :fr)
 
     assert_equal %w[0 0 0], css_select(".landing-season__fact dd").map { it.text.squish }
     assert_select ".landing-goal__count", /\A0 \/ \d+\z/
     assert_select ".landing-goal__gauge .is-lit", 0
     assert_select ".landing-goal__participants", "0 participant"
+    assert_select "ol.landing-roadmap__line", 0
+    assert_select ".landing-legend__item", 3
+    assert_select "#feed-entries > li", 0
+    assert_select ".landing-live__empty", I18n.t("landings.show.live.empty", locale: :fr)
   end
 
   test "a block that cannot be read shows a dash and the page renders" do
@@ -333,11 +336,16 @@ class LandingPageTest < ActionDispatch::IntegrationTest
     assert_match(/<template data-live-feed-preview-target="source"><turbo-cable-stream-source/, response.body)
   end
 
-  test "the live module without any activity keeps the no-activity line and an empty list" do
+  test "the live module shows the weekly duel stats post as its line alone" do
+    moves = [ { "card_season_id" => catalog_card_seasons(:portal_one).id, "stat" => "rating", "from" => 40.0, "to" => 50.0 } ]
+    Game::FeedEntry.record_duel_stats(moves:, week_start: Date.current.beginning_of_week, now: Time.current)
+
     get home_path(locale: :fr)
 
-    assert_select "#feed-entries > li", 0
-    assert_select ".landing-live__empty", I18n.t("landings.show.live.empty", locale: :fr)
+    assert_select "#feed-entries > li.feed__entry--duel-stats", 1 do
+      assert_select ".feed__sentence", "Le cours des cartes a bougé."
+      assert_select ".feed__moves, .feed__thumb, .feed__tag, .feed__byline", false
+    end
   end
 
   test "an unreadable feed leaves the live module empty and the page renders" do

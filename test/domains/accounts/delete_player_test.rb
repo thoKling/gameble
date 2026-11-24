@@ -84,6 +84,15 @@ class Accounts::DeletePlayerTest < ActiveSupport::TestCase
     assert_not Game::FeedEntry.exists?(own_entry.id)
   end
 
+  test "the feedback a player wrote goes with the account; another player's stays" do
+    Accounts::SendFeedback.new.call(player: @player, feature: "duels", message: "Mine").value!
+    Accounts::SendFeedback.new.call(player: @other, feature: "duels", message: "Theirs").value!
+
+    assert delete.success?
+
+    assert_equal [ "Theirs" ], Accounts::Feedback.pluck(:message)
+  end
+
   test "the identity rows go with the account; another player keeps theirs" do
     Accounts::Identity.create!(player: @player, provider: "google", uid: "g-1")
     other_rows = Accounts::Identity.where(player_id: @other.id).count
@@ -125,6 +134,24 @@ class Accounts::DeletePlayerTest < ActiveSupport::TestCase
     assert_not Game::CustomSet.exists?(player_id: @player.id)
     assert_not Game::CustomSetGame.exists?(custom_set_id: [ mine.id, library.id ])
     assert_equal 3, Game::CustomSetGame.where(custom_set_id: theirs.id).count
+  end
+
+  test "the player's decks are erased with their cards, the copies they blocked and the bought slots; another player's stay" do
+    portal = catalog_card_seasons(:portal_one)
+    [ @player, @other ].each do |player|
+      deck = Game::Deck.create!(player_id: player.id, name: "Vieux briscards")
+      Game::DeckCard.insert_all!([ { deck_id: deck.id, card_season_id: portal.id, card_id: portal.card_id, slot: 1 } ])
+      Game::Holding.create!(player_id: player.id, card_season_id: portal.id, quantity: 1, reserved: 1)
+      Game::CapacitySlot.create!(player_id: player.id, kind: "deck", bought: 1)
+    end
+
+    assert delete.success?
+
+    assert_not Game::Deck.exists?(player_id: @player.id)
+    assert_not Game::Holding.exists?(player_id: @player.id)
+    assert_not Game::CapacitySlot.exists?(player_id: @player.id)
+    assert Game::CapacitySlot.exists?(player_id: @other.id)
+    assert_equal 1, Game::DeckCard.where(deck_id: Game::Deck.where(player_id: @other.id).select(:id)).count
   end
 
   test "the trades naming the player on either side leave the feed; a trade between others stays" do

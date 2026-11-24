@@ -1,0 +1,14 @@
+/* ---- Set de la Confrérie: the visitor's way in ---- */
+
+.brotherhood-set__join {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--color-muted);
+  text-align: center;
+}
+
+.brotherhood-set__join-text {
+  margin: 0;
+}

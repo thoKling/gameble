@@ -20,13 +20,15 @@
       <p class="landing-live__links">
         <%= render ButtonComponent.new(variant: :link, href: feed_path) do %><%= t("landings.show.live.open_feed") %><% end %>
         <%= render ButtonComponent.new(variant: :link, href: fortune_register_path) do %><%= t("landings.show.live.open_register") %><% end %>
+        <%= render ButtonComponent.new(variant: :link, href: grand_inventory_path) do %><%= t("landings.show.live.grand_inventory.open") %><% end %>
       </p>
       <template data-live-feed-preview-target="source"><%= turbo_stream_from(*LiveStream.feed_streamables) %></template>
     <% end %>
     <%= render PanelComponent.new(brackets: true, class: "landing-season") do %>
       <p class="landing-kicker"><%= t("landings.show.live.season") %></p>
       <% number = @season_facts&.dig(:season_number) %>
-      <p class="landing-season__name"><%= number ? t("landings.show.live.season_name", number:) : unknown %></p>
+      <% name = SeasonTitle.call(@season_facts&.dig(:season_name)) %>
+      <p class="landing-season__name"><%= number ? t("landings.show.live.season_name", number:, name:) : unknown %></p>
       <dl class="landing-season__facts">
         <% %w[players packs discoveries].each do |fact| %>
           <div class="landing-season__fact">

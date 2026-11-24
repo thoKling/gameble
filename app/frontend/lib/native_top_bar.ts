@@ -8,6 +8,7 @@ export type TopBarState = {
   capsules: string
   friends: string
   trades: string
+  duels: string
   avatar: string
 }
 
@@ -39,6 +40,7 @@ export function readCounts(root: Readable): Omit<TopBarState, "avatar"> {
     capsules: capsulesBadge(standard, special),
     friends: textOf(root, "#player-menu-invitations-badge .menu-item__badge"),
     trades: textOf(root, "#tab-trades-badge .tab-bar__badge"),
+    duels: textOf(root, "#tab-duels-badge .tab-bar__badge"),
   }
 }
 

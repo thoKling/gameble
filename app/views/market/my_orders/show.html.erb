@@ -1,0 +1,19 @@
+<% content_for :title, t(".heading") %>
+<% tab = capture do %>
+  <% if @placed %><%= render "market/my_orders/result", row: @placed, balance: @balance %><% end %>
+  <% if @orders.in_progress.empty? && @orders.recent.empty? %>
+    <%= render EmptyStateComponent.new(line: t(".empty")) %>
+  <% else %>
+    <% if @orders.in_progress.any? %>
+      <%= render "market/my_orders/group", group: "in-progress", heading: t("market.my_orders.groups.in_progress"), rows: @orders.in_progress,
+            focus_heading: @placed.nil? %>
+    <% end %>
+    <% if @orders.recent.any? %>
+      <%= render "market/my_orders/group", group: "recent", heading: t("market.my_orders.groups.recent"), rows: @orders.recent,
+            focus_heading: @placed.nil? && @orders.in_progress.empty? %>
+    <% end %>
+  <% end %>
+<% end %>
+<%= render "exchanges/tabs", current: :market %>
+<%= render "markets/tab", title: content_for(:title), current: :orders, pulse: @pulse, desk: @desk, suspended: @suspended,
+      data: { controller: "row-focus", row_focus_landing_value: ("" if @placed) }.compact, content: tab %>

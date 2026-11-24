@@ -13,6 +13,30 @@ fr:
     invitation_sent:
       body: "%{name} veut devenir votre ami."
       title: "Demande d'ami"
+    market_lead_voided:
+      body: "Le joueur en tête sur %{card} a été retiré. L'enchère repart de son prix de départ."
+      title: "Enchère relancée"
+    market_order_expired:
+      body: "Votre ordre sur %{card} a expiré. Vos %{amount} sont de nouveau disponibles."
+      title: "Ordre expiré"
+    market_order_served:
+      body: "Votre ordre sur %{card} est servi : la carte rejoint votre collection."
+      title: "Ordre servi"
+    market_outbid:
+      body: "%{name} a dépassé votre maximum sur %{card}."
+      title: "Vous avez été dépassé"
+    market_sold:
+      body: "%{card} s'est vendue. Vous recevez %{amount}."
+      title: "Carte vendue"
+    market_unsold:
+      body: "%{card} n'a reçu aucune offre. La carte vous est rendue."
+      title: "Aucune offre"
+    market_withdrawn:
+      body: "%{card} a été retirée du marché. Vos %{amount} sont de nouveau disponibles."
+      title: "Annonce retirée"
+    market_won:
+      body: "Vous avez remporté %{card} pour %{amount}."
+      title: "Enchère remportée"
     reserve_full:
       body: "Vos %{number} capsules vous attendent. Ouvrez-en une pour que les suivantes continuent d'arriver."
       title: "Réserve pleine"
@@ -71,6 +95,10 @@ fr:
         loading: "Chargement des options de connexion…"
         signing_in: "Connexion en cours…"
   release_notes:
+    all: "Toutes les notes de version"
+    index:
+      empty: "Aucune note de version pour l'instant."
+      title: "Notes de version"
     credited: "%{change} (merci %{people})"
     close: "Fermer les notes de version"
     done: "Compris"
@@ -129,14 +157,27 @@ fr:
         withdrawn_html: "%{card} a été retirée du marché. Vos %{amount} sont de nouveau disponibles."
         sold_html: "%{card} s'est vendue. Vous recevez %{amount}."
         unsold_html: "%{card} n'a reçu aucune offre. La carte vous est rendue."
-        wanted_html: "%{card}, qui manque à vos objectifs, est en vente à partir de %{amount}."
+        order_served_html: "Votre ordre sur %{card} est servi : la carte rejoint votre collection."
+        order_expired_html: "Votre ordre sur %{card} a expiré. Vos %{amount} sont de nouveau disponibles."
+        listed_above_order_html: "%{card} est en vente à %{amount}, au-dessus de votre ordre."
+        wanted_grouped:
+          zero: "Aucune carte que vous cherchez n'est en vente."
+          one: "%{card}, une carte que vous voulez, est en vente."
+          other: "%{count} cartes que vous cherchez sont en vente."
       daily: "Votre capsule du jour est prête."
       mission: "Mission de la semaine : ouvrir %{target} capsules ensemble."
       mission_reached: "La mission de la semaine est accomplie : %{target} capsules ouvertes ensemble."
       mission_reward: "La mission hebdo est accomplie : une capsule rare vous attend."
       answer: "Répondre"
       see: "Voir"
+      resume: "Reprendre"
       collect: "Récupérer"
+      duel_resume: "Votre duel contre %{name} attend votre retour."
+      duel_finished: "Duel contre %{name} terminé : %{outcome}, %{score} à %{other_score}."
+      duel_outcome:
+        win: "victoire"
+        loss: "défaite"
+        draw: "égalité"
     live:
       marker: "Live"
     market_status:
@@ -167,19 +208,26 @@ fr:
       achievements: "Succès"
       sign_in: "Connexion"
       legal: "Mentions légales"
-      me: "Moi"
+      me: "Mon profil"
       how_it_works: "Comment ça marche"
       back_office: "Back-office"
       listing: "Annonce"
       my_bids: "Mes enchères"
       my_sales: "Mes ventes"
+      decks: "Deck"
+      exchange: "Bourse"
+      duels: "Duels"
+      order: "Ordre d'achat"
+      my_orders: "Mes ordres"
+      shop: "Boutique"
+      entrust: "Confier"
+      slot: "Emplacement"
     rarity:
       label: "Raretés"
       legend: "Raretés"
       columns:
         rarity: "Rareté"
         season: "Cette saison"
-        overall: "Toutes saisons"
         copies: "Exemplaires"
       totals: "Total"
       figure:
@@ -213,24 +261,36 @@ fr:
       support: "Soutenir"
       back_office: "Back-office"
       sign_out: "Se déconnecter"
+    duels:
+      in_progress:
+        zero: ""
+        one: ", %{count} duel en cours"
+        other: ", %{count} duels en cours"
+    exchanges:
+      trades:
+        zero: "%{number} échange"
+        one: "%{number} échange"
+        other: "%{number} échanges"
+      auctions:
+        zero: "%{number} enchère"
+        one: "%{number} enchère"
+        other: "%{number} enchères"
+      to_see_both: ", %{trades} et %{auctions} à voir"
+      to_see_one: ", %{part} à voir"
     tabs:
       label: "Navigation principale"
       hub: "Pont"
       booster: "Capsule"
+      capsules_ready:
+        zero: "%{number} capsule à ouvrir"
+        one: "%{number} capsule à ouvrir"
+        other: "%{number} capsules à ouvrir"
       sets: "Sets"
-      trades: "Échanges"
-      market: "Marché"
-      market_outbid:
-        zero: "%{number} enchère dépassée"
-        one: "%{number} enchère dépassée"
-        other: "%{number} enchères dépassées"
-      me: "Moi"
+      trades: "Commerce"
+      duels: "Duels"
+      me: "Mon profil"
       landing: "Accueil"
       all_cards: "Toutes les cartes"
-      trades_waiting:
-        zero: "%{number} échange en attente de vous"
-        one: "%{number} échange en attente de vous"
-        other: "%{number} échanges en attente de vous"
     toast:
       region: "Notifications"
       close: "Fermer"
@@ -242,7 +302,6 @@ fr:
       privacy: "politique de confidentialité"
     version:
       label: "Version déployée"
-      legal: "Mentions légales"
   pages:
     home:
       live:
@@ -287,15 +346,8 @@ fr:
           other: "%{owned} cartes uniques sur %{total}"
         trades: "Échanges"
         market: "Marché"
-        market_outbid:
-          zero: "%{number} enchère dépassée"
-          one: "%{number} enchère dépassée"
-          other: "%{number} enchères dépassées"
+        duels: "Duels"
         feed: "Fil d'activité"
-        trades_waiting:
-          zero: "%{number} échange en attente de vous"
-          one: "%{number} échange en attente de vous"
-          other: "%{number} échanges en attente de vous"
         invitations_waiting:
           zero: "%{number} invitation en attente de votre réponse"
           one: "%{number} invitation en attente de votre réponse"
@@ -319,11 +371,11 @@ fr:
         extras_label: "Extras"
         community: "Discord"
         how_it_works: "Comment ça marche"
+        release_notes: "Notes de version"
         support: "Soutenir"
         source_code: "GitHub"
       showcase:
         kicker: "Dernière obtention"
-        chosen_kicker: "Vitrine"
         see_card: "Voir la fiche"
         empty:
           title: "Ouvrez votre première capsule"
@@ -338,6 +390,7 @@ fr:
         collected: "Récupérée"
         next_in: "Prochaine dans"
         next_at: "Prochaine capsule : %{time}"
+      fold: "%{title} : détails"
       goal:
         title: "Mission hebdo"
         line: "Ouvrez %{target} capsules cette semaine."
@@ -353,6 +406,15 @@ fr:
       goals:
         title: "Objectifs en cours"
         see_all: "Tout voir"
+      grand_inventory:
+        title: "Le Grand Inventaire"
+        spoken:
+          zero: "%{found} carte découverte sur %{total}"
+          one: "%{found} carte découverte sur %{total}"
+          other: "%{found} cartes découvertes sur %{total}"
+        latest: "Dernière découverte :"
+        by_html: "par %{player}"
+        empty: "Aucune carte découverte pour l'instant."
       welcome:
         title: "Bienvenue sur Gameble"
         founders: "Autrefois bannis de la Terre, les jeux vidéo ont été sauvés grâce aux efforts de nos illustres fondateurs."
@@ -388,7 +450,7 @@ fr:
         title: "Testeurs de la bêta"
     legal:
       title: "Mentions légales et confidentialité"
-      updated: "Dernière mise à jour : 10 novembre 2026"
+      updated: "Dernière mise à jour : 23 novembre 2026"
       publisher:
         title: "Éditeur et hébergeur"
         publisher: "Éditeur"
@@ -422,8 +484,8 @@ fr:
           steam: "votre identifiant Steam et votre nom de profil Steam ;"
           steam_library: "si vous vous connectez avec Steam et laissez « Synchroniser mes jeux Steam » activé dans les paramètres : la liste des jeux du catalogue que contient votre bibliothèque Steam, lue chez Steam une fois par jour pour votre set « Ma bibliothèque Steam », avec la date de sa dernière synchronisation et, quand Steam ne partage plus votre bibliothèque, depuis quand ;"
           identities: "vos modes de connexion : Steam, Apple, Discord, Google ou code par e-mail, chacun avec son identifiant chez ce fournisseur, la date de son ajout et, pour les trois derniers, une empreinte irréversible de votre adresse e-mail vérifiée, jamais l'adresse elle-même ;"
-          activity: "votre activité de jeu : collection de cartes, vitrine, paliers de sets, sets perso, objectifs, succès, dos de carte débloqués et dos de carte actif, capsules, bonus du jour, récompenses de la mission hebdo, échanges, amitiés, invitations, code ami, entrées du fil d'activité, vos réactions aux entrées du fil et dernière activité ;"
-          market: "votre activité sur le marché : votre portefeuille de PiCoins (solde disponible et solde engagé), chaque mouvement de PiCoins, vos annonces, vos enchères avec les maximums que vous avez fixés, et vos notifications du marché ;"
+          activity: "votre activité de jeu : collection de cartes, vitrine, paliers de sets, sets perso, objectifs et leur nombre atteint, ouverture ou non des liens du code source et du soutien, octroi ou non par l'auteur du succès de contribution au code, présence ou non (et date) de votre compte Discord lié sur le serveur gameble, visites de profils faites et reçues (qui et quand, au plus une par heure et par profil), succès, dos de carte débloqués et dos de carte actif, capsules, bonus du jour, récompenses de la mission hebdo, échanges, amitiés, invitations, code ami, entrées du fil d'activité, vos réactions aux entrées du fil et dernière activité ;"
+          market: "votre activité sur le marché : votre portefeuille de PiCoins (solde disponible et solde engagé), chaque mouvement de PiCoins, vos annonces, vos enchères avec les maximums que vous avez fixés, vos ordres d'achat, vos ventes à des ordres, vos achats aux Archives, vos emplacements achetés, et vos notifications du marché ;"
           signals: "des signaux de comptes multiples, calculés chaque jour à partir de votre activité de capsules, d'échanges, de ventes et d'enchères, que seul le personnel de modération consulte, et dont aucune décision n'est tirée automatiquement ;"
           moderation: "les signalements que vous faites, ceux qui visent votre profil (leur auteur ne vous est pas communiqué) et les décisions de modération qui vous concernent, avec leur motif ;"
           settings: "vos réglages (visibilité du profil, animations réduites, synchronisation des jeux Steam) ;"
@@ -442,6 +504,7 @@ fr:
         nothing_else: "Pas de mesure d'audience, pas de publicité, pas d'argent réel. Vos données ne sont ni vendues ni cédées."
         services:
           intro: "Quelques services extérieurs interviennent :"
+          discord: "Discord, Inc. est interrogé, toutes les heures et par le bot du jeu, pour savoir si le compte Discord que vous avez lié est membre du serveur gameble, jusqu'à ce qu'il le soit : il reçoit l'identifiant de ce compte et répond oui ou non. Gameble ne garde que la date de la réponse et, pour un membre, le fait qu'il l'est ;"
           host: "Le site tourne sur des serveurs exploités par %{name}, en %{address} ;"
           steam: "Steam (Valve) gère la connexion et fournit votre nom de profil et, une fois par jour tant que la synchronisation est activée, les jeux de votre bibliothèque Steam ;"
           clerk: "Clerk, Inc. gère la connexion par Apple, Discord, Google ou code par e-mail, en tant que sous-traitant : il conserve l'utilisateur Clerk créé pour vous (votre adresse e-mail, l'identifiant que Discord ou Google donne pour vous, et vos sessions de connexion) et peut le traiter notamment aux États-Unis. Votre navigateur le contacte directement sur l'écran de connexion et dans les paramètres. Gameble ne garde que l'identifiant de cet utilisateur Clerk et une empreinte irréversible de votre adresse e-mail vérifiée, jamais l'adresse elle-même ;"
@@ -452,7 +515,7 @@ fr:
         retention:
           intro: "Combien de temps vos données sont conservées :"
           account: "votre compte, votre activité de jeu et vos réglages : tant que le compte existe ; un compte sans aucune visite connectée depuis trois ans est supprimé comme si vous l'aviez supprimé vous-même, sauf ceux des modérateurs et des administrateurs ;"
-          market: "votre portefeuille, vos mouvements de PiCoins, vos annonces, vos enchères et vos notifications du marché : tant que le compte existe ; à la suppression du compte, les notifications du marché et les entrées du fil qui annoncent vos ventes sont supprimées, votre nom est effacé des historiques d'enchères et le solde est détruit, mais le registre des PiCoins reste, sans identité, tant que le jeu existe ;"
+          market: "votre portefeuille, vos mouvements de PiCoins, vos annonces, vos enchères, vos ordres d'achat, vos ventes à des ordres, vos achats aux Archives et vos notifications du marché : tant que le compte existe ; à la suppression du compte, les notifications du marché et les entrées du fil qui annoncent vos ventes sont supprimées, votre nom est effacé des historiques d'enchères et le solde est détruit, mais le registre des PiCoins reste, sans identité, tant que le jeu existe ;"
           steam_library: "la liste des jeux de votre bibliothèque Steam : tant que le compte existe et que la synchronisation est activée ; elle est effacée aussitôt que vous désactivez « Synchroniser mes jeux Steam » dans les paramètres ou supprimez votre compte ;"
           reactions: "vos réactions aux entrées du fil : tant que le compte existe et que l'entrée reste dans le fil ; les autres joueurs voient combien ont réagi et, si votre profil est public, votre nom parmi les derniers à avoir réagi ;"
           reports: "un signalement : jusqu'à ce qu'un modérateur le traite, puis un an ; s'il vise un compte supprimé avant d'être traité, un an après la suppression ;"
@@ -464,11 +527,11 @@ fr:
           errors: "les erreurs techniques reçues par Sentry : 30 jours ;"
           backups: "les sauvegardes de la base de données, chiffrées et conservées en France : les 7 dernières sauvegardes quotidiennes, soit 7 jours en temps normal ; un compte supprimé en disparaît au bout de 7 jours, un peu plus si une sauvegarde a échoué ;"
           leftovers: "ce qu'un compte supprimé laisse et qui concerne d'autres joueurs ou la communauté (échanges passés, premières découvertes, contributions à la mission hebdo, journal des actions du jeu) : tant que le jeu existe, sans identifiant Steam ni nom."
-        deletion: "Quand vous supprimez votre compte, votre identifiant Steam, vos modes de connexion (et, chez Clerk, l'utilisateur qui détient votre adresse e-mail, supprimé là aussi), votre nom de profil, l'heure de votre dernière visite, votre dernier export de données, les annonces que vous avez fermées, les notes de version que vous avez vues, votre dernière activité, votre collection, votre vitrine, vos paliers de sets, vos sets perso, la liste de votre bibliothèque Steam, vos objectifs, vos succès, vos dos de carte débloqués et votre dos de carte actif, vos capsules, vos scores de chance, vos bonus du jour, vos récompenses de la mission hebdo, vos amitiés, vos invitations, votre code ami, la dernière ouverture de chacun de vos échanges, vos entrées du fil d'activité et vos réactions sont effacés, vos échanges en cours sont annulés et votre profil disparaît. Ce qui concerne aussi d'autres joueurs, la communauté ou la modération (échanges passés, premières découvertes, contributions à la mission hebdo, signalements, historique de modération, journal des actions du jeu) est conservé sans votre identifiant Steam ni votre nom, pendant les durées indiquées plus haut."
-        market_deletion: "Sur le marché, la suppression de votre compte supprime vos notifications du marché et les entrées du fil qui annoncent vos ventes, efface votre nom des historiques d'enchères, retire vos annonces en cours et libère vos maximums. Votre solde de PiCoins est détruit sans remboursement, une fois vos annonces et vos enchères en tête réglées. Le registre des PiCoins est conservé sans identité, pendant la durée indiquée plus haut."
+        deletion: "Quand vous supprimez votre compte, votre identifiant Steam, vos modes de connexion (et, chez Clerk, l'utilisateur qui détient votre adresse e-mail, supprimé là aussi), votre nom de profil, l'heure de votre dernière visite, votre dernier export de données, les annonces que vous avez fermées, les notes de version que vous avez vues, votre dernière activité, votre collection, votre vitrine, vos paliers de sets, vos sets perso, vos decks, vos emplacements achetés, la liste de votre bibliothèque Steam, vos objectifs, vos succès, vos dos de carte débloqués et votre dos de carte actif, vos capsules, vos scores de chance, vos bonus du jour, vos récompenses de la mission hebdo, vos amitiés, vos invitations, votre code ami, vos feedbacks, vos visites de profils, la dernière ouverture de chacun de vos échanges, les notifications que vous avez lues, vos entrées du fil d'activité et vos réactions sont effacés, vos échanges en cours sont annulés et votre profil disparaît. Ce qui concerne aussi d'autres joueurs, la communauté ou la modération (échanges passés, premières découvertes, contributions à la mission hebdo, signalements, historique de modération, journal des actions du jeu) est conservé sans votre identifiant Steam ni votre nom, pendant les durées indiquées plus haut."
+        market_deletion: "Sur le marché, la suppression de votre compte supprime vos notifications du marché et les entrées du fil qui annoncent vos ventes, efface votre nom des historiques d'enchères, retire vos annonces et vos ordres d'achat en cours et libère vos maximums. Les ordres d'achat en cours d'un compte suspendu sont aussi retirés et leurs PiCoins rendus à son solde. Votre solde de PiCoins est détruit sans remboursement, une fois vos annonces, vos enchères en tête et vos ordres d'achat réglés. Le registre des PiCoins est conservé sans identité, pendant la durée indiquée plus haut."
         rights:
           intro: "Vous pouvez accéder à vos données, les faire rectifier ou effacer, en limiter le traitement, vous opposer à un traitement fondé sur l'intérêt légitime et en recevoir une copie réutilisable. Vous pouvez aussi indiquer ce que deviennent vos données après votre décès. Nous répondons sous un mois."
-          access: "accès : depuis les paramètres, avec « Exporter » dans « Mes données », qui télécharge une copie de vos données dans un fichier réutilisable, vos modes de connexion et la liste de votre bibliothèque Steam, ainsi que vos données du marché : votre portefeuille, vos mouvements de PiCoins, vos annonces et vos enchères avec vos propres maximums compris ;"
+          access: "accès : depuis les paramètres, avec « Exporter » dans « Mes données », qui télécharge une copie de vos données dans un fichier réutilisable, vos modes de connexion et la liste de votre bibliothèque Steam, ainsi que vos données du marché : votre portefeuille, vos mouvements de PiCoins, vos annonces, vos enchères avec vos propres maximums, vos ordres d'achat, vos ventes à des ordres, vos achats aux Archives et vos emplacements achetés compris ;"
           rectification_html: "rectification : un nom de profil Steam est relu à chaque connexion Steam ; pour le reste, écrivez à %{contact} ;"
           erasure: "suppression : depuis les paramètres, avec « Supprimer mon compte » ;"
           objection_html: "opposition : rendez votre profil privé dans les paramètres, désactivez « Synchroniser mes jeux Steam » pour que Gameble ne lise plus votre bibliothèque Steam, ou écrivez à %{contact} ;"
@@ -590,6 +653,13 @@ fr:
         title: "Compléter un set"
         rule: "Un set est complet quand vous possédez en même temps toutes ses cartes. Les doubles ne comptent qu'une fois, et une carte compte dans chaque set où elle figure."
         once: "Une complétion n'est enregistrée qu'une fois : une carte échangée puis récupérée ne complète rien de nouveau. Votre profil compte les sets que vous possédez complets en ce moment."
+      duels:
+        title: "Les duels"
+        decks: "Un deck compte exactement %{cards} cartes que vous possédez, un jeu au plus une fois, et vous pouvez garder %{free} decks, jusqu'à %{ceiling} avec des emplacements achetés. Une carte dans un deck bloque un exemplaire de son édition : cet exemplaire ne peut être ni échangé, ni vendu, ni confié tant que vous ne retirez pas la carte de tous les decks qui la contiennent. Vos autres exemplaires restent libres."
+        stats: "Chaque carte est mesurée sur %{number} stats : %{names}. Chacune est un centile, la part des cartes classées que la carte bat, calculé à la publication d'une saison puis chaque lundi à minuit UTC. L'atout d'une carte est sa stat la plus extrême, dans un sens ou dans l'autre."
+        round: "Un duel compte %{rounds} manches. Les decks sont visibles des deux côtés : seules les cartes de la main restent cachées. Chaque joueur tient une main de %{hand} cartes, qui sert à annoncer comme à répondre, et pioche une carte après chaque manche. Celui qui annonce verrouille une carte de sa main, une stat et un sens ; sa carte se retourne et l'annonce reste cachée. L'autre joueur répond avec une carte de sa main. Le meilleur centile dans le sens annoncé gagne la manche ; à centiles égaux, on compare la valeur exacte ; si elle est égale aussi, personne ne marque. Chaque joueur annonce chaque stat une fois."
+        ties: "Un point par manche gagnée ; le plus haut score gagne le duel. À score égal, l'écart le plus grand l'emporte : les points de centile par lesquels les manches d'un joueur ont été gagnées. Si l'écart est égal aussi, le duel est une égalité."
+        timers: "Vous avez %{accept} secondes pour accepter un défi, %{call} secondes pour annoncer et %{answer} secondes pour répondre. Quand le temps est écoulé, ou %{absence} secondes après la coupure de la connexion d'un joueur, le jeu joue son coup : pour celui qui annonce, sa carte la plus forte sur sa stat la plus extrême parmi celles qui restent ; pour celui qui répond, sa carte la plus forte sur la stat la plus extrême de la carte montrée. Un coup joué ainsi est signalé dans le duel, et aucun duel ne se gagne par forfait."
       market:
         title: "Le marché"
         picoins: "Les PiCoins sont la monnaie du jeu. Le 100-6-Tron n'en crée que lorsqu'une carte est confiée à la Confrérie ; ils ne s'achètent jamais, ne se retirent jamais et n'ont aucune valeur en dehors de Gameble."
@@ -723,6 +793,48 @@ fr:
         draft: "La note de %{version} repasse en brouillon."
         ready: "La note de %{version} est prête."
         skipped: "%{version} n'a pas besoin de note."
+    duels:
+      no_value: "—"
+      show:
+        columns:
+          bot_archetype: "Archétype du bot"
+          bot_wins: "Victoires du bot"
+          calls: "Appels"
+          decided_on_margin: "Décidés à la marge"
+          decks: "Decks joués"
+          direction: "Sens"
+          finished: "Duels terminés"
+          first_caller_wins: "Victoires du premier à appeler"
+          forfeited: "Abandonnés"
+          recipe: "Recette"
+          stat: "Stat"
+          win_rate: "Taux de victoire"
+          wins: "Victoires"
+          with_automatic_move: "Avec un coup automatique"
+        heading: "Comment se jouent les duels"
+        intro: "Les duels terminés d'une version des règles. Un duel abandonné compte comme terminé et comme abandonné, et dans aucun taux ni aucune stat appelée ; chaque taux est une part des duels joués jusqu'au bout (le taux de victoire d'une recette, des decks qu'ils ont mis en jeu), et un nul n'est jamais une victoire."
+        live:
+          empty: "Aucun duel en ligne ne s'est terminé sous ces règles."
+          figures_caption: "Les duels en ligne terminés sous ces règles"
+          heading: "Duels en ligne"
+          recipes_heading: "Taux de victoire par recette de deck"
+          stats_heading: "Stats appelées dans les duels en ligne"
+        practice:
+          caption: "Les duels d'entraînement par archétype du bot"
+          empty: "Aucun duel d'entraînement ne s'est terminé sous ces règles."
+          heading: "Duels d'entraînement"
+          stats_heading: "Stats appelées dans les duels d'entraînement"
+        version_label: "Version des règles"
+        version_submit: "Afficher"
+    feedbacks:
+      index:
+        count:
+          one: "%{count} feedback"
+          other: "%{count} feedbacks"
+          zero: "aucun feedback"
+        empty: "Rien pour l'instant."
+        heading: "Testing"
+        intro: "Ce que les joueurs ont écrit sur les fonctionnalités que vous leur avez demandé de tester, du plus récent au plus ancien."
     announcements:
       create:
         created: "L'annonce est enregistrée."
@@ -764,6 +876,7 @@ fr:
         ignore: "Ignorer"
         no_proposal: "Aucun changement dans les bornes ne répond à cette alerte. Ajustez les réglages à la main."
         prepare: "Préparer ce changement"
+        proposal_archive_price: "Son prix des Archives monte à %{price} pour ne pas passer sous le prix minimum."
         proposal_minimum: "Son prix minimum monte à %{minimum} pour qu'un vendeur ne perde jamais."
         proposal_stamp: "Proposition : relever le timbre %{rarity} de %{from} à %{to}."
         title: "Alerte"
@@ -782,7 +895,7 @@ fr:
           threshold: "Alerte sous %{value}."
           title: "PiCoins détruits contre créés, 30 jours"
           todo: "Si la part reste sous son seuil, relevez un timbre pour que chaque vente détruise davantage."
-          what: "Sur les 30 derniers jours, les timbres, les commissions et les soldes confisqués ont détruit cette part des PiCoins que la confiance de cartes a créés."
+          what: "Sur les 30 derniers jours, les timbres, les commissions, les soldes confisqués et les achats à la Confrérie ont détruit cette part des PiCoins que la confiance de cartes a créés."
           why: "Quand on détruit moins qu'on ne crée, l'argent s'accumule dans les portefeuilles et les prix montent pour tous."
         picoins_per_player:
           threshold: "Alerte au-dessus de %{value}."
@@ -812,8 +925,11 @@ fr:
         intro: "Chaque indicateur est calculé depuis les instantanés de la nuit et s'explique lui-même. Rien sur cette page ne modifie le marché."
         oldest_due:
           age: "L'annonce la plus ancienne à clore a %{age} de retard."
-          heading: "L'annonce la plus ancienne à clore"
+          heading: "Clôtures et expirations en retard"
           none: "Aucune annonce n'est à clore."
+        oldest_due_order:
+          age: "L'ordre d'achat le plus ancien à expirer a %{age} de retard."
+          none: "Aucun ordre d'achat n'est à expirer."
         reconciliation:
           balanced: "Le rapprochement de la nuit du %{day} a trouvé chaque portefeuille et la circulation à l'équilibre."
           difference: "Le rapprochement de la nuit du %{day} a trouvé %{wallets} portefeuilles en écart et %{circulation} PiCoins d'écart de circulation."
@@ -840,10 +956,12 @@ fr:
     market_signals:
       banned: "banni"
       sentences:
+        archive_purchase_of_tied_deposit: "A acheté %{card} (saison %{season}) aux Archives pour %{price} PiCoins ces 30 derniers jours ; l'autre compte, qu'un autre signal lui lie, a confié cette édition. Exemplaires confiés : %{deposited}, la dernière fois le %{deposited_on}."
         bids_on_tied_seller: "Enchères sur les annonces de l'autre compte, qu'un autre signal lui lie, ces 30 derniers jours. Annonces : %{listings}, enchères : %{bids}."
         minimum_price_sales: "Vendu à l'autre compte au prix minimum ces 30 derniers jours : %{sales}."
         near_maximum_opening: "A ouvert %{per_day} capsules ou plus par jour sur %{days} des 7 derniers jours, jusqu'à %{peak} en un jour."
         one_way_trades: "Échanges des 7 derniers jours où il a donné bien plus qu'il n'a reçu : %{trades}. Exemplaires donnés : %{given}, reçus : %{received}."
+        order_sale_to_tied_buyer: "A vendu %{card} (saison %{season}) à l'ordre d'achat de l'autre compte, qu'un autre signal lui lie, pour %{price} PiCoins ces 30 derniers jours."
         sales_outside_price: "Vendu à l'autre compte ces 30 derniers jours à moins de la moitié ou à plus du double du prix moyen de l'édition : %{sales} (%{below} en dessous, %{above} au-dessus)."
       show:
         account: "Compte"
@@ -851,16 +969,25 @@ fr:
         empty: "Aucun compte ne correspond à un signal."
         facts: "Faits"
         heading: "Signaux de comptes alternatifs"
-        intro: "Des comptes qui ouvrent des capsules, échangent, vendent ou enchérissent comme le ferait un compte alternatif qui alimente un autre. Un signal est un indice, pas une preuve : il ne change rien au compte, et toute action passe par le bannissement de la page des joueurs. Les signaux sont remplacés chaque nuit et aucun joueur ne les voit."
+        intro: "Des comptes qui ouvrent des capsules, échangent, vendent, enchérissent ou achètent aux Archives comme le ferait un compte alternatif qui alimente un autre. Un signal est un indice, pas une preuve : il ne change rien au compte, et toute action passe par le bannissement de la page des joueurs. Les signaux sont remplacés chaque nuit et aucun joueur ne les voit."
         other_account: "Autre compte"
         refreshed_at: "Actualisé"
         signal: "Signal"
+        ties_caption: "Paires de comptes qu'un signal lie l'un à l'autre"
+        ties_empty: "Aucun signal ne lie deux comptes."
+        ties_heading: "Comptes liés"
       signals:
+        archive_purchase_of_tied_deposit: "Achat aux Archives du dépôt d'un compte lié"
         bids_on_tied_seller: "Enchères sur l'annonce d'un compte lié"
         minimum_price_sales: "Ventes au prix minimum répétées"
         near_maximum_opening: "Ouverture de capsules proche du maximum"
         one_way_trades: "Échanges à sens unique répétés"
+        order_sale_to_tied_buyer: "Vente directe à l'ordre d'un compte lié"
         sales_outside_price: "Ventes hors du prix du marché"
+      tie_sentences:
+        minimum_price_sales: "Ventes entre les deux comptes au prix minimum ces 30 derniers jours : %{sales}."
+        one_way_trades: "Échanges entre les deux comptes ces 7 derniers jours où l'un a donné bien plus qu'il n'a reçu : %{trades}. Exemplaires donnés : %{given}, reçus : %{received}."
+        sales_outside_price: "Ventes entre les deux comptes ces 30 derniers jours à moins de la moitié ou à plus du double du prix moyen de l'édition : %{sales} (%{below} en dessous, %{above} au-dessus)."
     markets:
       announcement:
         hint: "Affichée sur le bandeau rouge à la place de l'annonce actuelle, dans la langue de chaque joueur, %{length} caractères au plus."
@@ -892,11 +1019,14 @@ fr:
           averages: "Moyennes et fil d'actualité"
           cap: "Plafond quotidien"
           commission: "Commission"
+          orders: "Ordres d'achat"
           rarities: "Par rareté"
+          slots: "Emplacements achetés en PiCoins"
         heading: "Réglages de l'économie"
         hints:
           bounds: "De %{min} à %{max}."
           currently: "Actuellement %{value}."
+          not_sold: "Facultatif : laisser vide retire cette rareté de la boutique."
           optional: "Facultatif : laisser vide le désactive."
         labels:
           alert_destroyed_share_basis_points: "Alerte : part de PiCoins détruits (%)"
@@ -911,7 +1041,20 @@ fr:
           duration_short_hours: "Enchère courte (heures)"
           feed_threshold_multiple: "Seuil du fil (multiple de la moyenne)"
           increment_basis_points: "Surenchère minimale (%)"
+          order_duration_days: "Durée d'un ordre d'achat (jours)"
           preselected_duration_hours: "Durée d'enchère présélectionnée (heures)"
+          slot_price_custom_set_10: "Set perso n° 10 (PiCoins)"
+          slot_price_custom_set_6: "Set perso n° 6 (PiCoins)"
+          slot_price_custom_set_7: "Set perso n° 7 (PiCoins)"
+          slot_price_custom_set_8: "Set perso n° 8 (PiCoins)"
+          slot_price_custom_set_9: "Set perso n° 9 (PiCoins)"
+          slot_price_deck_4: "Deck n° 4 (PiCoins)"
+          slot_price_deck_5: "Deck n° 5 (PiCoins)"
+          slot_price_goal_10: "Objectif n° 10 (PiCoins)"
+          slot_price_goal_6: "Objectif n° 6 (PiCoins)"
+          slot_price_goal_7: "Objectif n° 7 (PiCoins)"
+          slot_price_goal_8: "Objectif n° 8 (PiCoins)"
+          slot_price_goal_9: "Objectif n° 9 (PiCoins)"
           soft_close_seconds: "Prolongation de fin (secondes)"
           unusual_maximum_multiple: "Maximum inhabituel (multiple de la moyenne)"
         moments:
@@ -919,17 +1062,20 @@ fr:
           close: "S'applique aux ventes qui se concluent à partir de maintenant."
           listing: "S'applique dès la prochaine mise en vente."
           now: "S'applique immédiatement."
+          order_placement: "S'applique dès le prochain ordre d'achat passé."
         not_yet_open: "Les réglages de l'économie deviennent modifiables une fois le marché ouvert pour la première fois."
         prepared:
           field: "Changement préparé, il était de %{value}."
           note: "Un changement est préparé depuis une alerte. Rien n'est enregistré avant que vous l'enregistriez avec l'annonce de la Confrérie."
         rows:
+          archive_price: "Prix des Archives"
           entrustment: "Gain de la confiance"
           income_days_target: "Jours de revenu visés"
           minimum_price: "Prix minimum"
           stamp: "Timbre"
         save: "Enregistrer les réglages"
         violations:
+          archive_below_minimum: "Un prix des Archives ne peut pas être sous le prix minimum d'une %{rarity} : %{minimum}."
           below_floor: "Sous le plancher sans perte : au moins %{floor}."
           durations_not_ascending: "Les durées courte, moyenne et longue doivent croître dans cet ordre."
           less_than_half: "Au moins la moitié de la valeur actuelle : %{limit}."
@@ -952,6 +1098,7 @@ fr:
           moderation: "Modération"
           catalog: "Catalogue"
           communication: "Communication"
+          duels: "Duels"
           market: "Marché"
           technical: "Technique"
         tiles:
@@ -982,6 +1129,12 @@ fr:
           release_notes:
             title: "Les notes de version"
             text: "Ce que voit chaque joueur après une mise à jour."
+          feedbacks:
+            title: "Testing"
+            text: "Les retours des joueurs sur les fonctionnalités en test."
+          duels:
+            title: "Les duels"
+            text: "Comment se jouent les duels, par version des règles."
           announcements:
             title: "Les annonces"
             text: "Le bandeau rouge, en français et en anglais."
@@ -1046,6 +1199,12 @@ fr:
         banned: "%{name} est banni."
       destroy:
         unbanned: "Le ban de %{name} est levé."
+    code_contributions:
+      actions:
+        grant: "SALUER SA CONTRIBUTION"
+        grant_confirm: "Accorder à %{name} le succès de contribution au code ? Cela ne peut pas être annulé."
+      create:
+        granted: "%{name} a obtenu le succès de contribution au code."
     players:
       actions:
         erase: "EFFACER"
@@ -1215,10 +1374,11 @@ fr:
         published: "Publiée"
       index:
         heading: "Les saisons du catalogue"
-        intro: "Les imports remplissent la saison en brouillon. La publier répartit ses cartes entre les cinq raretés, les numérote, les relie en thèmes, franchises, studios, panthéon et OVNI, et l'ouvre au tirage, d'un seul coup. Une saison publiée ne change plus jamais."
+        intro: "Les imports remplissent la saison en brouillon. La publier répartit ses cartes entre les cinq raretés, les numérote, les relie en thèmes, franchises, studios, panthéon et OVNI, et l'ouvre au tirage, d'un seul coup. Une saison publiée garde pour toujours ses cartes, ses raretés, leurs numéros et ses collections ; seul son nom peut encore changer."
         empty: "Aucune saison pour l'instant. Le premier import ouvrira le brouillon."
         caption: "Saisons du catalogue, par numéro"
         number: "Saison"
+        name: "Nom"
         status: "État"
         card_count: "Cartes"
         published_at: "Publiée"
@@ -1233,16 +1393,22 @@ fr:
           zero: "Publier la saison %{number} et sa seule carte ? La rareté et le numéro de cette carte ne changeront plus jamais."
           one: "Publier la saison %{number} et sa seule carte ? La rareté et le numéro de cette carte ne changeront plus jamais."
           other: "Publier la saison %{number} et ses %{count} cartes ? Ses raretés et leurs numéros ne changeront plus jamais."
+      name_fields:
+        name_fr: "Nom en français"
+        name_en: "Nom en anglais"
       show:
         heading: "La saison %{number}"
         all_seasons: "Toutes les saisons"
+        name: "Nom"
+        rename_heading: "Le nom de la saison"
+        rename: "Renommer la saison"
         status: "État"
         published_at: "Publiée"
         score_versions: "Versions de la formule de prestige"
         score_version: "version %{version}"
         no_score_version: "aucune notée (avant les versions)"
         published_heading: "La saison %{number}, telle que publiée"
-        published_intro: "Ce que la publication a inscrit pour cette saison, lu tel quel : les cartes et le score minimal de chaque rareté, et les collections. Rien n'est écrit ici et rien n'est retaillé. Les thèmes et les OVNI sont les collections inscrites à la publication."
+        published_intro: "Ce que la publication a inscrit pour cette saison, lu tel quel : les cartes et le score minimal de chaque rareté, et les collections. Seul le nom de la saison se change ici ; rien d'autre n'est écrit et rien n'est retaillé. Les thèmes et les OVNI sont les collections inscrites à la publication."
       preview:
         heading: "La saison %{number}, si elle était publiée maintenant"
         intro: "Ce que donnerait la publication du brouillon aujourd'hui, lu sur ses cartes telles qu'elles sont. Rien n'est écrit ici. La formule de prestige et les parts des raretés vivent dans le code ; les thèmes se gèrent sur la page des thèmes. Change l'un ou l'autre, recalcule le dernier import si la formule ou les thèmes ont changé, puis relis ceci."
@@ -1285,6 +1451,8 @@ fr:
         published: "La saison %{number} est publiée, officier. Ses cartes sont prêtes pour le tirage."
         import_active: "Un import Steam n'est pas fini, officier. Laisse-le finir ou reprends-le, ou abandonne-le s'il s'est interrompu, avant de publier la saison."
         import_awaiting_promotion: "Un import Steam terminé t'attend, officier. Ouvre-le et promeus ses cartes dans le brouillon, ou jette-les, avant de publier la saison."
+      update:
+        updated: "La saison %{number} est renommée, officier."
     roadmaps:
       translate:
         nothing: "Chaque ligne a déjà son anglais : rien à traduire."
@@ -1423,6 +1591,12 @@ fr:
           one: "Plus qu'une carte pour compléter"
           other: "Plus que %{missing} cartes pour compléter"
         suggestion_add_label: "Marquer comme objectif : %{set}"
+        to_order:
+          zero: "%{count} carte à commander :"
+          one: "%{count} carte à commander :"
+          other: "%{count} cartes à commander :"
+        to_order_more: "+ %{count}"
+        to_order_label: "Passer un ordre sur %{card}, objectif %{number} : %{set}"
       in_progress: "En cours"
       custom_sets:
         count: "Visibles par vous seul · %{sets} / %{max}"
@@ -1445,14 +1619,18 @@ fr:
       all_cards_tile:
         title: "Toutes mes cartes"
         unique: "cartes uniques"
-        open: "Ouvrir"
       all_sets_tile:
         title: "Tous les sets"
-        open: "Ouvrir"
         unit:
           zero: "set"
           one: "set"
           other: "sets"
+      grand_inventory:
+        title: "Le Grand Inventaire"
+        unit:
+          zero: "découverte"
+          one: "découverte"
+          other: "découvertes"
       loading: "Chargement des sets en cours…"
       found:
         zero: "Aucun set trouvé"
@@ -1606,7 +1784,8 @@ fr:
         all: "Tout"
         missing: "Manquantes"
         new: "Nouvelles"
-        duplicates: "Doublons"
+        duplicates: "2+"
+        triplicates: "3+"
     filter_row:
       more: "Plus"
       more_title: "Autres filtres"
@@ -1620,6 +1799,10 @@ fr:
       past_the_end: "Plus aucune carte ici : la grille s'arrête sur une page précédente. Revenez à la dernière page."
       new: "Nouveau"
       reserved:
+        in_deck:
+          zero: "Dans un deck"
+          one: "Dans un deck"
+          other: "%{count} dans des decks"
         on_sale:
           zero: "%{count} en vente"
           one: "%{count} en vente"
@@ -1666,6 +1849,7 @@ fr:
       aurore: "Aurore"
       centurion: "Centurion"
       contrat: "Contrat"
+      duelliste: "Duelliste"
       emeraude: "Émeraude"
       etoile-dor: "Étoile d'or"
       rubis: "Rubis"
@@ -1737,8 +1921,6 @@ fr:
         intro: "Votre titre s'affiche sur votre profil, dans le fil d'activité et dans vos échanges."
         none: "Aucun titre"
         empty: "Aucun titre pour l'instant. Atteignez un palier d'un set, ou complétez-le, pour en gagner un."
-      showcase:
-        empty: "Votre plus belle carte s'affichera ici, une fois choisie depuis la fiche d'une carte."
   own_profiles:
     avatar_sheet:
       heading: "Avatar"
@@ -1746,13 +1928,12 @@ fr:
       unlock: "Succès : %{achievement}"
       worn: "Porté"
     show:
-      title: "Moi"
+      title: "Mon profil"
       change: "Modifier"
       choose_title: "Choisir un titre"
       card_back: "Dos de carte · vous seul"
       customize: "Personnalisation"
       title_label: "Titre"
-      card_list: "Voir la liste des cartes"
       all_achievements: "Tout voir"
       change_avatar: "Changer d'avatar"
   average_price:
@@ -1768,6 +1949,120 @@ fr:
       no_sale: "sans vente"
   picoin_amount:
     accessible: "%{amount} PiCoins"
+  purchase_confirmation:
+    failed: "La confirmation n'a pas pu être chargée."
+    retry: "RÉESSAYER"
+    balance_after: "Solde après"
+    buy: "ACHETER · %{amount}"
+    cancel: "ANNULER"
+    close: "Fermer"
+    entrust: "CONFIER DES CARTES"
+    no_balance: "aucun"
+    price: "Prix"
+  slot_purchases:
+    ordinals:
+      "4":
+        indefinite: "UN 4E"
+        indefinite_words: "Un quatrième"
+        bare: "4E"
+        bare_words: "Quatrième"
+      "5":
+        indefinite: "UN 5E"
+        indefinite_words: "Un cinquième"
+        bare: "5E"
+        bare_words: "Cinquième"
+      "6":
+        indefinite: "UN 6E"
+        indefinite_words: "Un sixième"
+        bare: "6E"
+        bare_words: "Sixième"
+      "7":
+        indefinite: "UN 7E"
+        indefinite_words: "Un septième"
+        bare: "7E"
+        bare_words: "Septième"
+      "8":
+        indefinite: "UN 8E"
+        indefinite_words: "Un huitième"
+        bare: "8E"
+        bare_words: "Huitième"
+      "9":
+        indefinite: "UN 9E"
+        indefinite_words: "Un neuvième"
+        bare: "9E"
+        bare_words: "Neuvième"
+      "10":
+        indefinite: "UN 10E"
+        indefinite_words: "Un dixième"
+        bare: "10E"
+        bare_words: "Dixième"
+    dialog:
+      loading: "Chargement…"
+    confirmation:
+      title:
+        goal: "%{ordinal} OBJECTIF ?"
+        custom_set: "%{ordinal} SET ?"
+        deck: "%{ordinal} DECK ?"
+      spoken_title:
+        goal: "%{ordinal} objectif ?"
+        custom_set: "%{ordinal} set ?"
+        deck: "%{ordinal} deck ?"
+      lead:
+        goal: "Les %{free} premiers objectifs sont gratuits. Un emplacement de plus, gardé pour toujours, et %{set} devient votre objectif %{number}."
+        custom_set: "Les %{free} premiers sets perso sont gratuits. Un emplacement de plus, gardé pour toujours, puis l'éditeur s'ouvre."
+        deck: "Les %{free} premiers decks sont gratuits. Un emplacement de plus, gardé pour toujours, puis le nouveau deck s'ouvre."
+      short_line: "Il vous manque %{amount} PiCoins."
+    price_line_html: "Emplacements gratuits pris : le suivant coûte %{price}."
+    create:
+      throttled: "Trop d'achats d'emplacements en une minute. Réessayez dans un instant."
+  pioneer_rankings:
+    boards:
+      empty:
+        season: "Aucune découverte cette saison pour l'instant."
+        total: "Aucune découverte pour l'instant."
+        week: "Aucune découverte cette semaine pour l'instant."
+      none:
+        season: "Aucune découverte cette saison."
+        total: "Aucune découverte à votre nom pour l'instant."
+        week: "Aucune découverte cette semaine."
+      see_all: "Voir tout le classement"
+      see_all_label:
+        season: "Voir tout le classement de la saison"
+        total: "Voir tout le classement depuis toujours"
+        week: "Voir tout le classement de la semaine"
+      title: "Pionniers · %{period}"
+    discoveries:
+      zero: "%{count} découverte"
+      one: "%{count} découverte"
+      other: "%{count} découvertes"
+    periods:
+      season: "Saison"
+      total: "Total"
+      week: "Semaine"
+    periods_label: "Période du classement"
+    place:
+      zero: "Votre place : %{rank}, %{count} découverte"
+      one: "Votre place : %{rank}, %{count} découverte"
+      other: "Votre place : %{rank}, %{count} découvertes"
+    place_link:
+      zero: "Votre place : %{rank}, %{count} découverte, aller à ma ligne"
+      one: "Votre place : %{rank}, %{count} découverte, aller à ma ligne"
+      other: "Votre place : %{rank}, %{count} découvertes, aller à ma ligne"
+    rank:
+      zero: "%{count}e"
+      one: "%{count}er"
+      other: "%{count}e"
+    scopes:
+      all: "Toutes saisons"
+      current: "Saison en cours"
+    scopes_label: "Saisons du Grand Inventaire"
+    show:
+      page_loaded: "Page %{page} chargée"
+      pages_label: "Pages du classement"
+      reading: "%{period}. %{place}"
+      title: "Classement des pionniers"
+    visitor: "Rejoignez la Confrérie pour découvrir les cartes manquantes."
+    you: "Vous"
   player_name:
     anonymous: "Un joueur anonyme"
   profile_avatars:
@@ -1816,18 +2111,11 @@ fr:
         achievements: "Succès"
       showcase:
         title: "Vitrine"
-        info_label: "Comment marche la vitrine"
-        info: "Jusqu'à cinq cartes. Faites-les glisser pour changer leur ordre, et ajoutez-en une depuis sa fiche avec « %{add} »."
-        return: "Retour à la carte"
-        removal:
-          title: "Retirer de la vitrine ?"
-          text: "%{title} quitte votre vitrine. Vous gardez la carte."
-          confirm: "Retirer"
-          cancel: "La garder"
-          close: "Fermer"
+      stage:
+        edit: "Modifier la vitrine"
         moved: "%{title} est maintenant à la place %{position} sur %{count}."
         move_failed: "Le nouvel ordre n'a pas pu être enregistré."
-        remove: Retirer %{title} de la vitrine
+        placing: "Place %{position} sur %{count}"
       stats:
         title: "Statistiques"
         rarities: "Raretés"
@@ -1857,6 +2145,26 @@ fr:
     unavailable:
       title: "Profil indisponible"
       body: "Ce profil n'est pas disponible. Le lien ne mène nulle part, ou son propriétaire ne le montre plus."
+  brotherhood_sets:
+    show:
+      screen: "Le Grand Inventaire"
+      title: "%{set} · Le Grand Inventaire · Gameble"
+      back: "Grand Inventaire"
+      stamp: "Entièrement découvert"
+      progress:
+        zero: "%{found} carte découverte sur %{total}"
+        one: "%{found} carte découverte sur %{total}"
+        other: "%{found} cartes découvertes sur %{total}"
+      slots: "Cartes du set"
+      search:
+        label: "Rechercher un jeu du set par son nom"
+        placeholder: "Rechercher un jeu"
+      states:
+        found: "Découvertes"
+        all: "Tout"
+        missing: "À découvrir"
+        mine: "Mes découvertes"
+      join: "Rejoignez la Confrérie pour découvrir les cartes manquantes."
   bottom_sheet:
     close: "Fermer"
   boosters:
@@ -1865,19 +2173,11 @@ fr:
   booster:
     kicker: "Capsule · Saison %{number}"
     kicker_plain: "Capsule"
+    kicker_cards_html:
+      zero: "%{size} carte"
+      one: "%{size} carte"
+      other: "%{size} cartes"
     title: "Grand catalogue"
-    cards_per_pack: "Cartes par capsule"
-    in_reserve: "En réserve"
-    state: "État"
-    states:
-      sealed: "Scellée"
-      arming: "Armement"
-      ejecting: "Éjection"
-      inventory: "Inventaire"
-      legendary_signal: "Signal légendaire"
-      complete: "Inventaire complet"
-      waiting: "En attente"
-    reserve: "Réserve"
     next_in: "+1 dans"
     reserve_full: "Réserve pleine"
     open: "Ouvrir la capsule"
@@ -1885,6 +2185,7 @@ fr:
     origin:
       bonus: "CAPSULE QUOTIDIENNE"
       reward: "RÉCOMPENSE DE MISSION"
+      duel: "CAPSULE DE DUEL"
     origin_label: "Origine"
     reserves:
       label: "Réserves de capsules"
@@ -1898,16 +2199,17 @@ fr:
       collect: "Récupérer"
     reveal_all: "Tout révéler"
     canister_hint: "Cliquez pour ouvrir"
+    canister_name_fallback: "grand catalogue"
     canister_season: "Saison %{number}"
+    canister_kind:
+      standard: "STANDARD"
+      bonus: "QUOTIDIEN"
+      reward: "OBJECTIF"
+      duel: "CAPSULE DE DUEL"
     result: "Résultat de la capsule"
     card_label: "%{title} — %{details}"
     legendary_banner: "%{rarity} !"
-    strip_title: "Saison %{number} · Grand catalogue"
-    strip_title_plain: "Grand catalogue"
-    canister_hint_touch: "Touchez pour ouvrir"
-    hint_tap: "Touchez la carte pour la révéler"
-    hint_swipe: "Glissez la carte pour la ranger · ou touchez-la"
-    store: "Ranger"
+    strip_title: "Saison %{number} · %{name}"
     tray: "Cartes rangées"
     tray_label: "Carte"
     see_card: "Voir la fiche"
@@ -1917,41 +2219,37 @@ fr:
     zoom_previous: "Carte précédente"
     zoom_next: "Carte suivante"
     repost: "Reposter"
+    repost_tip: "Reposter dans le fil"
+    entrust_tip: "Confier à la Confrérie"
+    sell_tip: "Mettre en vente sur le marché"
+    undo: "Annuler"
     first_copy: "Nouveau"
     strings:
       origin_bonus: "CAPSULE QUOTIDIENNE"
+      origin_duel: "CAPSULE DE DUEL"
       origin_opening: "EN OUVERTURE · %{origin}"
       origin_reward: "RÉCOMPENSE DE MISSION"
       special_arrived: "Une capsule spéciale est arrivée."
       standard_ready: "Une capsule standard est prête."
       tab_special: "SPÉCIALES · %{n}"
       tab_standard: "STANDARD · %{n}"
-      reserve_count:
-        zero: "%{n} capsule"
-        one: "%{n} capsule"
-        other: "%{n} capsules"
+      reserve_unit:
+        zero: "capsule en réserve"
+        one: "capsule en réserve"
+        other: "capsules en réserve"
       next_at: "Prochaine capsule : %{time}"
       empty_next: "Prochaine capsule dans %{time}"
-      canister_label: "Ouvrir la capsule Saison %{season}, grand catalogue, %{count} cartes"
+      canister_label: "Ouvrir la capsule Saison %{season}, %{name}, %{count} cartes"
       canister_label_plain: "Ouvrir la capsule, grand catalogue, %{count} cartes"
-      hint_remaining:
-        zero: "Cliquez une carte pour la révéler · %{n} restante"
-        one: "Cliquez une carte pour la révéler · %{n} restante"
-        other: "Cliquez une carte pour la révéler · %{n} restantes"
-      hint_done:
-        zero: "Capsule inventoriée · +%{n} carte dans la collection"
-        one: "Capsule inventoriée · +%{n} carte dans la collection"
-        other: "Capsule inventoriée · +%{n} cartes dans la collection"
       face_down: "Carte %{position} sur %{total}, face cachée. Révéler."
-      face_up: "%{card}, %{rarity}. Voir la fiche."
-      face_up_goals: "%{card}, %{rarity}, %{goals}. Voir la fiche."
+      face_up: "%{card}, %{rarity}. Agrandir."
+      face_up_goals: "%{card}, %{rarity}, %{goals}. Agrandir."
       announce_card: "Carte %{position} : %{card}. %{rarity}."
       summary:
         zero: "%{n} carte révélée : %{tiers}."
         one: "%{n} carte révélée : %{tiers}."
         other: "%{n} cartes révélées : %{tiers}."
       summary_tier: "%{rarity} × %{n}"
-      banner_line: "%{title} · %{year}"
       refused_title: "Ouverture annulée"
       failed: "Pas de connexion. Votre capsule est intacte. Réessayez."
       goal_reached: "Objectif atteint"
@@ -1966,6 +2264,17 @@ fr:
       tray_slot_goals: "%{card}, %{rarity}, %{goals}. Agrandir."
       zoom_line: "%{rarity} · %{year}"
       repost_card: "Reposter %{card}"
+      entrust_card: "Confier %{card} à la Confrérie"
+      sell_card: "Mettre %{card} en vente sur le marché"
+      entrusted:
+        zero: "Confiée pour %{amount} PiCoin"
+        one: "Confiée pour %{amount} PiCoin"
+        other: "Confiée pour %{amount} PiCoins"
+      listed:
+        zero: "En vente dès %{amount} PiCoin"
+        one: "En vente dès %{amount} PiCoin"
+        other: "En vente dès %{amount} PiCoins"
+      market_failed: "La carte est restée dans votre collection. Vérifiez votre connexion, puis réessayez."
       reposted: "Carte repostée dans le fil."
       repost_failed: "Le repost n'a pas abouti. Vérifiez votre connexion, puis réessayez."
       celebration:
@@ -2029,6 +2338,11 @@ fr:
         public: "Public"
         friends_only: "Amis uniquement"
         private: "Privé"
+      rarity_aura:
+        hint: "Une lueur colorée autour de chaque carte tirée d'une capsule, selon sa rareté."
+        label: "Aura de rareté"
+        "on": "Affichés"
+        "off": "Masqués"
       motion:
         label: "Animations réduites"
         system: "Système"
@@ -2069,6 +2383,7 @@ fr:
         label: "Soutenir"
         link: "Soutenir"
       how_it_works: "Comment ça marche"
+      release_notes: "Notes de version"
       source_code: "Code source"
       legal: "Mentions légales"
       summary:
@@ -2082,6 +2397,8 @@ fr:
           friends_only: "Visible par vos amis seulement"
           private: "Profil privé : vous seul le voyez"
           private_short: "Vous seul le voyez"
+        grand_inventory:
+          signed: "Vos premières découvertes restent signées de votre nom dans le Grand Inventaire."
     private_dialog:
       title: "Passer en privé ?"
       text:
@@ -2101,6 +2418,16 @@ fr:
       confirm: "Désactiver"
       cancel: "Annuler"
       close: "Fermer"
+  feedbacks:
+    create:
+      sent: "Merci, votre feedback est envoyé."
+      throttled: "Trop de feedbacks en une minute. Réessayez dans un instant."
+    features:
+      duels: "Duels"
+    new:
+      message: "Ce qui a marché, ce qui n'a pas marché, ce que vous attendiez"
+      send: "Envoyer"
+      title: "Envoyer un feedback"
   feeds:
     show:
       title: "Fil d'activité"
@@ -2138,6 +2465,7 @@ fr:
         trade_html: "%{card} contre %{partner_card}"
         verdict: "Verdict du Chattomètre"
         verdict_title: "Le plus chanceux de la semaine passée"
+        duel_stats: "Duel"
         set_reached:
           metal_html: "Atteint %{tier}"
           rank_html: "Atteint le palier %{tier}"
@@ -2154,6 +2482,15 @@ fr:
       verdict_html: "Le Chattomètre a rendu son verdict : %{name} est le membre le plus chanceux de la semaine passée. %{register}"
       verdict_register: "Voir le classement"
       verdict_tag: "Verdict"
+      duel_stats: "Le cours des cartes a bougé."
+      duel_stats_rose_html: "%{card}, %{stat} en hausse, de %{from} à %{to}"
+      duel_stats_fell_html: "%{card}, %{stat} en baisse, de %{from} à %{to}"
+      duel_stats_stats:
+        popularity: "popularité"
+        rating: "note"
+        release: "sortie"
+        discovery: "découverte"
+        circulation: "circulation"
       traded_html: "%{name} et %{partner} ont échangé %{card} contre %{partner_card}"
       trade_tag: "Échange"
       set_reached:
@@ -2185,11 +2522,84 @@ fr:
         one: "1 nouvelle entrée dans le fil."
         other: "%{count} nouvelles entrées dans le fil."
   market:
+    archive_purchases:
+      confirmation:
+        card: "Carte"
+        edition: "Édition"
+        edition_value: "%{rarity} · saison %{season}"
+        note: "Prix fixe de la Confrérie. La carte garde sa rareté et sa saison."
+        short_line: "%{card} %{rarity} coûte %{price}, vous avez %{available}."
+        short_title: "IL VOUS MANQUE %{amount} PICOINS"
+        title: "ACHETER AUX ARCHIVES ?"
+      create:
+        throttled: "Doucement, les Archives comptent. Réessayez dans une minute."
+      refusals:
+        last_copy: "Un autre joueur vient de prendre le dernier exemplaire. Rien n'est débité."
+      result:
+        paid: "Vous payez %{amount}. La carte rejoint votre collection."
+        see_card: "VOIR LA CARTE"
+        title: "VOUS AVEZ ACHETÉ %{card}"
+    shops:
+      dialog:
+        loading: "Chargement…"
+      filters:
+        search_label: "Rechercher un jeu"
+        season_all: "toutes"
+        season_prefix: "Saison :"
+        seasons_label: "Choisir une saison"
+        sorts:
+          price_asc: "prix croissant"
+          price_desc: "prix décroissant"
+        sorts_label: "Trier les cartes des Archives"
+        wanted: "VOULUES · %{count}"
+        wanted_spoken:
+          zero: "Voulues, %{count} carte"
+          one: "Voulues, %{count} carte"
+          other: "Voulues, %{count} cartes"
+      offer:
+        archives: "ARCHIVES"
+        buy: "ACHETER"
+        buy_spoken: "Acheter"
+        fixed: "prix fixe"
+        label: "%{card}, %{rarity}, saison %{season}, Archives de la Confrérie, prix fixe %{price}"
+        stock:
+          zero: "%{count} en stock"
+          one: "%{count} en stock"
+          other: "%{count} en stock"
+        wanted: "VOULUE"
+        wanted_spoken: "voulue"
+      show:
+        cards:
+          zero: "%{count} carte"
+          one: "%{count} carte"
+          other: "%{count} cartes"
+        editions:
+          zero: "%{count} édition"
+          one: "%{count} édition"
+          other: "%{count} éditions"
+        empty: "Aucune carte aux Archives pour le moment."
+        heading: "Boutique de la Confrérie"
+        line: "« Les Archives ne détruisent rien. Elles rendent, contre une juste contribution au 100-6-Tron. »"
+        list_label: "Cartes des Archives"
+        no_match: "Aucune carte des Archives ne correspond à ces filtres."
+        pages_label: "Autres cartes des Archives"
+        screen_title: "BOUTIQUE"
+        sign_in: "Connectez-vous pour acheter aux Archives"
     copy_filters:
+      wanted: "VOULUES PAR D'AUTRES · %{count}"
+      wanted_label:
+        zero: "Voulues par d'autres, %{count} carte"
+        one: "Voulues par d'autres, %{count} carte"
+        other: "Voulues par d'autres, %{count} cartes"
+      wanted_matches:
+        zero: "Aucune carte voulue par d'autres joueurs"
+        one: "%{number} carte voulue par d'autres joueurs"
+        other: "%{number} cartes voulues par d'autres joueurs"
       clear_filters: "Effacer les filtres"
-      doubles: "Doublons"
+      doubles: "2+"
+      triples: "3+"
       filters_active: "Filtres actifs"
-      filters_legend: "Filtrer par rareté ou par doublons"
+      filters_legend: "Filtrer par rareté ou par nombre d'exemplaires"
       no_match: "Aucune édition ne correspond à ces filtres."
       search_label: "Chercher dans vos éditions"
       search_placeholder: "Chercher un jeu"
@@ -2302,7 +2712,7 @@ fr:
         no_leader: "Prix %{amount}, aucune offre. Fin à %{time}."
     suspended_banner:
       back: "Retour au marché"
-      body: "La Confrérie procède à un audit de ses procédures. Les enchères en cours se terminent normalement. Il n'est plus possible de confier, de vendre ou d'enchérir pour le moment."
+      body: "La Confrérie procède à un audit de ses procédures. Les enchères en cours se terminent normalement et les ordres d'achat restent bloqués jusqu'à leur fin. Il n'est plus possible de confier, de vendre, d'enchérir ou de passer un ordre pour le moment."
       title: "LE MARCHÉ EST SUSPENDU"
     cancellations:
       create:
@@ -2321,6 +2731,7 @@ fr:
         one: "%{number} dépassée"
         other: "%{number} dépassées"
       sales: "MES VENTES"
+      orders: "MES ORDRES"
     my_bids:
       groups:
         in_progress:
@@ -2372,6 +2783,110 @@ fr:
             one: ", dont %{number} avec une offre."
             other: ", dont %{number} avec une offre."
         heading: "Mes ventes"
+    my_orders:
+      all_editions: "toutes éditions"
+      cancel: "ANNULER"
+      cancel_name: "Annuler l'ordre, %{card}"
+      groups:
+        in_progress: "EN COURS"
+        recent: "TERMINÉS RÉCEMMENT"
+      result:
+        available: "%{amount} disponibles"
+        balance_after: "Solde après"
+        body: "Vos %{amount} PiCoins sont bloqués. Le premier joueur qui accepte vous vend un exemplaire de %{card} à ce prix ; la carte rejoint alors votre collection."
+        closing: "Annulation sans frais. Un ordre n'enchérit jamais à votre place."
+        heading: "ORDRE PASSÉ SUR %{card}"
+        reached: "Raretés atteintes"
+      listed_above_html: "%{name} vend %{card} à %{amount}, au-dessus de votre ordre."
+      returned: "PiCoins rendus"
+      see_listing: "VOIR L'ANNONCE"
+      served_html: "Vendue par %{name} · %{rarity} S%{season}"
+      show:
+        empty: "Vous n'avez passé aucun ordre."
+        heading: "Mes ordres"
+      status:
+        cancelled: "ANNULÉ"
+        expired: "EXPIRÉ"
+        served: "SERVI"
+    order_cancellations:
+      create:
+        cancelled: "Ordre annulé : vos %{amount} PiCoins vous sont rendus."
+        throttled: "Doucement, les Archives comptent. Réessayez dans une minute."
+      dialog:
+        close: "Fermer"
+        confirm: "ANNULER L'ORDRE"
+        keep: "GARDER L'ORDRE"
+        text: "Vos %{amount} PiCoins bloqués sur %{card} vous sont rendus. Aucun frais."
+        title: "ANNULER CET ORDRE ?"
+    orders:
+      create:
+        chain: "Ordre passé sur %{card} : %{amount} PiCoins bloqués. Carte %{index} sur %{count}."
+        throttled: "Doucement, les Archives comptent. Réessayez dans une minute."
+      days:
+        zero: "%{number} jour"
+        one: "%{number} jour"
+        other: "%{number} jours"
+      labels:
+        end: "Fin"
+        held: "Prix bloqué"
+      list:
+        last_word: " et "
+        two_words: " et "
+      letters:
+        common: "C"
+        epic: "É"
+        legendary: "L"
+        rare: "R"
+        uncommon: "PC"
+      new:
+        all_editions: "Toutes éditions de %{card}. Le premier joueur qui accepte vous vend un exemplaire à ce prix."
+        at_least: "Au moins %{amount}"
+        auctions: "Ce sont des enchères : pour les emporter, enchérissez sur l'annonce."
+        available: "Disponible : %{amount} PiCoins. Un ordre n'enchérit jamais à votre place."
+        available_now: "DISPONIBLE MAINTENANT"
+        best_order: "Meilleur ordre en cours"
+        chip_from: "%{rarity} dès %{amount}"
+        chip_reached: "%{rarity} %{amount}"
+        current_price: "Prix actuel"
+        duration: "Durée"
+        edition: "%{rarity} · S%{season}"
+        free_cancel_html: "%{amount} PiCoins seront bloqués, puis rendus si l'ordre expire ou si vous l'annulez. Annulation sans frais."
+        goal: "Il vous manque cette carte pour %{set}"
+        heading: "ORDRE D'ACHAT"
+        heading_for: "Ordre d'achat · %{card}"
+        held_now: "Bloqués maintenant"
+        listing_name: "Voir l'annonce, %{rarity} saison %{season}, vendue par %{name}, %{amount} PiCoins"
+        my_orders: "MES ORDRES"
+        no_best_order: "aucun"
+        no_player_listing: "Aucune annonce de joueur pour %{card}."
+        archives: "ARCHIVES"
+        fixed: "prix fixe"
+        buy: "ACHETER · %{amount}"
+        buy_label: "Acheter aux Archives, %{card} %{rarity} saison %{season}, %{amount} PiCoins"
+        nobody: "Personne ne vend %{card} pour le moment. Un joueur qui en a un verra votre prix en le vendant ou en le confiant."
+        price: "MON PRIX"
+        reached: "RARETÉS ATTEINTES"
+        see_listing: "VOIR L'ANNONCE"
+        sold_by_html: "Vendue par %{name}"
+        submit: "PASSER L'ORDRE"
+        submit_amount_html: " · %{amount}"
+        yours: "VOTRE ORDRE"
+      strings:
+        all: "Votre prix atteint toutes les raretés."
+        next:
+          common: "communes"
+          epic: "épiques"
+          legendary: "légendaires"
+          rare: "rares"
+          uncommon: "peu communes"
+        none: "Les %{next} à partir de %{amount}."
+        reached:
+          common: "communes"
+          epic: "épiques"
+          legendary: "légendaires"
+          rare: "rares"
+          uncommon: "peu communes"
+        some: "Votre prix atteint les %{reached}. Les %{next} à partir de %{amount}."
     rows:
       closing: "Clôture en cours…"
       labels:
@@ -2379,7 +2894,6 @@ fr:
         maximum: "Mon maximum"
         price: "Prix"
       relever: "RELEVER"
-      relever_name: "Relever, %{card}"
       status:
         cancelled: "ANNULÉE"
         in_progress: "EN COURS"
@@ -2395,7 +2909,7 @@ fr:
         throttled: "Doucement, les Archives comptent. Réessayez dans une minute."
       new:
         all_cards: "Toutes les cartes"
-        bar_action: "Confier ▸"
+        bar_action: "Confier"
         bar_label: "Votre sélection à confier"
         card_only: "Seulement %{title}."
         cap_full: "Votre plafond du jour est atteint. Il se renouvelle à 00:00 UTC."
@@ -2410,9 +2924,7 @@ fr:
           other: "%{count} exemplaires libres"
         grid_label: "Vos éditions à confier"
         heading: "Confier à la Confrérie"
-        intro: "Choisissez les cartes à confier à la Confrérie. Chaque exemplaire vous rapporte des PiCoins."
         keys_hint: "Les flèches changent de carte, Espace ou Entrée coche, + et - changent les exemplaires."
-        kicker: "Les Archives"
         not_returned: "Les cartes confiées ne vous sont pas rendues."
         prompt: "Cochez les cartes à confier."
         receive: "Vous recevez"
@@ -2423,6 +2935,8 @@ fr:
         sign_in_action: "Se connecter"
         select_all: "Tout cocher (%{number})"
         select_failed: "Les éditions n'ont pas pu être chargées. Rien n'a été coché, réessayez."
+        step_one: "Étape 1 sur 2"
+        set_apart_sentence: "D'autres joueurs les cherchent. Vous choisirez quoi en faire juste après : les vendre, ou les confier quand même."
       result:
         close: "Fermer"
         copies:
@@ -2482,10 +2996,31 @@ fr:
           one: "Confier 1 exemplaire"
           other: "Confier %{count} exemplaires"
         value_text: "%{count} sur %{max}"
+        set_apart_heading:
+          zero: "MISES DE CÔTÉ · %{count} CARTE VOULUE"
+          one: "MISE DE CÔTÉ · %{count} CARTE VOULUE"
+          other: "MISES DE CÔTÉ · %{count} CARTES VOULUES"
+        set_apart_status:
+          zero: "%{count} mise de côté"
+          one: "%{count} mise de côté"
+          other: "%{count} mises de côté"
+        seekers:
+          zero: "%{count} joueur la veut"
+          one: "%{count} joueur la veut"
+          other: "%{count} joueurs la veulent"
+        choose:
+          zero: "CHOISIR POUR LA CARTE VOULUE"
+          one: "CHOISIR POUR LA CARTE VOULUE"
+          other: "CHOISIR POUR LES %{count} CARTES VOULUES"
     sales:
       create:
         throttled: "Doucement, les Archives comptent. Réessayez dans une minute."
       new:
+        wanted_badge: "DEMANDÉE · %{count}"
+        wanted_words:
+          zero: "demandée par %{count} joueur"
+          one: "demandée par %{count} joueur"
+          other: "demandée par %{count} joueurs"
         all_cards: "Toutes les cartes"
         average_price: "Prix moyen"
         back: "◀ Retour aux cartes"
@@ -2510,8 +3045,6 @@ fr:
           one: "%{count} disponible"
           other: "%{count} disponibles"
         heading: "Mettre en vente"
-        intro: "Choisissez une carte, fixez son prix et laissez les membres enchérir."
-        kicker: "Les Archives"
         received: "Vendue au prix de départ, vous recevez"
         relisting: "Ces montants sont ceux de votre vente précédente."
         rules: "La carte est réservée pendant la vente. Vous pouvez annuler tant qu'aucune offre n'est en tête."
@@ -2523,15 +3056,148 @@ fr:
         start_label: "PRIX DE DÉPART"
         step: "Étape %{step} sur 2"
         submit: "METTRE EN VENTE"
+      order:
+        better: "Un meilleur ordre vient d'arriver : %{amount}. Vérifiez-le, puis validez de nouveau."
+        none: "Aucun ordre d'achat pour cette carte."
+        submit: "VENDRE MAINTENANT"
+        submit_label: "Vendre maintenant à l'ordre d'achat, %{amount} PiCoins reçus"
+        terms_html: "Vente immédiate, sans timbre. Vous recevez %{received} (Effort de la Confrérie : %{commission})."
+        waiting_html: "Un ordre d'achat vous attend : %{amount}"
+      sold:
+        body_html: "%{card} est vendue à un ordre d'achat. Vous recevez %{amount}."
+        title: "VENDUE"
       strings:
         amount: "%{amount} PiCoins"
         invalid_price: "Entrez un nombre entier de PiCoins, au-dessus de zéro."
         minimum_hint: "Au moins %{amount} pour une %{rarity}"
         minimum_refusal: "Au moins %{amount} pour une %{rarity}."
+        order_waiting: "Un ordre d'achat vous attend : %{amount} PiCoins"
         stamp_short: "Il vous manque %{amount} PiCoins pour le timbre."
         status: "Vous recevez %{amount} PiCoins"
         step: "Étape %{step} sur 2"
+    wanted_choices:
+      create:
+        throttled: "Doucement, les Archives comptent. Réessayez dans une minute."
+      new:
+        step: "Étape 2 sur 2"
+        first:
+          zero: "Aucun autre exemplaire n'est confié."
+          one: "L'autre exemplaire est déjà confié : %{amount} PiCoins fabriqués."
+          other: "Les %{count} autres exemplaires sont déjà confiés : %{amount} PiCoins fabriqués."
+        intro:
+          zero: "%{count} carte que d'autres joueurs veulent."
+          one: "1 carte que d'autres joueurs veulent. Choisissez quoi en faire, puis validez."
+          other: "%{count} cartes que d'autres joueurs veulent. Choisissez quoi faire de chacune ; une seule validation applique tout."
+        heads:
+          card: "CARTE"
+          seekers: "JOUEURS"
+          order: "MEILLEUR ORDRE"
+          average: "PRIX MOYEN"
+          value: "CONFIÉE"
+          choice: "VOTRE CHOIX"
+          receive: "VOUS RECEVEZ"
+        copies:
+          zero: "×%{count}"
+          one: "×%{count}"
+          other: "×%{count}"
+        no_order: "Aucun ordre"
+        group: "%{card}, %{rarity}, saison %{season} : votre choix"
+        choices:
+          order: "À L'ORDRE"
+          auction: "ENCHÈRES"
+          entrust: "CONFIER"
+        order_label: "À l'ordre, %{amount} PiCoins"
+        entrust_label: "Confier, %{amount} PiCoins"
+        auction_note: "ouvre le prix de départ et la durée sous cette ligne"
+        start_label: "Prix de départ, %{card} %{rarity}"
+        duration_label: "Durée, %{card} %{rarity}"
+        dock:
+          label: "Vos choix"
+          now: "VOUS RECEVEZ MAINTENANT"
+          listed: "MIS EN VENTE"
+          stamp: "TIMBRE À PAYER"
+          all: "TOUT CONFIER QUAND MÊME"
+          finality: "Une vente à un ordre est immédiate et ne peut pas être annulée. Si vous partez sans valider, ces cartes restent dans votre collection."
+          validate:
+            zero: "VALIDER MON CHOIX"
+            one: "VALIDER MON CHOIX"
+            other: "VALIDER LES %{count} CHOIX"
+        changed:
+          zero: "Aucune ligne n'a changé."
+          one: "1 ligne a changé : %{cards}. Rien n'a été vendu, mis en vente ni confié."
+          other: "%{count} lignes ont changé : %{cards}. Rien n'a été vendu, mis en vente ni confié."
+        served_none_left: "Cet ordre d'achat vient d'être servi, et aucun autre n'atteint cette carte. Vérifiez votre choix, puis validez de nouveau."
+        to_fix:
+          zero: "Aucun prix à corriger"
+          one: "1 prix à corriger."
+          other: "%{count} prix à corriger."
+        stamps_short: "Il vous manque %{amount} PiCoins pour les timbres des enchères."
+      result:
+        heading:
+          zero: "VOTRE CHOIX EST APPLIQUÉ"
+          one: "VOTRE CHOIX EST APPLIQUÉ"
+          other: "VOS %{count} CHOIX SONT APPLIQUÉS"
+        partial: "%{applied} CHOIX SUR %{count} APPLIQUÉS"
+        received: "Vous recevez maintenant"
+        stamp_paid_html: "Timbre payé : %{amount}."
+        chips:
+          sold: "VENDUE"
+          listed: "EN COURS"
+          entrusted: "CONFIÉE"
+        commission_html: "(Effort de la Confrérie : %{amount})"
+        listed_html: "Mise en vente à %{amount}, fin %{end}. Timbre payé : %{stamp}."
+        listed_received_html: "Vendue au prix de départ, vous recevez %{amount}."
+        see_listing: "VOIR L'ANNONCE"
+        entrusted_html: "Le 100-6-Tron a fabriqué %{amount}. La carte rejoint les Archives."
+        gained: "reçus"
+        stamp: "timbre"
+        back: "RETOUR AU MARCHÉ"
+      strings:
+        amount: "%{amount} PiCoins"
+        now: "maintenant"
+        at_start: "au départ"
+        changed_to: "Votre choix passe à %{choice}."
+        choice_order: "À L'ORDRE"
+        choice_auction: "ENCHÈRES"
+        choice_entrust: "CONFIER"
+        sales:
+          zero: "Aucune vente à un ordre"
+          one: "1 vente à un ordre"
+          other: "%{count} ventes aux ordres"
+        entrusted:
+          zero: "Aucune carte confiée"
+          one: "1 carte confiée"
+          other: "%{count} cartes confiées"
+        listed:
+          zero: "Aucune carte au prix de départ"
+          one: "1 carte au prix de départ, vous recevriez"
+          other: "%{count} cartes au prix de départ, vous recevriez"
+        all_entrust: "TOUT CONFIER QUAND MÊME · %{amount}"
+        status: "Vous recevez maintenant %{amount}."
   markets:
+    shop_panel:
+      heading: "BOUTIQUE DE LA CONFRÉRIE"
+      count:
+        zero: "%{count} carte aux Archives"
+        one: "%{count} carte aux Archives"
+        other: "%{count} cartes aux Archives"
+      line: "Les Archives revendent les cartes confiées, à prix fixe."
+      list_label: "Cartes à la une des Archives"
+      see_all: "Voir toute la boutique"
+      see_all_label: "Voir toute la boutique de la Confrérie"
+    wanted:
+      heading: "VOS CARTES VOULUES"
+      empty: "Aucune de vos cartes n'est voulue pour le moment."
+      seekers:
+        zero: "%{count} joueur la veut"
+        one: "%{count} joueur la veut"
+        other: "%{count} joueurs la veulent"
+      order: "Ordre"
+      no_order: "Aucun ordre"
+      tile_label: "%{card}, %{rarity}, saison %{season}, %{seekers}, ordre d'achat %{amount} PiCoins. Mettre en vente"
+      tile_label_no_order: "%{card}, %{rarity}, saison %{season}, %{seekers}, aucun ordre d'achat. Mettre en vente"
+      see_all: "Tout voir"
+      see_all_label: "Tout voir, vos cartes voulues"
     filters:
       hide_mine: "Masquer mes ventes"
       wanted: "Cartes voulues"
@@ -2556,14 +3222,25 @@ fr:
       empty: "Aucune annonce pour le moment."
       more: "Charger plus"
       pages_label: "Autres annonces"
+      sort_prefix: "Tri :"
       sorts_label: "Trier les annonces"
       all_heading: "TOUTES LES ANNONCES"
       found_heading: "ANNONCES TROUVÉES"
       soon_heading: "SE TERMINE BIENTÔT"
       soon_note: "dans l'heure"
       soon_label: "Annonces qui se terminent dans l'heure"
+      found_listings:
+        zero: "%{number} annonce"
+        one: "%{number} annonce"
+        other: "%{number} annonces"
+      found_archives:
+        zero: "%{number} carte des Archives"
+        one: "%{number} carte des Archives"
+        other: "%{number} cartes des Archives"
+      no_listing: "Aucune annonce pour %{card}."
+      no_player_listing: "Aucune annonce de joueur pour %{card}."
+      place_order: "PASSER UN ORDRE"
       desk:
-        kicker: "COMPTOIR DE LA CONFRÉRIE"
         listings:
           zero: "Aucune annonce en cours."
           one: "%{number} annonce en cours."
@@ -2576,7 +3253,7 @@ fr:
         purse_label: "Vos PiCoins"
       exchange:
         title: "LA BOURSE DE LA CONFRÉRIE"
-        window: "ce que coûte une carte, en jours de capsules · 90 j"
+        window: "ce que coûte une carte, en PiCoins · 90 j"
         open: "VOIR LA BOURSE"
         empty: "Les premiers cours paraissent au lendemain des premières ventes."
       mine:
@@ -2599,13 +3276,6 @@ fr:
           other: "dont %{number} avec une offre"
         raise: "RELEVER"
         see: "VOIR"
-      newcomer:
-        title: "Bienvenue au comptoir"
-        body: "Ici tout se paie en PiCoins. Confiez vos exemplaires en double aux Archives : la Confrérie vous les crédite sur-le-champ."
-        spare:
-          zero: "Vous n'avez aucun exemplaire en double pour l'instant."
-          one: "Vous avez %{number} exemplaire en double."
-          other: "Vous avez %{number} exemplaires en double."
     show:
       kicker: "Chantier"
       heading: "La Confrérie construit le marché"
@@ -2646,11 +3316,17 @@ fr:
           one: "%{count} exemplaire dans votre collection"
           other: "%{count} exemplaires dans votre collection"
         wanted: "Voulue"
-        wanted_spoken: "manque à vos objectifs"
+        wanted_spoken: "voulue"
+      stand:
+        leading_amount: "max"
+        leading_spoken: "vous êtes en tête avec un maximum de %{amount}"
+        outbid_amount: "mini"
+        outbid_spoken: "votre offre est dépassée, offre minimale %{amount}"
     time_left:
       hours: "%{hours} h %{minutes}"
       minutes: "%{minutes} min"
       under: "moins d'une minute"
+      ended: "terminée"
   filters:
     price:
       title: "Prix"
@@ -2663,7 +3339,6 @@ fr:
   fortune_registers:
     show:
       title: "Le Chattomètre"
-      intro: "La Confrérie classe ses membres selon la chance de leurs capsules : ce que leurs cartes ont rapporté face à ce que les capsules promettent. Chaque semaine, les 10 % les plus chanceux sont Privilégiés."
       empty:
         week: "Aucun membre n'a encore ouvert de capsule cette semaine."
         all_time: "Aucun membre n'a encore ouvert de capsule."
@@ -2696,6 +3371,76 @@ fr:
         open_card: "Voir la carte de %{name}"
         capsules: "Capsules"
         hidden: "–"
+  grand_inventories:
+    show:
+      title: "Le Grand Inventaire · Gameble"
+      heading: "Le Grand Inventaire"
+      season: "Saison %{number} · %{name}"
+      back: "Grand Inventaire"
+      empty: "Aucune carte découverte pour l'instant."
+      everything_found: "La Confrérie a tout découvert."
+      count:
+        of: "/ %{total} cartes découvertes par la Confrérie"
+        spoken:
+          zero: "%{found} carte découverte sur %{total}"
+          one: "%{found} carte découverte sur %{total}"
+          other: "%{found} cartes découvertes sur %{total}"
+      rarity:
+        zero: "%{rarity} : %{found} découverte sur %{total}, voir ces cartes"
+        one: "%{rarity} : %{found} découverte sur %{total}, voir ces cartes"
+        other: "%{rarity} : %{found} découvertes sur %{total}, voir ces cartes"
+      rarity_total: "/ %{total}"
+      pace:
+        week_html:
+          zero: "<b>%{number}</b> cette semaine"
+          one: "<b>%{number}</b> cette semaine"
+          other: "<b>%{number}</b> cette semaine"
+        today_html:
+          zero: "<b>%{number}</b> aujourd'hui"
+          one: "<b>%{number}</b> aujourd'hui"
+          other: "<b>%{number}</b> aujourd'hui"
+        latest_html: "Dernière : %{card}, par %{player}, %{age}"
+      scopes:
+        label: "Saisons du Grand Inventaire"
+        all: "Toutes saisons"
+        current: "Saison en cours"
+        status:
+          all: "Toutes saisons : %{count}"
+          current: "Saison en cours : %{count}"
+      tabs:
+        label: "Vues du Grand Inventaire"
+        cards: "Cartes"
+        pioneers: "Pionniers"
+        sets: "Sets"
+    sets:
+      title: "Sets"
+      complete:
+        zero: "Aucun set entièrement découvert"
+        one: "1 set entièrement découvert"
+        other: "Entièrement découverts · %{number}"
+      closest: "Les plus proches"
+      done: "Découvert"
+      all: "Tout voir"
+      progress:
+        zero: "%{found} carte découverte sur %{total}"
+        one: "%{found} carte découverte sur %{total}"
+        other: "%{found} cartes découvertes sur %{total}"
+    cards:
+      title: "Cartes"
+      page_loaded: "Page %{page} chargée"
+      states:
+        found: "Découvertes"
+        all: "Tout"
+        missing: "À découvrir"
+        mine: "Mes découvertes"
+    card:
+      found: "%{card}, découverte par %{player}"
+      found_by_you: "%{card}, découverte par vous"
+      missing: "%{card}, à découvrir"
+      to_discover: "À découvrir"
+      anonymous: "anonyme"
+      you: "Vous"
+      you_badge: "VOUS"
   fortunes:
     gauge:
       you: "VOUS"
@@ -2737,6 +3482,7 @@ fr:
         regular: "Capsules standard"
         bonus: "Capsules quotidiennes"
         reward: "Récompenses de mission"
+        duel: "Capsules de duel"
       empty:
         week: "Aucune capsule ouverte cette semaine."
         all_time: "Aucune capsule ouverte pour l'instant."
@@ -2971,6 +3717,63 @@ fr:
       capital_gain: "Plus-value réalisée"
       quarterly_targets_met: "Objectifs trimestriels atteints"
       insider_trading: "Délit d'initié"
+      boosters_1000: "Client stratégique"
+      boosters_5000: "Actionnaire de référence"
+      boosters_10000: "Fait partie des meubles"
+      reposts_10: "Ambassadeur de marque"
+      reposts_50: "Service communication"
+      reposts_200: "Directeur de la communication"
+      trades_10: "Partenariat durable"
+      trades_50: "Chambre de commerce"
+      trades_100: "Accord de libre-échange"
+      picoins_50k: "Épargne de précaution"
+      picoins_500k: "Patrimoine imposable"
+      picoins_1m: "Premier million"
+      friends_10: "Réseau professionnel"
+      friends_25: "Team building"
+      friends_50: "Séminaire annuel"
+      reactions_50: "Retour constructif"
+      reactions_200: "Enquête de satisfaction"
+      reactions_500: "Responsable de l'engagement"
+      self_assessment: "Auto-évaluation"
+      viral_memo: "Note de service virale"
+      showcase_full: "Agencement du point de vente"
+      everything_must_go: "Tout doit disparaître"
+      entrusted_100: "Dépôt légal"
+      entrusted_1000: "Fonds d'archives"
+      entrusted_5000: "Mécénat d'entreprise"
+      entrusted_10000: "Legs au patrimoine"
+      employee_of_the_week: "Employé de la semaine"
+      room_for_improvement: "Marge de progression"
+      sustained_growth: "Croissance soutenue"
+      turnaround_plan: "Plan de redressement"
+      statement_of_requirements: "Cahier des charges"
+      delivered_on_schedule: "Livré dans les délais"
+      goals_10: "Revue de projet"
+      goals_25: "Chef de projet"
+      goals_50: "Directeur de programme"
+      avatar_changed: "Photo d'identité"
+      avatar_rebrand: "Refonte de l'image de marque"
+      source_audit: "Audit de conformité"
+      funding_review: "Étude de financement"
+      code_contribution: "Contribution en nature"
+      profiles_viewed_1: "Visite de courtoisie"
+      profiles_viewed_5: "Tournée d'inspection"
+      profiles_viewed_20: "Audit des effectifs"
+      profile_visits_10: "Accueil du public"
+      profile_visits_50: "Fréquentation notable"
+      profile_visits_100: "Pôle d'attraction"
+      discord_member: "Réunion d'équipe"
+      first_dispute_settled_amicably: "Premier différend réglé à l'amiable"
+      competitive_advantage_observed: "Avantage concurrentiel constaté"
+      dominant_position: "Position dominante"
+      abuse_of_dominant_position: "Abus de position dominante"
+      de_facto_monopoly: "Monopole de fait"
+      valuation_error: "Erreur de valorisation"
+      merger_by_absorption: "Fusion-absorption"
+      settled_at_the_margin: "Arbitrage à la marge"
+      client_base_diversification: "Diversification de la clientèle"
+      certified_versatility: "Polyvalence certifiée"
     show:
       title: "Succès"
       summary:
@@ -3013,6 +3816,63 @@ fr:
       capital_gain: "Revendre une édition pour au moins le double du prix payé aux enchères"
       quarterly_targets_met: "Vendre 25 cartes aux enchères"
       insider_trading: "Revendre 5 éditions différentes pour au moins le double du prix payé aux enchères"
+      boosters_1000: "Ouvrir 1 000 capsules"
+      boosters_5000: "Ouvrir 5 000 capsules"
+      boosters_10000: "Ouvrir 10 000 capsules"
+      reposts_10: "Reposter 10 cartes"
+      reposts_50: "Reposter 50 cartes"
+      reposts_200: "Reposter 200 cartes"
+      trades_10: "Conclure 10 échanges"
+      trades_50: "Conclure 50 échanges"
+      trades_100: "Conclure 100 échanges"
+      picoins_50k: "Détenir 50 000 PiCoins, enchères en cours comprises"
+      picoins_500k: "Détenir 500 000 PiCoins, enchères en cours comprises"
+      picoins_1m: "Détenir 1 000 000 PiCoins, enchères en cours comprises"
+      friends_10: "Avoir 10 amis"
+      friends_25: "Avoir 25 amis"
+      friends_50: "Avoir 50 amis"
+      reactions_50: "Réagir à 50 entrées du fil d'activité"
+      reactions_200: "Réagir à 200 entrées du fil d'activité"
+      reactions_500: "Réagir à 500 entrées du fil d'activité"
+      self_assessment: "Réagir à l'une de vos propres entrées du fil d'activité"
+      viral_memo: "Recevoir 10 réactions sur l'une de vos entrées du fil d'activité"
+      showcase_full: "Remplir les 5 places de votre vitrine"
+      everything_must_go: "Vider votre vitrine après l'avoir remplie"
+      entrusted_100: "Confier 100 cartes aux Archives"
+      entrusted_1000: "Confier 1 000 cartes aux Archives"
+      entrusted_5000: "Confier 5 000 cartes aux Archives"
+      entrusted_10000: "Confier 10 000 cartes aux Archives"
+      employee_of_the_week: "Être désigné membre le plus chanceux de la semaine par le Chattomètre"
+      room_for_improvement: "Finir une semaine à la dernière place du Chattomètre"
+      sustained_growth: "Finir 3 semaines de suite avec une chance au-dessus de zéro au Chattomètre"
+      turnaround_plan: "Finir 3 semaines de suite avec une chance en dessous de zéro au Chattomètre"
+      statement_of_requirements: "Créer un set perso de 10 jeux ou plus"
+      delivered_on_schedule: "Compléter un set perso de 10 jeux ou plus"
+      goals_10: "Atteindre 10 objectifs"
+      goals_25: "Atteindre 25 objectifs"
+      goals_50: "Atteindre 50 objectifs"
+      avatar_changed: "Choisir un avatar"
+      avatar_rebrand: "Choisir un avatar 5 fois"
+      source_audit: "Ouvrir le code source du jeu sur GitHub"
+      funding_review: "Ouvrir la page de soutien"
+      code_contribution: "Être distingué par l'auteur pour avoir contribué au code du jeu"
+      profiles_viewed_1: "Consulter le profil d'un autre joueur"
+      profiles_viewed_5: "Consulter 5 fois le profil d'autres joueurs"
+      profiles_viewed_20: "Consulter 20 fois le profil d'autres joueurs"
+      profile_visits_10: "Recevoir 10 visites sur votre profil"
+      profile_visits_50: "Recevoir 50 visites sur votre profil"
+      profile_visits_100: "Recevoir 100 visites sur votre profil"
+      discord_member: "Lier votre compte Discord dans les paramètres et rejoindre le serveur Discord de gameble"
+      first_dispute_settled_amicably: "Terminer un premier duel"
+      competitive_advantage_observed: "Gagner un premier duel"
+      dominant_position: "Gagner 10 duels"
+      abuse_of_dominant_position: "Gagner 50 duels"
+      de_facto_monopoly: "Gagner 100 duels"
+      valuation_error: "Gagner une manche avec une carte Commune contre une carte Légendaire"
+      merger_by_absorption: "Gagner un duel 10 à 0"
+      settled_at_the_margin: "Gagner un duel départagé à l'écart"
+      client_base_diversification: "Affronter 5 amis différents"
+      certified_versatility: "Gagner une manche avec chacune des cinq caractéristiques"
   invite_links:
     show:
       title: "%{name} vous invite"
@@ -3203,7 +4063,8 @@ fr:
       none:
         title: "Aucune carte disponible."
         none_owned: "Vous n'avez plus aucune de ces cartes."
-        all_reserved: "Vos exemplaires sont tous réservés dans d'autres échanges."
+        all_reserved: "Vos exemplaires sont tous réservés : dans d'autres échanges, en vente ou dans un deck."
+        friend_all_reserved: "%{name} n'a aucun exemplaire à proposer pour l'instant."
         friend_none_owned: "%{name} n'a plus aucune de ces cartes."
     actions:
       accept: "Accepter"
@@ -3248,9 +4109,9 @@ fr:
     dialog:
       title: "Supprimer mon compte"
       close: "Fermer"
-      market_html: "Votre solde de %{balance} PiCoins est détruit sans remboursement une fois vos annonces en cours retirées et vos offres libérées."
-      note: "Seront effacés définitivement : votre identifiant Steam, vos modes de connexion (et, chez Clerk, l'utilisateur qui détient votre adresse e-mail), les téléphones où vont vos notifications, votre nom, votre profil et son lien, l'heure de votre dernière visite, votre dernier export de données, les annonces que vous avez fermées, les notes de version que vous avez vues et votre dernière activité, votre collection, votre vitrine, vos paliers de sets, vos sets perso, vos objectifs, vos succès, vos dos de carte débloqués et votre dos de carte actif, vos capsules, ouvertes ou non, vos scores de chance, vos bonus du jour et vos récompenses de la mission hebdo, vos amis, vos invitations, votre code ami, la dernière ouverture de chacun de vos échanges, vos réactions aux entrées du fil et vos entrées du fil d'activité : tirages, découvertes, reposts, achats annoncés dans le fil et tous les échanges qui vous nomment. Vos échanges en cours seront annulés."
-      kept: "Restent, sans votre identifiant Steam ni votre nom : vos échanges passés, vos premières découvertes, vos contributions à la mission hebdo, votre historique du marché (annonces, enchères, cartes confiées, avis et mouvements de PiCoins, votre portefeuille vidé), les signalements, l'historique de modération, les signaux de comptes alternatifs, les versions des réglages du marché et les publications des graphes, et le journal des actions du jeu. Cette action est irréversible."
+      market_html: "Votre solde de %{balance} PiCoins est détruit sans remboursement une fois vos annonces en cours retirées, vos offres libérées et vos ordres d'achat en cours retirés."
+      note: "Seront effacés définitivement : votre identifiant Steam, vos modes de connexion (et, chez Clerk, l'utilisateur qui détient votre adresse e-mail), les téléphones où vont vos notifications, votre nom, votre profil et son lien, l'heure de votre dernière visite, votre dernier export de données, les annonces que vous avez fermées, les notes de version que vous avez vues et votre dernière activité, votre collection, votre vitrine, vos paliers de sets, vos sets perso, vos decks, vos emplacements achetés, vos objectifs, vos succès, vos dos de carte débloqués et votre dos de carte actif, vos capsules, ouvertes ou non, vos scores de chance, vos bonus du jour et vos récompenses de la mission hebdo, vos amis, vos invitations, votre code ami, vos feedbacks, vos visites de profils, la dernière ouverture de chacun de vos échanges, les notifications que vous avez lues, vos réactions aux entrées du fil et vos entrées du fil d'activité : tirages, découvertes, reposts, achats annoncés dans le fil et tous les échanges qui vous nomment. Vos échanges en cours seront annulés."
+      kept: "Restent, sans votre identifiant Steam ni votre nom : vos échanges passés, vos duels passés, vos premières découvertes, vos contributions à la mission hebdo, votre historique du marché (annonces, enchères, ordres d'achat et ventes à des ordres, cartes confiées, achats aux Archives, avis et mouvements de PiCoins, votre portefeuille vidé), les signalements, l'historique de modération, les signaux de comptes alternatifs, les versions des réglages du marché et les publications des graphes, et le journal des actions du jeu. Cette action est irréversible."
       word: "SUPPRIMER"
       label: "Tapez %{word} pour confirmer"
       submit: "Supprimer définitivement"
@@ -3275,14 +4136,20 @@ fr:
     create:
       sent: "Merci. L'équipe de modération examinera ce profil. Le joueur ne verra pas qui l'a signalé."
       throttled: "Trop de tentatives en une minute. Réessayez dans un instant."
+  showcase_editors:
+    show:
+      title: "Modifier la vitrine"
+      grid: "Vos cartes"
+      dock: "Votre vitrine"
+      count: "%{chosen}/%{total}"
+      remove: "Retirer %{title} de la vitrine"
+      hint: "Touchez une carte pour l'ajouter ou la retirer. Vos cartes les plus rares occupent les places libres."
+      done: "Terminé"
   showcases:
     add: "Mettre en vitrine"
     add_edition: "Mettre la S%{season} en vitrine"
     remove: "Retirer de la vitrine"
     remove_edition: "Retirer la S%{season} de la vitrine"
-    removed:
-      title: "Retiré de la vitrine"
-      text: "%{title} n'est plus dans votre vitrine."
     full: "Vitrine pleine : retirez une carte pour en ajouter une autre."
     not_found: "Cette carte n'existe pas."
     open: "Ouvrir ma vitrine"
@@ -3294,7 +4161,9 @@ fr:
       gg: "GG"
       heart: "Cœur"
       middle_finger: "Doigt d'honneur"
+      poop: "Crotte"
       thumb: "Pouce levé"
+      want: "Je la veux"
       wow: "Wow"
     reacted: "Réaction envoyée : %{reaction}."
     remove: "Retirer votre réaction : %{reaction}"
@@ -3391,6 +4260,7 @@ fr:
     one_below: 2
     rarity_prices:
       change_html: "%{change} en 90 j"
+      days_of_capsules_html: "≈ %{duration} de capsules"
       columns:
         day: "Jour"
       empty: "Aucun prix pour l'instant."
@@ -3402,7 +4272,7 @@ fr:
         title: "INDICE DES PRIX"
       line: "Une carte se compte en jours de capsules, et cette mesure reste juste quand les PiCoins se multiplient."
       regular: "Joueur régulier : 40 à 50 capsules par jour, revenu médian des joueurs actifs."
-      subtitle: "prix moyen, en jours de capsules d'un joueur régulier"
+      subtitle: "prix moyen en PiCoins, avec sa valeur en jours de capsules d'un joueur régulier"
       tiles: "Prix de chaque rareté"
       tooltip: "%{series} : %{value}"
       window: "90 derniers jours"
@@ -3428,12 +4298,11 @@ fr:
         summary: "Sur 30 jours, %{minted} PiCoins frappés et %{destroyed} détruits (%{ratio}). %{circulation} en circulation."
         title: "FRAPPÉS ET DÉTRUITS PAR JOUR"
       heading: "LE RÉACTEUR DES BRIÉTÉS"
-      line: "« Le 100-6-Tron frappe chaque PiCoin qu'il vous remet et réduit en cendres chaque timbre et chaque effort. Voici sa comptabilité, sans fard. »"
       window: "30 derniers jours"
       words:
         balance: "Solde du jour : %{amount}"
         series:
-          destroyed: "Détruits (timbres et efforts)"
+          destroyed: "Détruits (timbres, efforts et achats à la Confrérie)"
           minted: "Frappés (cartes confiées)"
         tooltip: "%{series} : %{value}"
     show_table: "VOIR LE TABLEAU"
@@ -3514,8 +4383,18 @@ fr:
       add: "Marquer comme objectif"
       remove: "Objectif %{number} · Retirer"
       remove_label: "Objectif %{number}, %{set}. Retirer des objectifs"
+    orders:
+      button: "Passer des ordres · %{count}"
+      label:
+        zero: "Passer des ordres, %{count} carte manquante"
+        one: "Passer des ordres, %{count} carte manquante"
+        other: "Passer des ordres, %{count} cartes manquantes"
+    bought:
+      title: "%{ordinal} OBJECTIF ACHETÉ"
+      spoken: "%{ordinal} objectif acheté"
+      line: "%{set} est votre objectif %{number}."
     full:
-      limit: "5 objectifs au plus"
+      limit: "10 objectifs au plus"
       hint: "Retirez un objectif pour en ajouter un autre."
       link: "Voir mes objectifs"
     reached:
@@ -3648,8 +4527,10 @@ fr:
         empty: "Aucune activité pour l'instant."
         open_feed: "Ouvrir le fil d'activité"
         open_register: "Voir Le Chattomètre"
+        grand_inventory:
+          open: "Voir le Grand Inventaire"
         season: "Saison en cours"
-        season_name: "Saison %{number} · Grand catalogue"
+        season_name: "Saison %{number} · %{name}"
         facts:
           players: "Joueurs actifs cette semaine"
           packs: "Capsules ouvertes aujourd'hui"
@@ -3748,7 +4629,414 @@ fr:
         notice: "Gameble n'est affilié ni à Steam ni à Valve. Les illustrations appartiennent aux éditeurs des jeux et à leurs artistes."
   external_links:
     new_tab: "(nouvel onglet)"
+  decks:
+    deleted: "Deck supprimé."
+    throttled: "Trop de changements en une minute. Réessayez dans un instant."
+    editor:
+      title: "Deck"
+      info:
+        open: "Détails"
+        page: "Fiche complète"
+        title: "Détails de la carte"
+      name_label: "Nom du deck"
+      save: "Enregistrer"
+      slots: "Emplacements"
+      empty_slot: "Emplacement vide"
+      collection: "Toutes vos cartes"
+      legend:
+        heading: "Légende"
+        moves: "▲ ▼ Stat en hausse ou en baisse cette semaine"
+        bars: "Barres : rang parmi toutes les cartes, de 0 à 99"
+        stats:
+          popularity: "nombre d'avis sur Steam"
+          rating: "part d'avis positifs"
+          release: "date de sortie"
+          discovery: "rapidité de découverte par la communauté"
+          circulation: "nombre de joueurs qui la possèdent"
+      recommendations: "Recommandations"
+      more: "Voir plus de cartes"
+      no_match: "Aucune carte ne correspond."
+      search:
+        label: "Rechercher dans vos cartes"
+        placeholder: "Rechercher une carte…"
+      empty_collection: "Aucune carte dans votre collection pour l'instant."
+      no_stats: "Stats lundi"
+      trump: "%{trump} · %{stat}"
+      coverage:
+        advantages: "Avantages"
+        drawbacks: "Il manque"
+        many: "Beaucoup de %{cards}"
+        lacking: "Manque de %{cards}"
+        qualifiers:
+          popularity:
+            high: "forte"
+            low: "faible"
+          rating:
+            high: "haute"
+            low: "basse"
+          release:
+            high: "récente"
+            low: "ancienne"
+          discovery:
+            high: "précoce"
+            low: "tardive"
+          circulation:
+            high: "forte"
+            low: "faible"
+        gap_label: "Manque de %{cards}, trier la collection"
+        no_advantage: "Aucun pour l'instant"
+        none: "Rien ne manque"
+        cards:
+          popularity:
+            high: "cartes populaires"
+            low: "cartes peu connues"
+          rating:
+            high: "cartes bien notées"
+            low: "cartes mal notées"
+          release:
+            high: "cartes récentes"
+            low: "cartes anciennes"
+          discovery:
+            high: "cartes découvertes tôt"
+            low: "cartes découvertes tard"
+          circulation:
+            high: "cartes répandues"
+            low: "cartes introuvables"
+      sort:
+        label: "Trier"
+        by_title: "Par titre"
+        prefix: "Tri :"
+      trump_filter:
+        label: "Atout"
+        all: "Toutes"
+      moves:
+        up: "%{stat} en hausse : %{to}, contre %{from} lundi dernier"
+        down: "%{stat} en baisse : %{to}, contre %{from} lundi dernier"
+      delete: "Supprimer le deck"
+      delete_dialog:
+        text: "Les cartes restent dans votre collection."
+        confirm: "Supprimer"
+        cancel: "Annuler"
+        close: "Fermer"
+      strings:
+        add: "Ajouter"
+        in_deck: "Dans le deck"
+        in_deck_suffix: ", dans le deck"
+        remove: Retirer
+        remove_slot: "Retirer %{card} du deck"
+        added: "%{card} ajoutée, %{count} sur 12"
+        removed: "%{card} retirée, %{count} sur 12"
+        count_hidden: "%{count} sur 12"
+        delete_title: "Supprimer le deck « %{deck} » ?"
+        full: "Le deck est complet."
+        same_game: "Ce jeu est déjà dans le deck."
+        save_failed: "Enregistrement impossible, réessayez."
+        save_state_failed: "Non enregistré"
+        save_state_saved: "Enregistré"
+        save_state_saving: "Enregistrement…"
+        sorted: "Collection triée : %{call}"
+    holding:
+      tag: "Dans un deck"
+      names: "Dans : %{decks}"
+      words: "dans un deck : %{decks}"
+      remove: "Retirer des decks"
+      remove_label: "Retirer %{card} des decks"
+    removal:
+      title:
+        zero: "Retirer %{card} des decks ?"
+        one: "Retirer %{card} de %{count} deck ?"
+        other: "Retirer %{card} de %{count} decks ?"
+      text: "Un deck complet redevient un brouillon."
+      confirm: "Retirer"
+      cancel: "Annuler"
+      close: "Fermer"
+      done: "%{card} n'est plus dans aucun deck."
+      throttled: "Trop de retraits en une minute. Réessayez dans un instant."
+  duel_stats:
+    heading: "Duel"
+    trump: "Atout"
+    dated: "Valeurs du %{date}"
+    no_value: "Aucune valeur"
+    names:
+      popularity: "Popularité"
+      rating: "Note"
+      release: "Sortie"
+      discovery: "Découverte"
+      circulation: "Circulation"
+    short:
+      popularity: "Pop."
+      rating: "Note"
+      release: "Sortie"
+      discovery: "Déc."
+      circulation: "Circ."
+    directions:
+      popularity:
+        high: "La plus populaire"
+        low: "La plus confidentielle"
+      rating:
+        high: "La mieux notée"
+        low: "La moins bien notée"
+      release:
+        high: "La plus récente"
+        low: "La plus ancienne"
+      discovery:
+        high: "Découverte en premier"
+        low: "Découverte en dernier"
+      circulation:
+        high: "La plus répandue"
+        low: "La plus introuvable"
+    words:
+      popularity:
+        high: "Plus populaire que %{percent} des cartes"
+        low: "Plus confidentielle que %{percent} des cartes"
+      rating:
+        high: "Mieux notée que %{percent} des cartes"
+        low: "Moins bien notée que %{percent} des cartes"
+      release:
+        high: "Plus récente que %{percent} des cartes"
+        low: "Plus ancienne que %{percent} des cartes"
+      discovery:
+        high: "Découverte avant %{percent} des cartes"
+        low: "Découverte après %{percent} des cartes"
+      circulation:
+        high: "Plus répandue que %{percent} des cartes %{rarity}"
+        low: "Plus introuvable que %{percent} des cartes %{rarity}"
+    rarities:
+      common: "communes"
+      uncommon: "peu communes"
+      rare: "rares"
+      epic: "épiques"
+      legendary: "légendaires"
+    values:
+      popularity:
+        zero: "%{number} avis"
+        one: "%{number} avis"
+        other: "%{number} avis"
+      rating: "%{percent} positives"
+      circulation:
+        zero: "%{number} joueur"
+        one: "%{number} joueur"
+        other: "%{number} joueurs"
+  duels:
+  duels:
+    alpha: "ALPHA"
+    alpha_warning: "Attention, ce mode est en alpha. Il peut contenir des bugs et des problèmes d'équilibrage. Vos parties sont analysées pour équilibrer les règles."
+    archetypes:
+      coverage: "couverture"
+      popularity: "popularité"
+      rating: "note"
+      release: "sortie"
+      discovery: "découverte"
+      circulation: "circulation"
+      two_stats: "deux stats"
+      trumps: "atouts"
+      random: "aléatoire"
+      other: "autre"
+    feedback: "Envoyer un feedback"
+    show:
+      title: "Duels"
+    tutorial:
+      details: "Fonctionnement détaillé"
+      heading: "Comment fonctionne un duel"
+      steps:
+        deck:
+          title: "Composez un deck"
+          text: "Choisissez 12 cartes que vous possédez. Veillez à ce que votre deck soit équilibré pour gagner les 5 manches."
+        challenge:
+          title: "Défiez un ami"
+          text: "Défiez un ami avec un de vos decks personnalisés. Lors de la partie, vos cartes sont visibles, mais votre main reste cachée."
+        call:
+          title: "Faites le bon choix"
+          text: "Choisissez une carte de votre main ainsi qu'une statistique qui vous permettra de remporter la manche selon les cartes disponibles de votre adversaire. Attention, une statistique ne peut pas être réutilisée deux fois, donc jaugez bien."
+        win:
+          title: "Répondez à l'aveugle !"
+          text: "Lorsque c'est le tour de votre adversaire, essayez de deviner quelle statistique il a choisie selon sa carte, afin d'y répondre le mieux possible et de gagner à l'aveugle."
+    challenge:
+      button: "Défier"
+      button_in_duel: "Défier en duel"
+      in_duel: "Duel en cours"
+      label: "Défier %{name}"
+      label_in_duel: "Défier %{name} en duel"
+    clock:
+      seconds: "%{seconds} s"
+      spoken: "%{seconds} secondes"
+      warning: "10 secondes"
+      you: "Vous"
+    connection:
+      own_lost: "Connexion perdue… %{seconds} s"
+      own_lost_spoken: "Votre connexion est perdue."
+      other_lost: "Connexion de %{name} perdue… %{seconds} s"
+      other_lost_spoken: "La connexion de %{name} est perdue. Ses coups seront joués automatiquement dans une minute."
+    decks:
+      heading: "Mes decks"
+      count: "%{count} / %{max}"
+      heading_spoken: "Mes decks, %{count} sur %{max}"
+      new: "Nouveau deck"
+      complete:
+        zero: ", %{count} carte"
+        one: ", %{count} carte"
+        other: ", %{count} cartes"
+      draft: ", brouillon, %{count} sur %{total}"
+    history:
+      heading: "Derniers duels"
+    record:
+      label: "Record de duels"
+      kinds:
+        wins: "Victoires"
+        losses: "Défaites"
+        draws: "Égalités"
+      rate: "%{percent} % de victoires"
+      line_html: "Duels : %{wins}, %{losses}, %{draws}"
+      wins_html:
+        zero: "%{figure} victoire"
+        one: "%{figure} victoire"
+        other: "%{figure} victoires"
+      losses_html:
+        zero: "%{figure} défaite"
+        one: "%{figure} défaite"
+        other: "%{figure} défaites"
+      draws_html:
+        zero: "%{figure} égalité"
+        one: "%{figure} égalité"
+        other: "%{figure} égalités"
+    lobby:
+      deck: "Votre deck"
+      friend: "Ami"
+      challenge: "Défier"
+      accept: "Accepter"
+      resume: "Reprendre"
+      resume_label: "Reprendre le duel contre %{name}"
+      received_html: "%{name} vous défie en duel."
+      waiting_html: "En attente de la réponse de %{name}…"
+      in_progress_html: "Duel en cours contre %{name}."
+      practice: "S'entraîner contre le bot"
+      practice_hint: "Entraînement seulement : il ne compte pour rien."
+    online:
+      add_friends: "Ajouter des amis"
+      heading: "En ligne · %{count}"
+      no_friends: "Ajoutez des amis pour les défier."
+      none: "Aucun ami en ligne pour l'instant."
+    play:
+      title: "Duel"
+    received:
+      cancelled: "%{name} a annulé son défi."
+      lapsed: "Le défi de %{name} a expiré."
+      refuse: "Refuser"
+      refused: "Défi refusé."
+    sheet:
+      cancel: "Annuler"
+      deck_cards: "%{count} / %{total}"
+      gone: "%{name} n'est plus disponible."
+      in_duel: "%{name}, duel en cours"
+      no_deck: "Il vous faut un deck complet de 12 cartes pour défier."
+      open: "Défier un ami"
+      outcome:
+        accepted: "%{name} a accepté."
+        lapsed: "%{name} n'a pas répondu."
+        no_deck: "%{name} n'a pas de deck complet."
+        refused: "%{name} a décliné."
+      title: "Défier un ami"
+    board:
+      forfeit:
+        button: "Abandonner le duel"
+        by_them: "%{name} a abandonné le duel."
+        by_you: "Vous avez abandonné le duel."
+        confirm: "Abandonner ce duel ? Votre adversaire le remporte."
+      see_rounds: "Voir les manches"
+      verdict:
+        draw: "ÉGALITÉ"
+        loss: "DÉFAITE"
+        win: "VICTOIRE !"
+      versus_html: "contre %{name}"
+      round: "Manche %{number} / 10"
+      select: "Sélectionner"
+      round_spoken: "Manche %{number} sur 10"
+      score_spoken: "%{score} à %{other_score}"
+      margin: "écart"
+      margin_spoken:
+        plus: "plus %{points}"
+        minus: "moins %{points}"
+        even: "%{points}"
+      turn:
+        call: "À vous d'annoncer"
+        answer: "À vous de répondre"
+        their_call_html: "%{name} annonce…"
+        their_answer_html: "%{name} répond…"
+      call: "Annoncer"
+      sending: "Envoi…"
+      answer: "Répondre avec cette carte"
+      bot_archetype: "Le bot joue un deck %{archetype}"
+      hidden_call: "Annonce cachée"
+      called_status: "%{name} a annoncé. Sa carte : %{card}."
+      card_name: "%{title}, %{year}"
+      table: "Table"
+      previous: "Manche précédente"
+      next_round: "Manche suivante"
+      their_deck: "Son deck"
+      slot:
+        call: "Annonce"
+        answer: "Réponse"
+      stage:
+        in_hand: "En main"
+        played: "Jouée"
+        to_play: "À jouer"
+      hint:
+        call: "Choisissez une carte, puis appuyez sur le côté de la stat que vous annoncez. Votre adversaire ne verra pas la stat."
+        answer: "Jouez une carte de votre main. Vous ne savez pas sur quelle stat elle sera jugée."
+      my_deck: "Votre deck"
+      played: "Joué"
+      next: "Suivante"
+      stat_called: "%{label}, déjà annoncée"
+      stat_label: "%{name}, %{words}, %{value}"
+      directions_lowercase: true
+      outcome:
+        won: "Gagnée"
+        lost: "Perdue"
+        drawn: "Nulle"
+      reveal:
+        won: "Manche %{number} gagnée : %{card}, %{value}, contre %{other_card}, %{other_value}, %{direction}. %{score} à %{other_score}."
+        lost: "Manche %{number} perdue : %{card}, %{value}, contre %{other_card}, %{other_value}, %{direction}. %{score} à %{other_score}."
+        drawn: "Manche %{number} nulle : %{card}, %{value}, contre %{other_card}, %{other_value}, %{direction}. %{score} à %{other_score}."
+      round_line: "Manche %{number}, %{name} annonce %{direction} : %{card}, contre %{other_card}. %{outcome}."
+      decided_on_value: "départagée à la valeur exacte"
+      automatic: "Coup joué automatiquement"
+      result:
+        win_html: "Victoire contre %{name} · %{score} – %{other_score}"
+        loss_html: "Défaite contre %{name} · %{score} – %{other_score}"
+        draw_html: "Égalité avec %{name} · %{score} – %{other_score}"
+      result_spoken:
+        win: "Victoire contre %{name}, %{score} à %{other_score}"
+        loss: "Défaite contre %{name}, %{score} à %{other_score}"
+        draw: "Égalité avec %{name}, %{score} à %{other_score}"
+      result_margin: ", départagée à l'écart de %{margin} points de centile"
+      decided_on_margin: "Départagé à l'écart : %{margin} points de centile"
+      rematch: "Rejouer"
+      rematch_name: "Rejouer contre %{name}"
+      rematch_offline: "%{name} n'est plus en ligne."
+      rematch_in_duel: "Duel en cours"
+      ended: "Ce défi est terminé."
+    throttled: "Trop de coups en une minute. Réessayez dans un instant."
+  exchanges:
+    tabs:
+      label: "Commerce"
+      friends: "Entre amis"
+      market: "Marché"
+      friends_waiting:
+        zero: ", %{number} échange en attente"
+        one: ", %{number} échange en attente"
+        other: ", %{number} échanges en attente"
+      market_outbid:
+        zero: ", %{number} enchère dépassée"
+        one: ", %{number} enchère dépassée"
+        other: ", %{number} enchères dépassées"
+      throttled: "Trop de changements en une minute. Réessayez dans un instant."
   card_details:
+    wanted:
+      badge: "DEMANDÉE"
+      line_html: "%{seekers} · meilleur ordre %{amount}"
+      line_no_order: "%{seekers} · aucun ordre d'achat"
+    order:
+      button: "Passer un ordre"
     actions:
       collection: "Collection"
       links: "Liens"
@@ -3802,6 +5090,10 @@ fr:
     copies_reserved: "%{copies}, dont %{reserved}"
     reserved:
       and: " et "
+      in_deck:
+        zero: "%{count} dans un deck"
+        one: "%{count} dans un deck"
+        other: "%{count} dans des decks"
       on_sale:
         zero: "%{count} en vente"
         one: "%{count} en vente"
@@ -3847,6 +5139,7 @@ fr:
   cards:
     face:
       image_missing: "Image indisponible"
+      loading: "Chargement"
     show:
       invitation: "Ouvrez des capsules, complétez des sets, échangez avec vos amis."
       pitch_title: "Vos jeux Steam, en cartes à collectionner."
@@ -3950,6 +5243,8 @@ fr:
         other_season: "appartient à une autre saison"
   errors:
     accounts:
+      invalid_feedback: "Écrivez votre feedback en 1000 caractères au plus."
+      unknown_feature: "Cette fonctionnalité n'est pas ouverte aux feedbacks."
       incomplete_release_note: "Une note prête a besoin de son titre et de son texte dans les deux langues."
       invalid_release_note: "Un titre fait 80 caractères au plus, un texte 1500."
       invalid_release_note_state: "Cet état n'existe pas."
@@ -4008,6 +5303,7 @@ fr:
       unfilled_sources: "Des cartes de la saison en brouillon ont été importées avant que leurs sources soient enregistrées, officier : un genre d'avant les thèmes ou aucun nombre d'avis. Publiées, elles tomberaient dans les OVNI et laisseraient les sets franchise, studio et panthéon incomplets sans qu'on le voie. Lance steam:fill_card_sources, puis publie."
       invalid_tag: "Ce n'est pas un tag Steam que les registres connaissent, officier."
       invalid_theme_name: "Un thème a besoin d'un nom en français et en anglais, de 60 caractères au plus, officier."
+      invalid_season_name: "Une saison a besoin d'un nom en français et en anglais, de 60 caractères au plus, officier."
       unclassified_tags:
         zero: "Plus aucun tag à classer, officier."
         one: "%{count} tag des cartes du brouillon n'est pas encore classé, officier. Rattache-le à un thème ou écarte-le sur la page des thèmes, puis publie."
@@ -4027,6 +5323,7 @@ fr:
       achievement_not_earned: "Vous n'avez pas obtenu ce succès."
       unknown_achievement: "Ce succès n'existe pas."
       unknown_reaction: "Cette réaction n'existe pas."
+      unknown_reason: "Les stats de duel ne connaissent pas ce motif de calcul."
       entry_not_found: "Cette entrée du fil est introuvable."
       player_required: "Connectez-vous avec un compte actif pour faire cela."
       invalid_time: "L'heure envoyée n'a pas pu être lue. Rechargez la page."
@@ -4065,18 +5362,42 @@ fr:
       unknown_player: "Ce lien d'invitation n'est pas valide."
       already_friends: "Vous êtes déjà amis."
       not_a_friend: "Ce joueur ne fait pas partie de vos amis."
+      friend_busy: "Cet ami est déjà en duel ou a déjà un défi en attente."
+      friend_unavailable: "Cet ami n'est pas en ligne pour l'instant."
+      deck_not_ready: "Un brouillon ne peut pas jouer : il lui faut 12 cartes."
+      not_your_move: "Ce coup ne vous revient plus."
+      not_due: "Ce coup a encore du temps."
+      stat_already_called: "Vous avez déjà annoncé cette caractéristique."
+      card_not_in_hand: "Cette carte n'est pas dans votre main."
+      duel_in_progress: "Vous avez déjà un duel en cours."
+      own_duels_closed: "Vos duels sont fermés tant que votre profil est privé."
+      friend_duels_closed: "Duels fermés tant que ce profil est privé."
+      duel_not_found: "Ce duel est introuvable."
+      invalid_move: "Ce coup n'a pas pu être lu. Rechargez la page."
       already_sent: "Invitation déjà envoyée."
       not_found: "Cette invitation n'existe plus."
       card_not_owned: "Vous ne possédez pas cette carte."
+      too_many_decks: "Cinq decks au plus : supprimez-en un pour en créer un autre."
+      deck_name_required: "Donnez un nom au deck."
+      deck_name_too_long: "24 caractères au plus."
+      deck_name_taken: "Vous avez déjà un deck de ce nom."
+      deck_not_found: "Ce deck est introuvable."
+      not_yet_ranked: "Cette carte aura ses stats lundi."
+      deck_full: "Le deck est complet."
+      game_already_in_deck: "Ce jeu est déjà dans le deck."
+      no_free_copy: "Toutes vos copies de cette carte sont réservées."
       already_reposted: "Vous avez déjà reposté cette carte aujourd'hui. Réessayez demain."
       repost_limit_reached: "Vous avez beaucoup reposté depuis une heure. Réessayez plus tard."
       card_already_showcased: "Cette carte est déjà dans votre vitrine."
       card_not_showcased: "Cette carte n'est pas dans votre vitrine."
       custom_set_not_found: "Ce set n'existe pas ou n'est pas à vous."
       goal_set_not_found: "Ce set ne fait pas partie de la saison publiée."
+      goal_already_set: "Ce set est déjà un objectif."
+      slot_already_bought: "Cet emplacement est déjà acheté."
+      slot_ceiling: "Vous avez déjà tous les emplacements possibles."
       goal_set_complete: "Ce set est déjà complet."
       library_set_empty: "Votre bibliothèque Steam ne contient encore aucun jeu du catalogue."
-      too_many_goals: "5 objectifs au plus. Retirez un objectif pour en ajouter un autre."
+      too_many_goals: "10 objectifs au plus. Retirez un objectif pour en ajouter un autre."
       game_not_in_catalog: "Un jeu choisi n'est pas dans le catalogue. Rechargez la page et réessayez."
       name_required: "NOM REQUIS · Donnez un nom à votre set."
       name_taken: "NOM DÉJÀ PRIS · Un autre de vos sets porte ce nom."
@@ -4092,6 +5413,12 @@ fr:
       back_locked: "Ce dos de carte est encore verrouillé."
       avatar_locked: "Cet avatar est encore verrouillé."
       unknown_avatar: "Cet avatar n'existe pas."
+      unknown_link: "Ce lien n'existe pas."
+      profile_not_found: "Ce profil est introuvable."
+      recently_visited: "Ce profil vient d'être visité."
+      code_contribution_already_granted: "Ce joueur a déjà le succès de contribution au code."
+      player_not_found: "Ce profil est introuvable."
+      unknown_tab: "Cet onglet n'existe pas."
       unknown_back: "Ce dos de carte n'existe pas."
       unknown_season: "Vous n'avez pas obtenu ce dos de carte pendant cette saison."
       showcase_edge: "Cette carte ne peut pas aller plus loin."
@@ -4118,13 +5445,25 @@ fr:
       market_busy: "Les Archives sont occupées pour le moment. Réessayez dans un instant."
       market_closed: "Le marché est suspendu pour le moment."
       copy_not_free: "Cette carte n'est plus disponible."
+      best_order_changed: "Cet ordre d'achat vient d'être servi. Vérifiez le nouveau meilleur ordre, puis validez de nouveau."
       invalid_duration: "Choisissez l'une des durées proposées."
       invalid_price: "Entrez un nombre entier de PiCoins, au-dessus de zéro."
       stamp_not_covered: "Il vous manque %{amount} PiCoins pour le timbre."
       start_below_minimum: "Au moins %{amount} pour une %{rarity}."
+      card_not_published: "Cette carte n'est pas encore publiée."
+      order_below_minimum: "Au moins %{amount} pour une %{rarity}."
+      order_already_open: "Vous avez déjà un ordre sur %{card} : %{amount}, encore %{days} j."
+      order_not_open: "Cet ordre n'est plus en cours."
+      order_served: "Cet ordre vient d'être servi."
+      order_not_found: "Cet ordre n'existe pas."
       no_rarity: "Une de ces cartes n'a pas encore de rareté : la Confrérie ne peut pas l'estimer."
       not_enough_copies: "Vous n'avez pas autant d'exemplaires libres d'une de ces cartes."
       nothing_fits: "Aucune carte ne tient dans votre plafond du jour. Il se renouvelle à 00:00 UTC."
+      invalid_choices: "Certains choix sont à corriger. Rien n'a été vendu, mis en vente ni confié."
+      invalid_choice: "Ce choix n'existe pas."
+      not_in_shop: "Cette carte n'est plus vendue aux Archives."
+      out_of_stock: "Cette carte n'est plus disponible."
+      invalid_purchase_token: "Cet achat n'a pas pu être lu. Rechargez la page."
     steam:
       invalid_claimed_id: "La réponse de Steam n'a pas été reconnue. Connectez-vous à nouveau."
       sign_in_failed: "La connexion n'a pas abouti. Réessayez."

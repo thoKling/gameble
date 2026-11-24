@@ -6,11 +6,15 @@ module Game
       transaction do
         step DropFriendsAndTrades.new.call(player:)
         BankLock.acquire(player.id)
+        step ReleaseDuelSeats.new.call(player:)
         Market::Notice.where(player_id: player.id).delete_all
         Market::AltSignal.where(account_id: player.id).or(Market::AltSignal.where(other_account_id: player.id)).delete_all
+        Market::TiedAccount.where(low_account_id: player.id).or(Market::TiedAccount.where(high_account_id: player.id)).delete_all
         FeedReaction.where(player_id: player.id).delete_all
         ReactionNotice.where(reactor_id: player.id).delete_all
         TradeView.where(player_id: player.id).delete_all
+        ProfileVisit.where(viewer_id: player.id).or(ProfileVisit.where(visited_id: player.id)).delete_all
+        BellRead.where(player_id: player.id).delete_all
         FeedEntry.where(player_id: player.id).or(FeedEntry.where(partner_id: player.id)).delete_all
         DailyBonusClaim.where(player_id: player.id).delete_all
         GoalReward.where(player_id: player.id).delete_all
@@ -21,7 +25,11 @@ module Game
         ShowcaseEntry.where(player_id: player.id).delete_all
         Goal.where(player_id: player.id).delete_all
         CustomSet.where(player_id: player.id).delete_all
+        Deck.where(player_id: player.id).delete_all
+        CapacitySlot.where(player_id: player.id).delete_all
         Holding.where(player_id: player.id).delete_all
+        Market::RefreshWanted.call(player)
+        Market::PendingWantedRefresh.where(player_id: player.id).delete_all
         AchievementUnlock.where(player_id: player.id).delete_all
         CardBackUnlock.where(player_id: player.id).delete_all
         FriendCode.where(player_id: player.id).delete_all

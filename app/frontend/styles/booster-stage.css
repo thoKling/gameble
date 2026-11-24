@@ -1,0 +1,235 @@
+/*
+ * The stage's floor and the opened capsule's card badges. The floor is a grid drawn once on a canvas
+ * (stage-grid), lit around a mouse on a second canvas; the CSS background is the same floor for the
+ * first frame.
+ */
+
+:root {
+  --stage-floor:
+    radial-gradient(
+      ellipse 55% 45% at 50% 38%,
+      color-mix(in srgb, var(--color-accent) 20%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      ellipse 70% 30% at 50% 100%,
+      color-mix(in srgb, var(--color-lime) 10%, transparent),
+      transparent 70%
+    ),
+    linear-gradient(color-mix(in srgb, var(--color-line) 55%, transparent) 1px, transparent 1px) 0 0 / 24px 24px,
+    linear-gradient(90deg, color-mix(in srgb, var(--color-line) 55%, transparent) 1px, transparent 1px) 0 0 / 24px 24px,
+    linear-gradient(180deg, var(--color-panel-raised), var(--color-backdrop));
+}
+
+.booster__stage {
+  container-type: inline-size;
+  isolation: isolate;
+  overflow: hidden;
+  min-height: 480px;
+  background: var(--stage-floor);
+  box-shadow: var(--panel-soft-border);
+}
+
+.booster__grid {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.booster__grid--halo {
+  inset: 0 auto auto 0;
+  width: calc(32 * 24px);
+  height: calc(32 * 24px);
+  opacity: var(--halo-pull, 0);
+  transform: translate(var(--halo-x, 0), var(--halo-y, 0));
+  mix-blend-mode: plus-lighter;
+  will-change: transform, opacity;
+}
+
+.booster__stage:has(.booster__grid) {
+  background: linear-gradient(180deg, var(--color-panel-raised), var(--color-backdrop));
+}
+
+.booster__stage::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  box-shadow: inset 0 0 80px var(--color-backdrop);
+  pointer-events: none;
+}
+
+.booster[data-layout="phone"] .booster__stage {
+  min-height: 360px;
+}
+
+/* ---- The dealt row: three cards, then two ---- */
+
+.booster__deal-area {
+  padding-block: var(--space-7);
+}
+
+.booster__deal {
+  max-width: calc(3 * var(--card-m-width) + 2 * var(--space-deal-gap-max));
+}
+
+@media (max-width: 1259px) {
+  .booster__deal {
+    max-width: calc(3 * var(--card-m-width) + 2 * var(--space-deal-gap-min));
+  }
+}
+
+.booster[data-layout="narrow"] .booster__deal {
+  max-width: calc(3 * var(--card-s-width) + 2 * var(--space-deal-gap-min));
+}
+
+/* The stage keeps one height from the sealed capsule to the revealed hand:
+   two rows of cards with their badges, the same margin above and below.
+   A shorter hand sits in its middle. */
+.booster:not([data-layout="phone"]) {
+  --booster-hand-card: var(--card-m-height);
+}
+
+.booster[data-layout="narrow"] {
+  --booster-hand-card: var(--card-s-height);
+}
+
+.booster:not([data-layout="phone"]) .booster__shake {
+  --booster-hand-row: calc(var(--booster-hand-card) + var(--booster-badge-size));
+  --booster-hand-margin: calc(var(--space-8) + var(--space-6));
+
+  grid-template-rows: minmax(calc(2 * var(--booster-hand-row) + var(--space-8) + 2 * var(--booster-hand-margin)), auto);
+}
+
+.booster:not([data-layout="phone"]) .booster__deal-area {
+  justify-content: center;
+}
+
+/* ---- A revealed card's actions: repost, entrust, sell, one colour that lights up on hover ---- */
+
+.booster {
+  --booster-badge-size: 28px;
+}
+
+.booster-card__badges {
+  position: relative;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  min-height: var(--booster-badge-size);
+  margin-top: 0;
+}
+
+.booster-card__action {
+  display: inline-grid;
+  place-items: center;
+  width: var(--booster-badge-size);
+  height: var(--booster-badge-size);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: color-mix(in srgb, currentcolor 10%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, currentcolor 45%, transparent);
+  color: color-mix(in srgb, var(--color-text-bright) 60%, transparent);
+  cursor: pointer;
+  transition:
+    background 120ms,
+    box-shadow 120ms,
+    color 120ms;
+}
+
+.booster-card__action:hover,
+.booster-card__action:focus-visible {
+  background: color-mix(in srgb, currentcolor 22%, transparent);
+  box-shadow:
+    inset 0 0 0 1px currentcolor,
+    0 0 10px color-mix(in srgb, var(--color-text-max) 55%, transparent);
+  color: var(--color-text-max);
+}
+
+.booster-card__action:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: var(--focus-ring-offset);
+}
+
+.booster-card__action-icon {
+  width: 16px;
+  height: auto;
+}
+
+.booster-card:not([data-revealed]) .booster-card__action {
+  visibility: hidden;
+}
+
+/* A badge's name on hover or focus: a small bubble above it, over the neighbouring cards. */
+.booster-card:has(.booster-card__action:is(:hover, :focus-visible)) {
+  z-index: 10;
+}
+
+.booster-card__action {
+  position: relative;
+}
+
+.booster-card__action[data-tip]::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  z-index: 5;
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-panel-raised);
+  box-shadow:
+    inset 0 0 0 1px var(--color-line),
+    0 4px 0 var(--color-outline);
+  color: var(--color-text-bright);
+  font: var(--font-label);
+  letter-spacing: var(--tracking-label);
+  text-transform: none;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 4px);
+  transition:
+    opacity 120ms,
+    transform 120ms;
+}
+
+.booster-card__action:is(:hover, :focus-visible)::after {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+/* A quick entrust or sale: the card dims under its outcome, with an undo while it waits. */
+.booster-card__move {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  background: color-mix(in srgb, var(--color-backdrop) 78%, transparent);
+  box-shadow: inset 0 0 0 1px var(--color-line);
+  text-align: center;
+}
+
+.booster-card__move[hidden] {
+  display: none;
+}
+
+.booster-card__move-label {
+  margin: 0;
+  color: var(--color-text-max);
+  font: var(--font-body-small);
+}
+
+.booster-card[data-moved] .booster-card__badges {
+  visibility: hidden;
+}

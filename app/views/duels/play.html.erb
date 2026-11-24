@@ -1,0 +1,19 @@
+<% turbo_exempts_page_from_cache %>
+<% content_for :title, t(".title") %>
+<% content_for :screen_title, t(".title") %>
+<% content_for :back_button, true %>
+<% content_for :no_back, true %>
+<% content_for :no_tab_bar, true %>
+<%= turbo_stream_from(*DuelStream.streamables(@screen.stream_key), channel: DuelSeatChannel) %>
+<section class="duel page page--regular" aria-labelledby="duel-heading" data-controller="duel">
+  <h1 id="duel-heading" class="visually-hidden"><%= t(".title") %></h1>
+  <%= render "duels/alpha" %>
+  <p id="duel-status" class="visually-hidden" role="status" aria-live="polite" data-duel-target="status"></p>
+  <p class="duel-connection__line duel-connection__line--own" role="status" hidden data-controller="duel-link"
+    data-duel-link-template-value="<%= t("duels.connection.own_lost", seconds: "{seconds}") %>">
+    <span aria-hidden="true" data-duel-link-target="text"></span>
+    <span class="visually-hidden"><%= t("duels.connection.own_lost_spoken") %></span>
+  </p>
+  <div id="duel-connection" class="duel-connection" role="status"><%= render "duels/connection", screen: @screen %></div>
+  <%= render "duels/board", screen: @screen %>
+</section>

@@ -5,12 +5,6 @@
  * edges and pixel outlines on the 2px grid; no animation of its own.
  */
 
-.settings {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-7);
-}
-
 .settings__layout {
   display: grid;
   grid-template-columns: 380px minmax(0, 1fr);
@@ -78,7 +72,7 @@
 
 .settings-row__label {
   margin: 0;
-  color: var(--color-muted);
+  color: var(--color-text-bright);
   font: var(--font-label);
   letter-spacing: var(--tracking-label);
   text-transform: uppercase;
@@ -306,4 +300,12 @@
 .settings-name__input:focus-visible {
   border-color: var(--color-accent);
   outline: 2px solid var(--color-accent);
+}
+
+.settings__version {
+  margin: var(--space-7) 0 0;
+  color: var(--color-dim);
+  font: var(--font-label);
+  letter-spacing: var(--tracking-label);
+  user-select: none;
 }

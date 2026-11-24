@@ -22,7 +22,7 @@ class Game::EarnedAchievementsTest < ActiveSupport::TestCase
     earned = nil
     assert_queries_count(1) { earned = Game::EarnedAchievements.call(@player) }
 
-    assert_equal [ 6, Game::Achievements::CATALOGUE.size ], [ earned.count, earned.total ]
+    assert_equal [ 6, Game::Achievements.offered.size ], [ earned.count, earned.total ]
     assert_equal %i[first_trade boosters_10 first_legendary first_repost], earned.latest.map(&:key)
     assert earned.latest.all?(&:earned)
     assert_equal [ 1, 10, 1, 1 ], earned.latest.map(&:threshold)
@@ -51,5 +51,5 @@ class Game::EarnedAchievementsTest < ActiveSupport::TestCase
     end
   end
 
-  def total_achievements = Game::Achievements::CATALOGUE.size
+  def total_achievements = Game::Achievements.offered.size
 end

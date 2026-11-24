@@ -4,8 +4,9 @@ require_relative "../support/game_sets"
 require_relative "../support/steam_sign_in"
 
 # The Me page: the player's own profile, its title and card back each changed
-# in a bottom sheet opened from the customize panel, its showcase cards
-# removed by their cross once confirmed, the result shown at once.
+# in a bottom sheet opened from the customize panel, its showcase edited on
+# its own screen and reordered by dragging the cards of its stage, by mouse
+# or by a held touch, the result shown at once.
 class MePageTest < ApplicationSystemTestCase
   include CatalogSeeds
   include GameSets
@@ -64,21 +65,43 @@ class MePageTest < ApplicationSystemTestCase
     Game::SetTier.insert_all!(%w[novice adept].map { |tier| { player_id: @player.id, set_id:, tier:, reached_by: "trade", reached_at: Time.current } })
   end
 
-  def drag_first_slot_onto_last
+  SLOT = ".profile-stage__slot[data-stage-order-target=slot]"
+
+  def slot_titles = all(SLOT, visible: :all, minimum: 2).map { it[:"data-title"] }
+
+  def assert_hand_dealt
+    eventually("the stage's cards should be dealt") do
+      evaluate_script("document.querySelector('.profile-stage__fan').getAnimations({ subtree: true }).every(it => it.animationName !== 'profile-stage-deal')")
+    end
+  end
+
+  # A touch only lifts the card once held, so the moves wait past the hold.
+  def carry_first_slot_onto_second(pointer_type: "mouse")
     execute_script(<<~JS)
-      const slots = document.querySelectorAll(".profile-showcase__slot")
+      const slots = document.querySelectorAll(#{SLOT.to_json})
       const centre = (slot) => { const box = slot.getBoundingClientRect(); return [box.left + box.width / 2, box.top + box.height / 2] }
       const [fromX, fromY] = centre(slots[0])
       const [toX, toY] = centre(slots[1])
-      const pointer = (type, x, y) => new PointerEvent(type, { bubbles: true, cancelable: true, pointerId: 1, pointerType: "mouse", isPrimary: true, button: 0, clientX: x, clientY: y })
+      const pointer = (type, x, y) => new PointerEvent(type, { bubbles: true, cancelable: true, pointerId: 1, pointerType: #{pointer_type.to_json}, isPrimary: true, button: 0, clientX: x, clientY: y })
+      window.letGo = () => window.dispatchEvent(pointer("pointerup", toX, toY))
+      const carry = () => {
+        window.dispatchEvent(pointer("pointermove", (fromX + toX) / 2, (fromY + toY) / 2))
+        window.dispatchEvent(pointer("pointermove", toX, toY))
+      }
       slots[0].dispatchEvent(pointer("pointerdown", fromX, fromY))
-      window.dispatchEvent(pointer("pointermove", (fromX + toX) / 2, (fromY + toY) / 2))
-      window.dispatchEvent(pointer("pointermove", toX, toY))
-      window.dispatchEvent(pointer("pointerup", toX, toY))
+      #{pointer_type == "touch" ? "setTimeout(carry, 600)" : "carry()"}
     JS
   end
 
-  test "on a phone the title and the back preview each open their sheet as a modal named by its title, Escape giving the focus back" do
+  def let_go = execute_script("window.letGo()")
+
+  def assert_carried(title, over:)
+    assert_selector "#{SLOT}[data-dragging][data-title=\"#{title}\"]"
+    assert_selector "#{SLOT}.profile-stage__slot--1[data-title=\"#{over}\"]"
+    assert_selector ".profile-stage__placing", text: "PLACE 2 OF 2"
+  end
+
+  test "on a phone the title and the back preview each open their sheet as a modal named by its title, Escape giving the focus back, and the header menu leads to the settings" do
     resize_to(*PHONE)
     sign_in_to_me
 
@@ -91,42 +114,81 @@ class MePageTest < ApplicationSystemTestCase
       assert_no_selector "dialog##{id}", visible: true
       assert_focused opener
     end
-  end
 
-  test "a card's cross asks before removing it from the showcase; keeping it changes nothing" do
-    choose_two_cards
-    sign_in_to_me
-    first, second = all(".profile-showcase__slot").map { it[:"data-title"] }
-    cross = ".profile-showcase__slot:first-child button.profile-showcase__remove"
-    dialog = find(cross)["data-dialog-opener-dialog-value"]
-
-    find(cross).click
-    assert_modal(dialog)
-    assert_selector "##{dialog} .showcase-removal__text", text: "#{first} leaves your showcase. You keep the card."
-    within("##{dialog}") { click_on "Keep it" }
-    assert_no_selector "dialog##{dialog}", visible: true
-    assert_selector ".profile-showcase__slot", count: 2
-
-    find(cross).click
-    assert_modal(dialog)
-    within("##{dialog}") { click_on "Remove" }
-
-    assert_selector "#toasts .toast", text: /#{Regexp.escape(first)} is no longer in your showcase/
-    assert_selector ".profile-showcase__slot", count: 1
-    assert_focused "button.profile-showcase__remove[aria-label='Remove #{second} from the showcase']"
-  end
-
-  test "a card dragged on Me is announced once the new order is saved, and kept after a reload" do
-    choose_two_cards
-    sign_in_to_me
-    first_title = all(".profile-showcase__slot").first[:"data-title"]
-
-    drag_first_slot_onto_last
-
-    assert_selector "p[role=status]", text: "#{first_title} is now in place 2 of 2.", visible: :all
-    assert_selector ".profile-showcase__slot:last-child[data-title=\"#{first_title}\"]"
     visit me_path(locale: :en)
-    assert_selector ".profile-showcase__slot:last-child[data-title=\"#{first_title}\"]"
+    assert_selector ".me[data-controller=me]"
+
+    find(".player-chip__button").click
+    within("#player-menu") { click_link href: "/en/settings" }
+
+    assert_current_path settings_path(locale: :en)
+  end
+
+  test "the stage's edit link opens the editor, where a tapped card joins the showcase and its count, and Done comes back to Me" do
+    choose_two_cards
+    portal = catalog_card_seasons(:portal_one)
+    Game::Holding.create!(player_id: @player.id, card_season_id: portal.id, quantity: 1)
+    sign_in_to_me
+
+    click_on "Edit the showcase"
+    assert_selector ".showcase-dock__count", text: "2/5"
+    find(".showcase-pick form[action$='/cards/portal/seasons/1/showcase'] button[aria-pressed=false]").click
+
+    assert_selector ".showcase-dock__count", text: "3/5"
+    assert_selector ".showcase-pick--chosen", count: 3
+    assert_selector ".showcase-dock__pick", count: 3
+    click_on "Done"
+    assert_selector SLOT, count: 3
+  end
+
+  test "a card carried on Me makes the other slide into its place at once, then the new order is announced without a toast and kept after a reload; on a phone, a card held then carried does the same and takes its place once let go" do
+    choose_two_cards
+    sign_in_to_me
+    first, second = slot_titles
+    assert_hand_dealt
+
+    carry_first_slot_onto_second
+    assert_carried(first, over: second)
+    assert_no_selector "#toasts .toast"
+    let_go
+
+    assert_selector "#profile-stage-status", text: "#{first} is now in place 2 of 2.", visible: :all
+    assert_selector "#{SLOT}:first-child.profile-stage__slot--1[data-title=\"#{second}\"]"
+    assert_no_selector "#toasts .toast"
+    assert_no_selector ".profile-stage__placing", visible: true
+    assert_selector ".profile-stage__name", text: /\A#{Regexp.escape(second)}\z/i
+    visit me_path(locale: :en)
+    assert_selector "#{SLOT}:first-child[data-title=\"#{second}\"]"
+
+    resize_to(*PHONE)
+    visit me_path(locale: :en)
+    assert_selector ".me[data-controller=me]"
+    first, second = slot_titles
+    assert_hand_dealt
+
+    carry_first_slot_onto_second(pointer_type: "touch")
+    assert_carried(first, over: second)
+    let_go
+
+    assert_selector "#profile-stage-status", text: "#{first} is now in place 2 of 2.", visible: :all
+    assert_selector "#{SLOT}:first-child[data-title=\"#{second}\"]"
+  end
+
+  test "Escape puts a carried card back and saves nothing" do
+    choose_two_cards
+    sign_in_to_me
+    first, second = slot_titles
+    assert_hand_dealt
+
+    carry_first_slot_onto_second
+    assert_carried(first, over: second)
+    find("body").send_keys(:escape)
+
+    assert_selector "#{SLOT}.profile-stage__slot--1[data-title=\"#{first}\"]:not([data-dragging])"
+    assert_no_selector ".profile-stage__placing", visible: true
+    let_go
+    assert_no_selector "#toasts .toast"
+    assert_equal [ first, second ], Game::ChosenShowcase.call(@player).map { Catalog::CardViews.call([ it ], locale: :en)[it].title }
   end
 
   test "a title chosen in its sheet shows in the band with its toast, and no title removes it" do
@@ -149,7 +211,7 @@ class MePageTest < ApplicationSystemTestCase
     assert_selector "#{TITLE_OPENER} .me-opener__value", text: "Choose a title"
   end
 
-  test "a back equipped in its sheet shows in the band's preview at once, the page kept" do
+  test "a back equipped in its sheet shows in the band's preview at once, the page kept, and stays in the preview once the page is restored from the cache by Back, equipping going on from there" do
     Game::CardBackUnlock.record(@player.id, "set-theme-rpg", Time.current)
     sign_in_to_me
     assert_selector ".me-back-opener [data-me-target=preview] .me-opener__value", text: "Standard"
@@ -169,11 +231,10 @@ class MePageTest < ApplicationSystemTestCase
     assert_selector ".me-back-opener .me-opener__value", text: "RPG"
     visit me_path(locale: :en)
     assert_selector ".me-back-opener .me-opener__value", text: "RPG"
-  end
 
-  test "a back equipped on Me stays in the preview once the page is restored from the cache by Back, and equipping goes on from there" do
-    Game::CardBackUnlock.record(@player.id, "set-theme-rpg", Time.current)
-    sign_in_to_me
+    Game::ChooseCardBack.new.call(player: @player, back: "standard").value!
+    visit me_path(locale: :en)
+    assert_selector ".me[data-controller=me]"
     open_sheet("a.me-back-opener", "me-back-sheet")
     find("[data-key='set-theme-rpg'] .back-picker__back").click
     assert_selector ".me-back-opener .me-opener__value", text: "RPG", visible: :all
@@ -192,15 +253,5 @@ class MePageTest < ApplicationSystemTestCase
     find("[data-key='set-theme-rpg'] .back-picker__back").click
     assert_selector ".me-back-opener .me-opener__value", text: "RPG", visible: :all
     assert_equal "set-theme-rpg", Game::PlayerState.where(player_id: @player.id).pick(:active_card_back)
-  end
-
-  test "on a phone the header menu leads to the settings" do
-    resize_to(*PHONE)
-    sign_in_to_me
-
-    find(".player-chip__button").click
-    within("#player-menu") { click_link href: "/en/settings" }
-
-    assert_current_path settings_path(locale: :en)
   end
 end

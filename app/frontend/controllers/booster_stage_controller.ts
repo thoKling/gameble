@@ -2,11 +2,12 @@ import { Controller } from "@hotwired/stimulus"
 import { animate } from "../lib/booster_effects"
 import { cardBackClass, cardBackProperties, cardBackSeasonMark, pilePose } from "../lib/booster_motion"
 import { CardSwipe, dragTransform, type SwipeRelease } from "../lib/booster_swipe"
-import { writeData, writeText } from "../lib/dom_writes"
+import { writeData } from "../lib/dom_writes"
 import { BANNER_TIERS, type Fragments } from "../lib/screen"
 import { cloneTemplate } from "../lib/templates"
 import type { Rarity } from "../lib/card_types"
 import type { CardBackView } from "../lib/opening"
+import type { MarketPlace } from "../lib/booster_types"
 
 export type CardView = Readonly<{
   index: number
@@ -15,9 +16,12 @@ export type CardView = Readonly<{
   revealedAt: number | undefined
   legendary: boolean
   name: string
-  tierLabel: string
   firstCopy: boolean
   repostName: string
+  entrustName: string
+  sellName: string
+  move: string | null
+  undoable: boolean
   depth: number | null
 }>
 
@@ -31,9 +35,7 @@ export type HandView = Readonly<{
 
 export type StageView = Readonly<{
   legendary: boolean
-  headShown: boolean
   hand: HandView | null
-  hint: string | null
 }>
 
 export type BannerView = Readonly<{
@@ -47,16 +49,32 @@ export type BannerView = Readonly<{
 
 export type CardIntent = { index: number }
 
+export type MarketIntent = CardIntent & { place: MarketPlace }
+
 export default class BoosterStageController extends Controller<HTMLElement> {
-  static targets = ["shake", "fx", "flash", "result", "dealArea", "deal", "hint", "pileArea", "pile", "card", "banner"]
+  static targets = [
+    "shake",
+    "fx",
+    "flash",
+    "sparks",
+    "scanlines",
+    "dealFx",
+    "dealArea",
+    "deal",
+    "pileArea",
+    "pile",
+    "card",
+    "banner",
+  ]
 
   declare readonly shakeTarget: HTMLElement
   declare readonly fxTarget: HTMLElement
   declare readonly flashTarget: HTMLElement
-  declare readonly resultTarget: HTMLElement
+  declare readonly sparksTarget: HTMLCanvasElement
+  declare readonly scanlinesTarget: HTMLElement
+  declare readonly dealFxTarget: HTMLElement
   declare readonly dealAreaTarget: HTMLElement
   declare readonly dealTarget: HTMLOListElement
-  declare readonly hintTarget: HTMLElement
   declare readonly pileAreaTarget: HTMLElement
   declare readonly pileTarget: HTMLOListElement
   declare readonly cardTarget: HTMLTemplateElement
@@ -83,6 +101,18 @@ export default class BoosterStageController extends Controller<HTMLElement> {
     return this.flashTarget
   }
 
+  get sparks(): HTMLCanvasElement {
+    return this.sparksTarget
+  }
+
+  get scanlines(): HTMLElement {
+    return this.scanlinesTarget
+  }
+
+  get dealFx(): HTMLElement {
+    return this.dealFxTarget
+  }
+
   get lastDragEnd(): number {
     return this.swipe.lastDragEnd
   }
@@ -99,16 +129,11 @@ export default class BoosterStageController extends Controller<HTMLElement> {
     this.swipe.forget()
   }
 
-  render({ legendary, headShown, hand, hint }: StageView, fragments: Fragments): void {
+  render({ legendary, hand }: StageView, fragments: Fragments): void {
     this.element.toggleAttribute("data-legendary", legendary)
-    this.resultTarget.toggleAttribute("data-shown", headShown)
-    if (headShown) this.resultTarget.removeAttribute("aria-hidden")
-    else this.resultTarget.setAttribute("aria-hidden", "true")
 
     this.dealAreaTarget.hidden = hand === null
     this.pileAreaTarget.hidden = hand === null
-    this.hintTarget.hidden = hint === null
-    if (hint !== null) writeText(this.hintTarget, hint)
 
     if ((hand?.key ?? null) !== this.handKey) this.deal(hand, fragments)
     if (hand) this.update(hand)
@@ -143,13 +168,25 @@ export default class BoosterStageController extends Controller<HTMLElement> {
     const slot = target?.closest<HTMLLIElement>(".booster-card")
     if (!target || !slot) return
     const index = this.indexOf(slot)
-    if (target.closest(".booster-card__repost")) {
+    if (target.closest(".booster-card__move button")) {
       event.stopPropagation()
-      if (slot.hasAttribute("data-revealed")) this.dispatch("repost", { detail: { index } satisfies CardIntent })
+      this.dispatch("undo", { detail: { index } satisfies CardIntent })
+      return
+    }
+    const action = target.closest<HTMLElement>(".booster-card__action")
+    if (action) {
+      event.stopPropagation()
+      if (slot.hasAttribute("data-revealed")) this.dispatchAction(action, index)
       return
     }
     event.preventDefault()
     this.dispatch("activate", { detail: { index } satisfies CardIntent })
+  }
+
+  private dispatchAction(action: HTMLElement, index: number): void {
+    const place = action.dataset.market as MarketPlace | undefined
+    if (place) this.dispatch("market", { detail: { index, place } satisfies MarketIntent })
+    else this.dispatch("repost", { detail: { index } satisfies CardIntent })
   }
 
   press(event: PointerEvent): void {
@@ -226,10 +263,12 @@ export default class BoosterStageController extends Controller<HTMLElement> {
     if (!slot) return null
     slot.dataset.position = String(card.index + 1)
     slot.dataset.tier = card.tier
-    if (card.tier !== "legendary") slot.querySelector(".booster-card__glow")?.remove()
+    const glow = slot.querySelector(".booster-card__glow")
+    if (card.tier !== "legendary") glow?.remove()
     const rays = slot.querySelector(".booster-card__rays")
     if (BANNER_TIERS.includes(card.tier)) rays?.classList.add(`card-rays--${card.tier}`)
     else rays?.remove()
+    if (!hand.phone) this.underCards(slot, [glow, rays])
     const back = slot.querySelector<HTMLElement>(".booster-card__back")
     back?.classList.add(cardBackClass(hand.cardBack))
     for (const [name, value] of cardBackProperties(hand.cardBack)) back?.style.setProperty(name, value)
@@ -237,13 +276,22 @@ export default class BoosterStageController extends Controller<HTMLElement> {
     if (back && seasonMark) back.dataset.seasonMark = seasonMark
     slot.querySelector(".booster-card__front")?.replaceChildren(fragments.face(card.index) ?? "")
     if (!card.firstCopy) slot.querySelector(".booster-card__new")?.remove()
-    slot.querySelector(".booster-card__label-icon-box")?.replaceChildren(fragments.icon(card.tier) ?? "")
-    const name = slot.querySelector(".booster-card__label-name")
-    if (name) name.textContent = card.tierLabel
-    const repost = slot.querySelector(".booster-card__repost")
-    if (hand.phone) repost?.remove()
-    else repost?.setAttribute("aria-label", card.repostName)
+    const actions = {
+      repost: card.repostName,
+      entrust: card.entrustName,
+      sell: card.sellName,
+    }
+    for (const [name, label] of Object.entries(actions)) {
+      const action = slot.querySelector(`.booster-card__${name}`)
+      if (hand.phone) action?.remove()
+      else action?.setAttribute("aria-label", label)
+    }
     return slot
+  }
+
+  private underCards(slot: HTMLLIElement, parts: (Element | null)[]): void {
+    const frame = slot.querySelector(".booster-card__frame")
+    for (const part of parts.reverse()) if (part?.parentElement) frame?.prepend(part)
   }
 
   private update(hand: HandView): void {
@@ -281,5 +329,17 @@ export default class BoosterStageController extends Controller<HTMLElement> {
     slot.querySelector(".booster-card__flip")?.classList.toggle("is-up", card.revealed)
     const hit = slot.querySelector(".booster-card__hit")
     if (hit && hit.getAttribute("aria-label") !== card.name) hit.setAttribute("aria-label", card.name)
+    this.updateMove(slot, card)
+  }
+
+  private updateMove(slot: HTMLLIElement, { move, undoable }: CardView): void {
+    slot.toggleAttribute("data-moved", move !== null)
+    const overlay = slot.querySelector<HTMLElement>(".booster-card__move")
+    if (!overlay) return
+    overlay.hidden = move === null
+    const label = overlay.querySelector(".booster-card__move-label")
+    if (label && label.textContent !== (move ?? "")) label.textContent = move ?? ""
+    const undo = overlay.querySelector<HTMLButtonElement>("button")
+    if (undo) undo.hidden = !undoable
   }
 }

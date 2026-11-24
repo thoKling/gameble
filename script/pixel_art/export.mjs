@@ -318,6 +318,22 @@ const ACHIEVEMENT_GLYPHS = {
   growth: ["#..####", "#....##", "#...#.#", "#..#...", "#.#....", "##.....", "#######"],
   ledger: ["#######", "##....#", "##.##.#", "##....#", "##.##.#", "##....#", "#######"],
   briefcase: ["..###..", "..#.#..", "#######", "#######", "###.###", "#######", "#######"],
+  coin: ["..###..", ".#####.", "#.....#", "##.#.##", "##.#.##", ".#####.", "..###.."],
+  friends: [".#...#.", "###.###", ".#...#.", ".......", "###.###", "###.###", "###.###"],
+  thumb: ["...#...", "..##...", "..##...", "#.#####", "#.#####", "#.#####", "#.####."],
+  mirror: ["..###..", ".#...#.", ".#..##.", ".#.#.#.", "..###..", "...#...", "...#..."],
+  megaphone: ["......#", "....###", "#######", "#######", "#######", ".#..###", ".#....#"],
+  showcase: ["#######", "#.#.#.#", "#.#.#.#", "#######", "#.#.#.#", "#.#.#.#", "#######"],
+  broom: ["......#", ".....#.", "....#..", "..##...", ".####..", "#####..", "#.#.#.."],
+  archive: ["#######", "#######", ".......", "#######", "##...##", "#######", "#######"],
+  crown: ["#..#..#", "##.#.##", "#######", "#.#.#.#", "#######", ".......", "#######"],
+  anchor: ["..###..", "..#.#..", ".#####.", "...#...", "#..#..#", "##.#.##", ".#####."],
+  sun: ["...#...", ".#...#.", "..###..", "#.###.#", "..###..", ".#...#.", "...#..."],
+  rain: ["..###..", ".#####.", "#######", "#######", ".......", ".#.#.#.", "#.#.#.."],
+  quill: [".....##", "....###", "...###.", "..###..", "..##...", ".#.....", "#......"],
+  binder: [".#####.", ".#...#.", ".#####.", ".#####.", ".##.##.", ".#####.", ".#####."],
+  portrait: ["#######", "#..#..#", "#.###.#", "#.###.#", "#..#..#", "#.###.#", "#######"],
+  blades: ["##...##", ".##.##.", "..###..", "...#...", "..###..", ".##.##.", "##...##"],
 }
 const ACHIEVEMENT_EARNED = { h: "#d2efff", b: "#66c0f4", s: "#2a6f9a" }
 const ACHIEVEMENT_LOCKED = { h: "#8f98a0", b: "#5d6b78", s: "#3d4a57" }
@@ -451,6 +467,43 @@ const ICONS = {
       "c.....c",
     ],
   },
+  // ↪ repost into the feed
+  repost: {
+    grid: [
+      ".....c..",
+      ".....cc.",
+      "..cccccc",
+      ".c...cc.",
+      "c....c..",
+      "c.......",
+      "c.......",
+    ],
+  },
+  // a vault, entrusting the card to the Brotherhood
+  entrust: {
+    grid: [
+      "cccccccc",
+      "c......c",
+      "c..cc..c",
+      "c.c..c.c",
+      "c..cc..c",
+      "c......c",
+      "cccccccc",
+      ".c....c.",
+    ],
+  },
+  // a price tag, selling the card on the market
+  sell: {
+    grid: [
+      "....cccc",
+      "...ccc.c",
+      "..cccccc",
+      ".cccccc.",
+      "cccccc..",
+      ".cccc...",
+      "..cc....",
+    ],
+  },
   // ⋯ more actions
   more: {
     grid: [
@@ -562,6 +615,42 @@ const ICONS = {
       ".oooooo.",
     ],
   },
+  // The duel capsule's small canister (8 × 11): the packs chip's canister
+  // with steel-blue label bands and a white blade emblem.
+  "canister-small-duel": {
+    legend: { o: OUTLINE, S: "#dfe6ec", d: "#5d6b7c", b: "#4a6580", B: "#3b5167", a: "#9ec3e6", g: "#e8f1f8" },
+    grid: [
+      ".oooooo.",
+      "oSSSSSSo",
+      "oddddddo",
+      "obbbbbBo",
+      "oaaaaaao",
+      "obbgbbBo",
+      "oaaaaaao",
+      "obbbbbBo",
+      "oSSSSSSo",
+      "oddddddo",
+      ".oooooo.",
+    ],
+  },
+  // The trophy of a won duel (14 × 12): a gold cup with two handles.
+  "duel-trophy": {
+    legend: { o: OUTLINE, g: "#f4c542", h: "#fff3c4", s: "#8f5e0a" },
+    grid: [
+      "..oooooooooo..",
+      ".ooghgggggsoo.",
+      "ogoghgggggsogo",
+      "ogoghgggggsogo",
+      ".ooghgggggsoo.",
+      "...oghgggso...",
+      "....ogggso....",
+      ".....ogso.....",
+      ".....ogso.....",
+      "...ogggggso...",
+      "..ogggggggso..",
+      "..oooooooooo..",
+    ],
+  },
   // The merged counter's standard capsule: a round-ended pill, blue (7 × 11).
   "capsule-standard": {
     legend: { o: OUTLINE, a: "#66c0f4", b: "#2f4f6c" },
@@ -579,19 +668,22 @@ const ICONS = {
       "..ooo..",
     ],
   },
-  // The merged counter's special capsule: a lime diamond (9 × 9).
+  // The merged counter's special capsule: the standard pill in lime, a
+  // pale spark on its top half (7 × 11).
   "capsule-special": {
-    legend: { o: OUTLINE, l: "#a4d007", d: "#5c7a0c" },
+    legend: { o: OUTLINE, l: "#a4d007", d: "#5c7a0c", s: "#f4ffd6" },
     grid: [
-      "....o....",
-      "...olo...",
-      "..olllo..",
-      ".olllllo.",
-      "olllllllo",
-      ".odllldo.",
-      "..oddlo..",
-      "...odo...",
-      "....o....",
+      "..ooo..",
+      ".olllo.",
+      "ollsllo",
+      "olssslo",
+      "ollsllo",
+      "odddddo",
+      "odddddo",
+      "odddddo",
+      "odddddo",
+      ".odddo.",
+      "..ooo..",
     ],
   },
   // The player's portrait until they choose an avatar (16 × 16).
@@ -1102,17 +1194,17 @@ const ICONS = {
   },
   "tab-capsule": {
     grid: [
-      "...........",
-      "...ccccc...",
-      "..c.....c..",
-      "..c.....c..",
-      "..c.....c..",
       "..ccccccc..",
-      "..ccccccc..",
-      "..c.....c..",
-      "..c.....c..",
-      "...ccccc...",
+      ".ccccccccc.",
+      ".ccccccccc.",
       "...........",
+      ".ccccccccc.",
+      ".ccccccccc.",
+      ".ccccccccc.",
+      "...........",
+      ".ccccccccc.",
+      ".ccccccccc.",
+      "..ccccccc..",
     ],
   },
   "tab-sets": {
@@ -1158,6 +1250,21 @@ const ICONS = {
       "cc.cc.cc.cc",
       "cc.cc.cc.cc",
       "...........",
+    ],
+  },
+  "tab-duels": {
+    grid: [
+      "c.........c",
+      ".c.......c.",
+      "..c.....c..",
+      "...c...c...",
+      "....c.c....",
+      ".....c.....",
+      "....c.c....",
+      ".c.c...c.c.",
+      "..c.....c..",
+      ".c.c...c.c.",
+      "c.........c",
     ],
   },
   "tab-friends": {
@@ -1278,24 +1385,46 @@ function random(seed) {
   }
 }
 
-// The star field's tile (atmosphere): 2px and 4px squares of
-// {colors.star} on the 2px grid, at a few brightnesses, repeated by CSS.
+// The star field's tile (atmosphere): 2px and 4px squares on the 2px grid,
+// at a few brightnesses, repeated by CSS. Most are {colors.star}; the rest
+// lean faintly gold, orange, blue or red, as in a deep-sky photograph.
+const STAR_TINTS = [
+  ["#c7d5e0", 0.55],
+  ["#e6d9b8", 0.17],
+  ["#e8c09a", 0.12],
+  ["#adc6ea", 0.11],
+  ["#e0a596", 0.05],
+]
+
+function starTint(roll) {
+  let left = roll
+  for (const [colour, share] of STAR_TINTS) {
+    if ((left -= share) < 0) return colour
+  }
+  return STAR_TINTS[0][0]
+}
+
 function starfieldSvg() {
   const SIZE = 480
-  const STAR = "#c7d5e0"
   const next = random(20261005)
-  const byOpacity = new Map()
+  // Its own sequence, so the tints leave every star where it was.
+  const nextTint = random(20261116)
+  const groups = new Map()
   for (let i = 0; i < 70; i++) {
     const big = next() < 0.15
     const size = big ? 4 : 2
     const x = Math.floor(next() * ((SIZE - size) / 2)) * 2
     const y = Math.floor(next() * ((SIZE - size) / 2)) * 2
     const opacity = [0.35, 0.55, 0.8][Math.floor(next() * 3)]
-    if (!byOpacity.has(opacity)) byOpacity.set(opacity, [])
-    byOpacity.get(opacity).push(`M${x} ${y}h${size}v${size}h-${size}z`)
+    const key = `${opacity} ${starTint(nextTint())}`
+    if (!groups.has(key)) groups.set(key, [])
+    groups.get(key).push(`M${x} ${y}h${size}v${size}h-${size}z`)
   }
-  const body = [...byOpacity.entries()].sort(([a], [b]) => a - b)
-    .map(([opacity, d]) => `<path fill="${STAR}" fill-opacity="${opacity}" d="${d.join("")}"/>`).join("")
+  const body = [...groups.entries()].sort(([a], [b]) => a.localeCompare(b))
+    .map(([key, d]) => {
+      const [opacity, colour] = key.split(" ")
+      return `<path fill="${colour}" fill-opacity="${opacity}" d="${d.join("")}"/>`
+    }).join("")
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${SIZE} ${SIZE}" width="${SIZE}" height="${SIZE}" shape-rendering="crispEdges">${body}</svg>\n`
 }
 
@@ -1741,6 +1870,9 @@ const DESCRIPTIONS = {
   "close.svg": "✕ close and remove (text colour)",
   "check.svg": "✓ check mark (text colour)",
   "plus.svg": "+ add mark, the new set tile's, 8 × 8 (text colour)",
+  "repost.svg": "↪ repost into the feed, the opened capsule's card badge, 8 × 7 (text colour)",
+  "entrust.svg": "A vault, entrusting to the Brotherhood, the opened capsule's card badge, 8 × 8 (text colour)",
+  "sell.svg": "A price tag, selling on the market, the opened capsule's card badge, 8 × 7 (text colour)",
   "more.svg": "⋯ more actions, the menu of a row's rarer actions (text colour)",
   "info.svg": "An \"i\" in a rounded frame, the info mark beside a heading, 9 × 9 (text colour)",
   "rank-novice.svg": "Novice rank mark: one chevron, 9 × 5 (text colour)",
@@ -1753,6 +1885,8 @@ const DESCRIPTIONS = {
   "external.svg": "↗ external link (text colour)",
   "hourglass.svg": "⧗ hourglass for expiry and pending (text colour)",
   "canister-small.svg": "The packs chip's small canister, 8 × 11",
+  "canister-small-duel.svg": "The duel result's small canister: the packs chip's canister in the duel capsule's steel blue, 8 × 11",
+  "duel-trophy.svg": "The trophy of a won duel: a gold cup with two handles, 14 × 12",
   "avatar-default.svg": "The player's portrait until they choose an avatar, 16 × 16",
   "avatar-novice.svg": "Avatar: the novice, a blue hood, the face in shadow, a gold clasp, 16 × 16",
   "avatar-archivist.svg": "Avatar: the archivist, a green hood, brass spectacles, 16 × 16",
@@ -1776,20 +1910,21 @@ const DESCRIPTIONS = {
   "avatar-owl.svg": "Avatar: the owl, brown with ear tufts and round yellow eyes, 16 × 16",
   "pencil.svg": "✎ pencil on the player's own portrait, choose an avatar, 8 × 8 (text colour)",
   "capsule-standard.svg": "The merged counter's standard capsule: a blue pill, 7 × 11",
-  "capsule-special.svg": "The merged counter's special capsule: a lime diamond, 9 × 9",
+  "capsule-special.svg": "The merged counter's special capsule: a lime pill with a spark, 7 × 11",
   "tab-hub.svg": "Phone tab bar icon: PONT (text colour)",
   "tab-collection.svg": "Phone tab bar icon: COLLECTION (text colour)",
   "tab-capsule.svg": "Phone tab bar icon: CAPSULE, a vertical pill (text colour)",
   "tab-sets.svg": "Phone tab bar icon: SETS, four tiles (text colour)",
   "tab-trades.svg": "Phone tab bar icon: ÉCHANGES, two opposed arrows (text colour)",
   "tab-market.svg": "Phone tab bar icon: MARCHÉ, four bars rising and falling (text colour)",
+  "tab-duels.svg": "Phone tab bar icon: DUELS, two crossed blades (text colour)",
   "tab-friends.svg": "Phone tab bar icon: AMIS, two heads and shoulders (text colour)",
   "tab-me.svg": "Phone tab bar icon: ME, one head and shoulders (text colour)",
   "bell.svg": "The header's bell, what is new for the player, 7 × 8",
   ...Object.fromEntries(Object.entries(BACK_OFFICE_ICONS).map(([name, { look }]) => [`office-${name}.svg`, `Back-office tile icon, ${name.replace("-", " ")}: ${look}, 11 × 11 (text colour)`])),
   ...Object.fromEntries(Object.entries(PICOIN_MARKS).map(([name, { look, size }]) => [`${name}.svg`, `PiCoin mark: ${look}, ${size} × ${size}`])),
   "menu.svg": "The phone header's menu: profile, settings and the extras (text colour)",
-  "starfield.svg": "Star field tile, 480 × 480 CSS px, repeated under the content",
+  "starfield.svg": "Star field tile, 480 × 480 CSS px, repeated under the content; a few stars faintly tinted gold, orange, blue or red",
   "nebula.png": `Nebula tile behind the star field: faint blue and violet clouds and a pale band of the galaxy, ${NEBULA_WIDTH} × ${NEBULA_HEIGHT}, drawn at 4 CSS px per pixel`,
   ...Object.fromEntries([...BASE_BACK_DESIGNS, ...NAMED_BACK_DESIGNS].flatMap(({ name, title }) => Object.entries(CARD_SIZES).map(([size, [w, h]]) =>
     [`back-${name}-${size}.png`, `${title} back for card-${size}, ${w / 2 | 0} × ${h / 2 | 0} art px`]))),

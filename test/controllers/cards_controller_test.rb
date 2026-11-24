@@ -898,19 +898,19 @@ class CardsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".top-bar__phone-back", false
   end
 
-  test "a player's request costs eighteen queries, a visitor's six; a frame visit (◀ ▶) skips the top bar's" do
+  test "a player's request costs twenty-two queries, a visitor's eight; a frame visit (◀ ▶) skips the top bar's" do
     player = accounts_players(:player)
     hold(player, catalog_card_seasons(:portal_one).id, 2)
     sign_in(player)
 
     # Player lookup, card detail, sets, neighbours, quantities, the copies
-    # set apart, the holder's showcase, the pioneer, the friends owning it, the share image, the player's goals, and the top bar's four
+    # set apart, the holder's showcase, the pioneer, the duel profile, the friends owning it, the share image, the player's goals, and the top bar's four
     # (reserve count, next pack, copies per tier, rarity legend), and the tab bar's trades and invitations waiting.
-    assert_request_queries(21) { get card_path(locale: :en, slug: "portal") }
+    assert_request_queries(23) { get card_path(locale: :en, slug: "portal") }
     assert_response :success
     assert_equal [ "Copies", "2 copies" ], facts.to_h.assoc("Copies")
     assert_select "#share-sheet"
-    assert_request_queries(11) { get card_path(locale: :en, slug: "portal"), headers: { "Turbo-Frame" => "card-detail" } }
+    assert_request_queries(12) { get card_path(locale: :en, slug: "portal"), headers: { "Turbo-Frame" => "card-detail" } }
     assert_select "turbo-frame#card-detail .card-detail h1", "Portal"
 
     delete session_path(locale: :en)
@@ -928,15 +928,15 @@ class CardsControllerTest < ActionDispatch::IntegrationTest
 
     # The twelve and the friends of a missing card, the set's neighbours replaced by the pack and its two
     # neighbours' cards.
-    assert_request_queries(21) { get pack_detail("blue-depths", pack, slot: 3) }
+    assert_request_queries(23) { get pack_detail("blue-depths", pack, slot: 3) }
     assert_equal "S1 · #3 · 3 / 5 · swipe to browse", position
 
     # The set's neighbours replaced by the published season, the grid's
     # genres, the grid's cards in order and its two neighbours' cards,
     # whether a state is asked or not.
-    assert_request_queries(23) { get card_season_path(locale: :en, slug: "blue-depths", number: 1, grid: { q: "" }) }
+    assert_request_queries(25) { get card_season_path(locale: :en, slug: "blue-depths", number: 1, grid: { q: "" }) }
     assert_select ".card-detail__nav", 2
-    assert_request_queries(23) { get card_season_path(locale: :en, slug: "blue-depths", number: 1, grid: { q: "", state: %w[all] }) }
+    assert_request_queries(25) { get card_season_path(locale: :en, slug: "blue-depths", number: 1, grid: { q: "", state: %w[all] }) }
   end
 
   # The row of a card whose fixture pioneer is the banned player.
@@ -1207,7 +1207,7 @@ class CardsControllerTest < ActionDispatch::IntegrationTest
     assert_equal [ [ "Add to showcase", "disabled" ] ], showcase_buttons
     assert_select ".card-detail__showcase form", false
     assert_select ".card-detail__holder-actions > .card-detail__showcase + .card-detail__showcase-full:last-child", /\AShowcase full: remove a card to add another.\s+Open my showcase\z/
-    assert_select ".card-detail__showcase-full a.card-detail__showcase-open[href=?]", "/en/me?card=portal&edition=1#showcase"
+    assert_select ".card-detail__showcase-full a.card-detail__showcase-open[href=?]", "/en/me/showcase"
     assert_select ".card-detail__holder-actions > form.button-form:first-child button.button--primary", "Repost"
   end
 
@@ -1347,5 +1347,32 @@ class CardsControllerTest < ActionDispatch::IntegrationTest
     close_market!(first_opened_at: 2.days.ago)
     get card_path(locale: :en, slug: "portal")
     assert_select ".card-detail__market", false
+  end
+
+  test "a card nobody holds shows its duel profile to a player who does not hold it, a stat without a value named so with no bar or words" do
+    Game::ComputeDuelStats.new.call(reason: "first").value!
+    sign_in_viewer
+
+    get card_path(locale: :en, slug: "portal")
+
+    assert_select ".card-detail__facts + .duel-profile"
+    assert_select ".duel-profile__stat", count: 5
+    assert_select ".duel-profile__stat--trump .duel-profile__trump", text: "Trump", count: 1
+    assert_select ".duel-profile__stat:nth-child(1)" do
+      assert_select ".duel-profile__name", text: /Popularity/
+      assert_select ".duel-profile__value", text: "No value"
+      assert_select "progress, .duel-profile__words", count: 0
+    end
+    assert_select ".duel-profile__stat:nth-child(2)" do
+      assert_select "progress.duel-profile__bar[aria-hidden=true]"
+      assert_select ".duel-profile__words", text: /rated than/
+    end
+
+    get card_path(locale: :fr, slug: "portal")
+
+    assert_select ".duel-profile__heading", text: "Duel"
+    assert_select ".duel-profile__trump", text: "Atout", count: 1
+    assert_select ".duel-profile__stat:nth-child(5) .duel-profile__value", text: "Aucune valeur"
+    assert_select ".duel-profile__dated", text: /\AValeurs du /
   end
 end

@@ -3,7 +3,7 @@
 }
 
 [data-layout="phone"] .entrust-grid__list {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--space-3);
 }
 
@@ -15,7 +15,7 @@
 
 [data-layout="phone"] .entrust-cell {
   gap: var(--space-1);
-  padding: var(--space-2);
+  padding: var(--space-3) var(--space-2);
   min-width: 0;
 }
 

@@ -16,7 +16,7 @@ export const stageShake = (stage: HTMLElement | null, amplitude: number, duratio
   animate(stage, shakeKeyframes(amplitude), { duration, fill: "none" })
 }
 
-export const stageFlash = (flash: HTMLElement | null, tone: "warm" | "gold", peak: number, duration: number) => {
+export const stageFlash = (flash: HTMLElement | null, tone: "warm", peak: number, duration: number) => {
   if (motionReduced() || !flash) return
   flash.dataset.tone = tone
   animate(flash, [{ opacity: 0 }, { opacity: peak, offset: 0.12 }, { opacity: 0 }], {
@@ -24,6 +24,21 @@ export const stageFlash = (flash: HTMLElement | null, tone: "warm" | "gold", pea
     easing: "ease-out",
     fill: "none",
   })
+}
+
+export const flashbang = (flash: HTMLElement | null, duration: number) => {
+  if (motionReduced() || !flash) return
+  flash.dataset.tone = "white"
+  animate(
+    flash,
+    [
+      { opacity: 0 },
+      { opacity: 0.8, offset: 0.02 },
+      { opacity: 0.72, offset: 0.1, easing: "cubic-bezier(.3,0,.2,1)" },
+      { opacity: 0 },
+    ],
+    { duration, fill: "none" },
+  )
 }
 
 export const spark = (
@@ -80,48 +95,6 @@ export const burst = (host: HTMLElement | null, tier: Rarity) => {
       { duration: scaled(420 + 40 * tierIndex(tier)), easing: "steps(4)" },
     ),
   )
-}
-
-export const blast = (host: HTMLElement | null, body: HTMLElement | null | undefined) => {
-  if (!host || !body || motionReduced()) return
-  const box = host.getBoundingClientRect()
-  const rect = body.getBoundingClientRect()
-  const x = rect.left + rect.width / 2 - box.left
-  const y = rect.top + rect.height / 2 - box.top
-  ring(host, "booster-fx__ring booster-fx__ring--blast", x, y, 220)
-  for (let index = 0; index < 14; index++) {
-    const angle = (index / 14) * Math.PI * 2 + 0.3
-    const reach = 90 + (index % 3) * 50
-    spark(
-      host,
-      `booster-fx__spark booster-fx__spark--${index % 4}`,
-      x,
-      y,
-      [
-        { transform: "translate(0px, 0px)", opacity: 1 },
-        {
-          transform: `translate(${Math.round(Math.cos(angle) * reach)}px, ${Math.round(Math.sin(angle) * reach)}px)`,
-          opacity: 0,
-        },
-      ],
-      { duration: scaled(480), easing: "cubic-bezier(.15,.8,.3,1)" },
-    )
-  }
-  for (let index = 0; index < 6; index++) {
-    const side = index % 2 === 0 ? -1 : 1
-    const top = index < 3 ? -1 : 1
-    spark(
-      host,
-      "booster-fx__smoke",
-      x + side * 70,
-      y + top * 110,
-      [
-        { transform: "translate(0px, 0px) scale(0.6)", opacity: 0.5 },
-        { transform: `translate(${side * 40}px, ${top * 50}px) scale(2.4)`, opacity: 0 },
-      ],
-      { duration: scaled(520 + index * 30), easing: "ease-out" },
-    )
-  }
 }
 
 export const traySparks = (host: HTMLElement | null, slot: HTMLElement | null | undefined, tier: Rarity) => {

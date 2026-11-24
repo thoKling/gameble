@@ -14,6 +14,7 @@ module MarketSalesHelper
     copy_not_free: :grid,
     no_rarity: :grid,
     market_closed: :closed,
+    best_order_changed: :order,
     player_required: :signed_out
   }.freeze
 
@@ -27,20 +28,27 @@ module MarketSalesHelper
       .merge(screen_outlets("listing-form", SALE_ACTIONS.keys))
   end
 
-  def sale_edition_data(copy, settings)
+  def sale_edition_data(copy, settings, order: nil)
     rarity = copy.card.rarity.to_sym
     { ref: copy.ref, title: copy.card.title, rarity:, rarity_name: sale_rarity_name(rarity), season: copy.card.season_number,
-      free: copy.free, minimum: settings.minimum_price(rarity), stamp: settings.stamp(rarity) }
+      free: copy.free, minimum: settings.minimum_price(rarity), stamp: settings.stamp(rarity), order: order&.price.to_s }
+  end
+
+  # What the seller receives selling to an order at this price, the commission drawn at the settings version shown.
+  def order_sale_amounts(price, settings)
+    commission = Game::Market::AuctionMath.commission(price, settings.commission_basis_points)
+    { commission:, received: price - commission }
   end
 
   def sale_stamp_short_text(missing)
     t("market.sales.strings.stamp_short", amount: picoins([ missing, 1 ].max))
   end
 
-  def sale_cell_label(copy, settings, price = nil)
+  def sale_cell_label(copy, settings, price = nil, decks: nil, wanted: nil)
     minimum = picoins_label(settings.minimum_price(copy.card.rarity.to_sym))
     [ copy.card.title, t("catalog.rarity.#{copy.card.rarity}"), t("market.sales.new.season", number: copy.card.season_number),
-      t("market.sales.new.free", count: copy.free), t("market.sales.new.cell_minimum", amount: minimum), average_price_words(price) ].compact.join(", ")
+      t("market.sales.new.free", count: copy.free), (deck_holding_words(decks) if decks), t("market.sales.new.cell_minimum", amount: minimum),
+      average_price_words(price), (t("market.sales.new.wanted_words", count: wanted.seekers) if wanted) ].compact.join(", ")
   end
 
   def sale_durations(settings, checked:)

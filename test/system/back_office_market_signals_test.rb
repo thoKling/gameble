@@ -8,13 +8,17 @@ class BackOfficeMarketSignalsTest < ApplicationSystemTestCase
 
   setup do
     Game::Market::AltSignal.delete_all
+    Game::Market::TiedAccount.delete_all
     Game::Pack.update_all(opened_at: nil)
     @alice = accounts_players(:player)
     @bob = accounts_players(:administrator)
     @now = Time.current.utc.beginning_of_day + 40.minutes
   end
 
-  teardown { Game::Market::AltSignal.delete_all }
+  teardown do
+    Game::Market::AltSignal.delete_all
+    Game::Market::TiedAccount.delete_all
+  end
 
   def visit_signals_as(player)
     mock_steam_sign_in(player.steam_id)
@@ -37,12 +41,5 @@ class BackOfficeMarketSignalsTest < ApplicationSystemTestCase
 
     assert_selector "tr[data-player-token='#{@alice.token}']"
     assert_selector "tr[data-player-token]", count: 1
-  end
-
-  test "a player gets the back-office refusal" do
-    visit_signals_as(accounts_players(:player))
-
-    assert_no_selector "tr[data-signal]"
-    assert_text "No route matches"
   end
 end

@@ -41,9 +41,8 @@
     letter-spacing: var(--tracking-kicker-phone);
   }
 
-  .hub-showcase__name {
-    font: var(--font-showcase-name-phone);
-    letter-spacing: var(--tracking-showcase-name-phone);
+  .hub-showcase {
+    display: none;
   }
 
   .daily-booster .button,

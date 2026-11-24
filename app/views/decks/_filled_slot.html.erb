@@ -1,0 +1,16 @@
+<%# locals: (entry:) %>
+<span class="deck-slot__filled">
+  <%= tag.button type: "button", class: "deck-slot", aria: { expanded: "false" },
+        data: { action: "pointerdown->deck-slots#press click->deck-slots#toggle" } do %>
+    <span class="deck-slot__card"><%= render("decks/card", entry:) if entry %></span>
+  <% end %>
+  <span class="deck-slot__actions" hidden>
+    <span class="deck-slot__info" data-action="click->deck-slots#fillInfo">
+      <%= render(ButtonComponent.new(variant: :secondary, size: :small, opens: "deck-card-info")) { t("decks.editor.info.open") } %>
+    </span>
+    <span class="deck-slot__remove" data-action="click->deck-slots#remove">
+      <%= render(ButtonComponent.new(variant: :danger, size: :small, aria_label: (deck_slot_label(entry) if entry))) { t("decks.editor.strings.remove") } %>
+    </span>
+  </span>
+  <span class="deck-slot__moves" aria-hidden="true"><%= deck_moves_text(entry) %></span>
+</span>

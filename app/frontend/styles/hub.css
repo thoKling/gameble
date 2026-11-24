@@ -5,9 +5,9 @@
  * in a column of their own so neither side column waits on the other's
  * rows. From 720px two: the left column (260 to 300px) holds the kicker,
  * menu, community goal, daily booster panel and set progress; the showcase
- * stands alone in the centre. Under 720px one column, without the menu:
- * kicker, showcase (or invitation), community goal, daily booster panel,
- * set progress.
+ * stands alone in the centre. Under 720px one column, without the menu or
+ * the showcase (the profile shows it): kicker, community goal, daily booster
+ * panel, set progress.
  */
 
 .hub {
@@ -108,11 +108,6 @@
 .hub-linked__link:focus-visible::after {
   outline: var(--focus-ring-width) solid var(--focus-ring-color);
   outline-offset: var(--focus-ring-offset);
-}
-
-.hub-linked__arrow {
-  width: 6px;
-  height: auto;
 }
 
 .hub__subtitle {

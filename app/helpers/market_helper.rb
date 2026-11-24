@@ -4,7 +4,9 @@ module MarketHelper
   def listing_seconds_left(ends_at) = [ (ends_at - Time.current).floor, 0 ].max
 
   def listing_time_left(seconds)
-    if seconds >= SOON_SECONDS
+    if seconds.zero?
+      t("markets.time_left.ended")
+    elsif seconds >= SOON_SECONDS
       t("markets.time_left.hours", hours: seconds / SOON_SECONDS, minutes: format("%02d", seconds % SOON_SECONDS / 60))
     elsif seconds >= 60
       t("markets.time_left.minutes", minutes: seconds / 60)
@@ -19,12 +21,21 @@ module MarketHelper
 
   def listing_elapsed_seconds(listing) = (Time.current - listing.created_at).floor.clamp(0, listing_duration_seconds(listing))
 
-  def listing_tile_label(row, mark = nil)
+  def listing_tile_label(row, mark = nil, stand = nil)
     card = row.card
     label = t("markets.tile.label", card: card.title, rarity: CardStrings.new.rarity_name(card.rarity), season: card.season_number,
       price: picoins_label(row.current_price), offers: t("markets.tile.offers", count: row.offers),
       time: local_time_text(row.ends_at, :time))
-    mark ? "#{label}, #{listing_ownership_text(mark, spoken: true)}" : label
+    spoken_stand = t("markets.tile.stand.#{stand.status}_spoken", amount: picoins_label(stand.amount)) if stand
+    [ label, spoken_stand, (listing_ownership_text(mark, spoken: true) if mark) ].compact.join(", ")
+  end
+
+  def listing_tile_stand_chip(stand)
+    tag.span(class: "listing-tile__line listing-tile__stand listing-tile__stand--#{stand.status}") do
+      safe_join([ tag.span(t("market.rows.status.#{stand.status}"), class: "listing-tile__stand-tag"),
+        tag.span(t("markets.tile.stand.#{stand.status}_amount"), class: "listing-tile__stand-word"),
+        render(PicoinAmountComponent.new(amount: stand.amount, compact: true, class: "listing-tile__stand-amount")) ])
+    end
   end
 
   def listing_tile_ownership(mark)
@@ -39,8 +50,8 @@ module MarketHelper
   end
 
   def listing_ownership_state(mark)
-    if mark.owned? then :owned
-    elsif mark.wanted? then :wanted
+    if mark.wanted? then :wanted
+    elsif mark.owned? then :owned
     else :missing
     end
   end
@@ -55,10 +66,17 @@ module MarketHelper
 
   def market_filtered_path(filters, **extra) = market_path(**filters.to_params, **extra.compact)
 
+  def market_found_note(listings, archives)
+    parts = [ t("markets.screen.found_listings", count: listings, number: number_with_delimiter(listings)) ]
+    parts << t("markets.screen.found_archives", count: archives, number: number_with_delimiter(archives)) if archives.positive?
+    parts.join(" · ")
+  end
+
   def clock_data(seconds)
     { controller: "listing-clock", listing_clock_seconds_value: seconds,
       listing_clock_hours_template_value: t("markets.time_left.hours", hours: "%{hours}", minutes: "%{minutes}"),
       listing_clock_minutes_template_value: t("markets.time_left.minutes", minutes: "%{minutes}"),
-      listing_clock_under_template_value: t("markets.time_left.under") }
+      listing_clock_under_template_value: t("markets.time_left.under"),
+      listing_clock_ended_template_value: t("markets.time_left.ended") }
   end
 end

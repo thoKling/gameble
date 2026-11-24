@@ -70,7 +70,7 @@ class CardDetailTest < ApplicationSystemTestCase
     assert_selector ".card-detail__position", text: "· 4 / 16 · SWIPE TO BROWSE"
     assert_no_selector ".card-detail__number"
     assert_selector ".top-bar__phone-back", text: "GRID"
-    assert_no_selector ".top-bar__start > a.button[href='/en']"
+    assert_selector ".top-bar__start > a.top-bar__bridge[href='/en'] .top-bar__back-g"
     assert_equal [ [ "Repost", true ], [ "Add to showcase", false ], [ "Share", false ], [ "See on Steam (new tab)", false ] ], action_buttons
 
     find(".card-detail__nav--next").click
@@ -99,7 +99,7 @@ class CardDetailTest < ApplicationSystemTestCase
     assert_focused ".collection-grid > li:nth-child(5) a.card-link"
   end
 
-  test "on a phone, from a filtered, searched collection ◀ ▶ walk it across its pages and ◀ Grille returns to it with its filters" do
+  test "on a phone, from a filtered, searched collection ◀ ▶ walk it across its pages and ◀ Grille returns to it with its filters; a step from the keyboard keeps the focus on the same control" do
     season = publish_sets_draft
     page.driver.browser.manage.window.resize_to(*PHONE)
     filters = { state: %w[missing], genre: %w[roguelike], q: "seed" }
@@ -134,18 +134,28 @@ class CardDetailTest < ApplicationSystemTestCase
     assert_selector ".collection-grid"
     assert_focused ".collection-grid > li:nth-child(60) a.card-link"
     assert_equal "seed", find("#collection-search").value
-  end
 
-  test "a step from the keyboard keeps the focus on the same control" do
-    season = publish_sets_draft
     ids = members(season, "horror")
-    page.driver.browser.manage.window.resize_to(*PHONE)
-
     visit in_set_path(ids[1], season)
     find(".card-detail__nav--next").execute_script("this.focus()")
     find(".card-detail__nav--next").send_keys(:enter)
 
     assert_selector ".card-detail__position", text: "· 3 / 16 ·"
     assert_focused ".card-detail__nav--next"
+  end
+
+  test "the art loader shows while the art is drawing and leaves once it is drawn or missing" do
+    season = publish_sets_draft
+    visit in_set_path(members(season, "horror").first, season)
+    art = ".card-detail .card__art"
+
+    assert_selector "#{art}[data-art=failed] .card__missing", text: "IMAGE UNAVAILABLE"
+    assert_no_selector "#{art} .card__loader"
+
+    page.execute_script("delete document.querySelector(#{art.to_json}).dataset.art")
+    assert_selector "#{art} .card__loader", text: "LOADING"
+
+    page.execute_script("document.querySelector(#{art.to_json}).dataset.art = 'drawn'")
+    assert_no_selector "#{art} .card__loader"
   end
 end

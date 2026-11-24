@@ -20,8 +20,12 @@ class LibraryController < ApplicationController
     @steam_library_tile = library_tiles.first
     @sets_total = Catalog::SeasonSets.every_kind(season: @season).count + own_sets.size
     load_goals
+    @goal_slots = Game::Capacity.limit(current_player, :goal)
+    @custom_set_slots = Game::Capacity.limit(current_player, :custom_set)
+    @custom_set_slot = Game::SlotOffer.call(:custom_set, limit: @custom_set_slots, used: @custom_set_tiles.size)
     load_unique_cards
     load_latest_cards
+    @grand_inventory = Game::GrandInventory.new(seasons: :all)
   end
 
   def in_progress
@@ -71,6 +75,7 @@ class LibraryController < ApplicationController
   private
     def load_goals
       @goals = goal_marks.needs
+      @cards_to_order = Game::Market::CardsToOrder.call(current_player, @goals, locale: I18n.locale)
       @goal_suggestions = @goals.empty? ? goal_suggestions(current_player, season: @season) : []
     end
 

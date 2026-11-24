@@ -10,12 +10,32 @@ module Game
         Game::DailyBonusCollected => [ :player_id ],
         Game::PackRevealed => [ :player_id ],
         Game::TradeAccepted => [ :proposer_id, :recipient_id ],
-        Game::Market::AuctionSold => [ :seller_id, :winner_id ]
+        Game::Market::AuctionSold => [ :seller_id, :winner_id ],
+        Game::Market::CardsEntrusted => [ :player_id ],
+        Game::Market::OrderServed => [ :buyer_id, :seller_id ],
+        Game::Market::WantedChoicesApplied => Game::Market::WantedChoicesApplied.method(:player_ids),
+        Game::Market::ArchivePurchased => [ :player_id ],
+        Game::FeedEntryReacted => [ :player_id, :author_id, :partner_id ],
+        Game::InvitationAccepted => [ :sender_id, :recipient_id ],
+        Game::ShowcaseCardAdded => [ :player_id ],
+        Game::ShowcaseCardRemoved => [ :player_id ],
+        Game::CustomSetCreated => [ :player_id ],
+        Game::CustomSetEdited => [ :player_id ],
+        Game::AvatarChosen => [ :player_id ],
+        Game::LinkOpened => [ :player_id ],
+        Game::CodeContributionGranted => [ :player_id ],
+        Game::ProfileVisited => [ :viewer_id, :visited_id ],
+        Game::DiscordMemberFound => [ :player_id ]
       }.freeze
 
       def self.call(event)
-        EVENTS.fetch(event.class).each { GrantAchievementsJob.perform_later(event.data.fetch(it)) }
+        return if removed_reaction?(event)
+
+        NamedPlayers.of(event, EVENTS).each { GrantAchievementsJob.perform_later(it) }
       end
+
+      def self.removed_reaction?(event) = event.is_a?(Game::FeedEntryReacted) && event.data.fetch(:kind).nil?
+      private_class_method :removed_reaction?
     end
   end
 end
