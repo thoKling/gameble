@@ -11,7 +11,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       - name: Build
         working-directory: mobile/android
-        run: JAVA_HOME="$JAVA_HOME_17_X64" ./gradlew --no-daemon assembleDebug -PgamebleRootUrl=https://test.gameble.net
+        run: JAVA_HOME="$JAVA_HOME_17_X64" ./gradlew --no-daemon assembleDebug -PgamebleRootUrl=https://gameble.net
       - name: Commit APK
         run: |
           cp mobile/android/app/build/outputs/apk/debug/app-debug.apk gameble-debug.apk
